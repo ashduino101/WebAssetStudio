@@ -1,0 +1,129 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#tree {
+  /*font-family: sans-serif;*/
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  height: 100%;
+  overflow: auto;
+}
+
+#left {
+  position: absolute;
+  height: 100%;
+  width: 20%;
+  top: 0;
+  left: 0;
+}
+
+#center {
+  position: relative;
+  height: 100%;
+  width: 40%;
+  top: 0;
+  left: 20%;
+  margin: 0;
+}
+
+#right {
+  position: absolute;
+  height: 100%;
+  width: 40%;
+  top: 0;
+  right: 0;
+}
+
+#preview {
+  width: 50%;
+  max-width: 50%;
+  aspect-ratio: 1/1;
+  border: 3px dashed #aaa;
+  box-sizing: border-box;
+}
+
+.no-preview {
+  user-select: none;
+  font-family: Helvetica, sans-serif;
+  color: #aaa;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  position: relative;
+  top: 10%;
+}
+
+/* Tree text styling */
+.tree-label {
+  /* generic styles */
+}
+
+.label-bundle {
+  color: #c22ac2;
+}
+
+.label-asset {
+  color: #8d8d15;
+}
+
+.label-typetree {
+  color: #56d583;
+}
+
+.label-resource {
+  color: #5628cb;
+}
+
+.label-objecttype {
+  color: #c29640;
+}
+
+.label-objectname {
+  color: #7a3434;
+}
+
+.label-objectid {
+  color: #707070;
+}
+
+.label-generic {
+  color: #4b4b4b;
+}
+
+/* ------ */
+
+.tree-value {
+  /* generic styles */
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.value-generic {
+  color: #595959;
+}
+
+.value-numeric {
+  color: #4474a1;
+}
+
+.value-string {
+  color: #2e8021;
+}
+
+.value-bool {
+  color: #de6811;
+}
+
+.value-object {
+  color: #c935e5;
+}
+
+.value-undefined {
+  color: #8a8a8a;
+}

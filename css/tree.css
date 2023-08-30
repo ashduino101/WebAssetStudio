@@ -1,0 +1,29 @@
+.icon-asset {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -120px 0 !important;
+}
+
+.icon-generic {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -120px 0 !important;
+}
+
+.icon-bundle {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -24px 0 !important;
+}
+
+.icon-resource {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -72px 0 !important;
+}
+
+.icon-object {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -48px 0 !important;
+}

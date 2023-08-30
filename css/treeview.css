@@ -1,0 +1,95 @@
+.vtree ul.vtree-subtree, .vtree li.vtree-leaf {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  position: relative;
+}
+
+.vtree li.vtree-leaf {
+  background-position: -90px 0;
+  background-repeat: repeat-y;
+  min-height: 18px;
+  line-height: 18px;
+}
+
+.vtree li.vtree-leaf::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  background-position: -36px 0;
+}
+
+.vtree li.vtree-leaf li.vtree-leaf {
+  margin-left: 18px;
+}
+
+.vtree li.vtree-leaf:last-child {
+  background-image: none;
+}
+
+.vtree li.vtree-leaf.closed ul.vtree-subtree {
+  display: none;
+}
+
+.vtree li.vtree-leaf.vtree-has-children > span.vtree-toggle {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background-position: -72px 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.vtree li.vtree-leaf.vtree-has-children.closed > span.vtree-toggle {
+  background-position: -54px 0;
+}
+
+.vtree a.vtree-leaf-label {
+  line-height: 18px;
+  display: inline-block;
+  vertical-align: top;
+  width: calc(100% - 18px);
+  box-sizing: border-box;
+  margin-left: 18px;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.vtree li.vtree-leaf a.vtree-leaf-label:hover {
+  background-color: #d8effb;
+}
+
+.vtree li.vtree-leaf.vtree-selected > a.vtree-leaf-label {
+  background-color: #44bfff;
+}
+
+.vtree-contextmenu {
+  position: absolute;
+  z-index: 9999999;
+  border: solid 1px #ccc;
+  background: #eee;
+  padding: 0;
+  margin: 0;
+  display: none;
+}
+
+.vtree-contextmenu li {
+  list-style: none;
+  padding: 1px 5px;
+  margin: 0;
+  color: #333;
+  line-height: 20px;
+  height: 20px;
+  cursor: default;
+}
+
+.vtree-contextmenu li:hover {
+  color: #fff;
+  background-color: #3399ff;
+}
+
+.vtree li.vtree-leaf, .vtree li.vtree-leaf::before, .vtree li.vtree-leaf.vtree-has-children > span.vtree-toggle {
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjE4IiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAyOC41NzUgNC43NjI1IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxnIHN0cm9rZT0iIzdjN2M3YyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJtMS41ODc1IDEuMzIyOTIgMS4wNTgzMyAxLjA1ODMzLTEuMDU4MzMgMS4wNTgzMyAxLjA1ODMzLTEuMDU4MzN6IiBzdHJva2Utd2lkdGg9Ii4yMDAwMjUiLz48cGF0aCBkPSJtNy45NzI4MSAxLjgxNjY3LTEuMDU4MzMgMS4wNTg0My0xLjA1ODMzLTEuMDU4MzMgMS4wNTgzMyAxLjA1ODMzeiIgc3Ryb2tlLXdpZHRoPSIuMiIvPjxwYXRoIGQ9Im0xMS42NDE3IDB2Mi4zODEyNWgyLjY0NTgzLTIuNjQ1ODN6IiBzdHJva2Utd2lkdGg9Ii4xIi8+PHBhdGggZD0ibTI1LjkyOTIgMHY0Ljc2MjV6IiBzdHJva2Utd2lkdGg9Ii4xIi8+PHBhdGggZD0ibTE1Ljg3NTEgMS4zMjI5OCAxLjA1ODMzIDEuMDU4MzMtMS4wNTgzMyAxLjA1ODMzIDEuMDU4MzMtMS4wNTgzM3oiIHN0cm9rZS13aWR0aD0iLjIiLz48cGF0aCBkPSJtMjIuMjI1MSAxLjg1MjE0LTEuMDU4MzMgMS4wNTg0My0xLjA1ODMzLTEuMDU4MzMgMS4wNTgzMyAxLjA1ODMzeiIgc3Ryb2tlLXdpZHRoPSIuMiIvPjwvZz48L3N2Zz4=);
+}
