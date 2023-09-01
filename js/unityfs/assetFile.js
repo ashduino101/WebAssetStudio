@@ -3,8 +3,21 @@ import {SharedStrings} from "./sharedStrings";
 import {BinaryReader, SEEK_CUR} from "./reader";
 import {BuildTarget} from "./buildTarget";
 import {ObjectReader} from "./objectReader";
+import {UnityObject} from "./classes/object";
+import {getClassName} from "./utils";
 
 export class TypeTree {
+  exposedAttributes = [
+    'level',
+    'type',
+    'name',
+    'size',
+    'index',
+    'typeFlags',
+    'metaFlag',
+    'children',
+  ];
+
   constructor(version, reader) {
     this.version = version;
     this.reader = reader;
@@ -105,7 +118,9 @@ export class TypeTree {
 }
 
 export class TypeTreeReference {
-  constructor(classID, isStripped, scriptTypeIndex, scriptID, oldTypeHash, offset) {
+  constructor(reader, version, classID, isStripped, scriptTypeIndex, scriptID, oldTypeHash, offset) {
+    this.reader = reader;
+    this.version = version;
     this.classID = classID;
     this.isStripped = isStripped;
     this.scriptTypeIndex = scriptTypeIndex;
@@ -114,20 +129,19 @@ export class TypeTreeReference {
     this.offset = offset;
   }
 
-  getTree(reader, version) {
-    reader.seek(this.offset);
-    let type = {};
+  get tree() {
+    this.reader.seek(this.offset);
 
     // if (this.enableTypeTrees) {
-    type.tree = new TypeTree(version, reader);
-    if (version >= 12 || version === 10) {
-      type.tree.readBlob();
+    let tree = new TypeTree(this.version, this.reader);
+    if (this.version >= 12 || this.version === 10) {
+      tree.readBlob();
     } else {
-      type.tree.readLegacy();
+      tree.readLegacy();
     }
     // }
 
-    return type;
+    return tree;
   }
 }
 
@@ -140,11 +154,7 @@ export class ObjectInfo {
   }
 
   getClassName() {
-    let ct = ClassIDType[this.classID];
-    if (typeof ct == 'function') {
-      return ct.name;
-    }
-    return ct;
+    return getClassName(this.classID);
   }
 
   _createReader() {
@@ -168,7 +178,7 @@ export class ObjectInfo {
     let cls = ClassIDType[this.classID];
     if (typeof cls == 'string') {
       console.error('unsupported class:', cls);
-      return null;
+      return UnityObject;  // safe fallback
     }
     return cls;
   }
@@ -202,11 +212,22 @@ export class ObjectInfo {
 }
 
 export class LocalObjectIdentifier {
+  exposedAttributes = [
+    'localFileIndex',
+    'localIdentifier'
+  ];
+
   constructor() {
   }
 }
 
 export class FileIdentifier {
+  exposedAttributes = [
+    'guid',
+    'type',
+    'path'
+  ];
+
   constructor() {
   }
 }
@@ -249,7 +270,12 @@ export class AssetFile {
     'unityVersion',
     'targetPlatform',
     'enableTypeTrees',
-    'objects'
+    'types',
+    'objects',
+    'scriptTypes',
+    'externals',
+    'refTypes',
+    'userInformation'
   ]
 
   constructor(reader) {
@@ -367,7 +393,7 @@ export class AssetFile {
         let empty = this.reader.readCString();
       }
       if (this.version >= 5) {
-        external.guid = this.reader.read(16);
+        external.guid = [...this.reader.read(16)].map(i => i.toString(16).padStart(2, '0')).join('');
         external.type = this.reader.readInt32();
       }
       external.path = this.reader.readCString();
@@ -395,6 +421,7 @@ export class AssetFile {
     } else {
       type.isStripped = false;
     }
+    type.scriptTypeIndex = 0;
     if (this.version >= 17) {
       type.scriptTypeIndex = this.reader.readInt16();
     }
@@ -436,6 +463,8 @@ export class AssetFile {
     let [info, offset] = this.readSerializedTypeInfoOnly(isRef);
 
     return new TypeTreeReference(
+      this.reader,
+      this.version,
       info.classID,
       info.isStripped,
       info.scriptTypeIndex,
@@ -580,28 +609,18 @@ export class AssetFile {
   }
 
   getTypeFromReference(typeRef) {
-    return typeRef.getTree(this.reader, this.version);
+    return typeRef.tree;
   }
 
-  getObjectUsingTree(obj) {
+  getObjectUsingTree(obj) {  // TODO: fallback to explicit class system
     const typeRef = this.getClass(obj.classID);
     this.currentBranch = {};
     if (this.enableTypeTrees) {
       const type = this.getTypeFromReference(typeRef);
-      console.log(type)
       this.reader.seek(obj.offset);
-      return this.parseTypeTree(type.tree, this.reader, obj.offset + obj.size);
-    } else if (this.fallbacks !== undefined) {
-      const type = this.fallbacks[obj.classID];
-      if (type === undefined) {
-        console.error(`No fallback tree available for type ${ClassIDType[obj.classID]} (${obj.classID})`);
-        return -1;
-      }
-      this.reader.seek(obj.offset);
-      return this.parseTypeTree(type.tree, this.reader, obj.offset + obj.size);
+      return this.parseTypeTree(type, this.reader, obj.offset + obj.size);
     } else {
       this.reader.seek(obj.offset);
-      console.log(ClassIDType[obj.classID]);
       return this.reader.read(obj.size);
     }
   }
@@ -612,11 +631,5 @@ export class AssetFile {
       types[type.classID] = this.getTypeFromReference(type);
     }
     return JSON.stringify(types);
-  }
-
-  async loadFallbackTypeRegistry() {
-    let resp = await fetch('js/unityfs/types1.json');
-    let buf = await resp.arrayBuffer();
-    this.fallbacks = JSON.parse(new TextDecoder('utf-8').decode(buf));
   }
 }

@@ -1,5 +1,5 @@
 import {decodeETC2} from "./unityfs/texture2d";
-import {AssetFile, ObjectCollection, ObjectInfo} from "./unityfs/assetFile";
+import {AssetFile, ObjectCollection, ObjectInfo, TypeTreeReference} from "./unityfs/assetFile";
 import {BinaryReader} from "./unityfs/reader";
 import {FileType, UnityFS} from "./unityfs/unityFile";
 import {FSB5} from "./fsb5/fsb5";
@@ -9,6 +9,8 @@ import $ from 'jquery';
 import 'jstree';
 import '../css/vendor/jstree/style.min.css';
 import {BundleFile, NodeFile} from "./unityfs/bundleFile";
+import ClassIDType from "./unityfs/classIDType";
+import {getClassName} from "./unityfs/utils";
 
 function fsb5Test(data) {
   let len = data.length;
@@ -62,6 +64,7 @@ class AssetTree {
     this.treeObjects = {};
 
     this.objectBranches = {};
+    this.typeTrees = {};
   }
 
   htmlEscape(text) {
@@ -146,9 +149,26 @@ class AssetTree {
     }
   }
 
-  async createTreeForObject(obj, rootNode, name, style = 'generic', icon = 'icon-generic', isInsideAsset = false) {
+  async createTreeForTypeTree(obj, rootNode) {
+    await this.createNode(
+      rootNode,
+      rootNode + '-trees-' + obj.classID + '_' + obj.scriptTypeIndex,
+      this.styleTextAs(getClassName(obj.classID), 'typetree'),
+      'icon-generic',
+      true,
+      {type: 'typetree', data: obj, root: rootNode}
+    );
+    await this.createNode(
+      rootNode + '-trees-' + obj.classID + '_' + obj.scriptTypeIndex,
+      rootNode + '-trees-' + obj.classID + '_' + obj.scriptTypeIndex + '-placeholder',
+      '&lt;not loaded&gt;',
+      'icon-generic'
+    );
+  }
+
+  async createTreeForObject(obj, rootNode, name, style = 'generic', icon = 'icon-generic', isOpened = false) {
     if (typeof obj.exposedAttributes != 'undefined') {
-      await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, true);
+      await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened);
       for (let attr of obj.exposedAttributes) {
         let val = obj[attr];
         if (typeof val == 'undefined') {
@@ -162,7 +182,7 @@ class AssetTree {
         await this.createTreeForObject(val, rootNode + '-' + name, attr);
       }
     } else if (obj instanceof Array) {
-      await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, true);
+      await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened);
       for (let i = 0; i < obj.length; i++) {
         await this.createTreeForObject(obj[i], rootNode + '-' + name, i);
       }
@@ -207,11 +227,13 @@ class AssetTree {
             // file.parser.objects.fileID = name;
             await this.createTreeForObject(file.parser, rootNode, obj.node.path, 'asset', 'icon-asset');
           } else {
-            await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(obj.node.path, newStyle), newIcon, true);
+            await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(obj.node.path, newStyle), newIcon, isOpened);
           }
         }
       } else if (obj instanceof ObjectCollection) {
         await this.createTreeForObjectCollection(obj, rootNode);
+      } else if (obj instanceof TypeTreeReference) {
+        await this.createTreeForTypeTree(obj, rootNode);
       } else {
         await this.createNode(rootNode, rootNode + '-' + name, this.styleKeyValue(name, obj), icon, true);
       }
@@ -219,20 +241,35 @@ class AssetTree {
   }
 
   async loadBundle() {
-    // await this.createNode('bundle', 'file-version',
-    //   this.styleKeyValue('version', this.parser.version), 'icon-generic', true);
-    // await this.createNode('bundle', 'unity-version',
-    //   this.styleKeyValue('unityVersion', this.parser.unityVersion), 'icon-generic', true);
-    // await this.createNode('bundle', 'unity-revision',
-    //   this.styleKeyValue('unityRevision', this.parser.unityRevision), 'icon-generic', true);
-    // await this.createNode('bundle', 'bundle-size',
-    //   this.styleKeyValue('bundleSize', this.parser.size), 'icon-generic', true);
-    // await this.createNode('bundle', 'compressed-block-info-size',
-    //   this.styleKeyValue('compressedBlockInfoSize', this.parser.compressedBlockInfoSize), 'icon-generic', true);
-    // await this.createNode('bundle', 'uncompressed-block-info-size',
-    //   this.styleKeyValue('uncompressedBlockInfoSize', this.parser.uncompressedBlockInfoSize), 'icon-generic', true);
-
     await this.createTreeForObject(this.parser, '#', 'Bundle', 'bundle', 'icon-bundle');
+
+    document.body.addEventListener('bundle-resolve-request', data => {
+      let path = data.detail;
+      if (path.startsWith('archive:/')) {
+        path = path.substring('archive:/'.length, path.length);
+      }
+      let matches = this.treeFiles.filter(f => f.fileName === path);
+      let match;
+      if (matches.length > 0) {
+        match = matches[0];
+      } else {
+        path = path.substring(path.indexOf('/') + 1, path.length);
+        matches = this.treeFiles.filter(f => f.fileName === path);
+        if (matches.length > 0) {
+          match = matches[0];
+        } else {
+          console.warn('no matches, left with path:', path);
+          document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: false, data: null}}));
+          return false;
+        }
+      }
+      let outData = match.parser.reader.data;
+      document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: true, data: outData}}));
+    });
+  }
+
+  async loadAssets() {
+    await this.createTreeForObject(this.parser, '#', 'Asset', 'asset', 'icon-asset');
 
     document.body.addEventListener('bundle-resolve-request', data => {
       let path = data.detail;
@@ -284,18 +321,14 @@ class AssetTree {
 
     const preview = document.getElementById('preview');
     this.tree.on("select_node.jstree", async (evt, data) => {
-      // const pathID = data?.node?.data?.pathID;
-      // const fileID = data?.node?.data?.fileID;
-      // if (typeof pathID == 'undefined' || typeof fileID == 'undefined') {
-      //   return;
-      // }
-      // console.log(this.treeObjects)
-      // console.log(this.treeObjects[fileID]);
       if (data.node.data.type === 'object') {
         let object = data.node.data.data.object;
         if (typeof object.createPreview === 'function') {
-          preview.innerHTML = '';
-          await preview.appendChild(await object.createPreview());
+          preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
+          object.createPreview().then(prev => {
+            preview.innerHTML = '';
+            preview.appendChild(prev);
+          });
         }
       }
     })
@@ -312,7 +345,16 @@ class AssetTree {
         await this.createNode(parent, parent + 'size', this.styleKeyValue('size', dataDesc.data.size), 'icon-generic');
         await this.createNode(parent, parent + 'stripped', this.styleKeyValue('stripped', dataDesc.data.stripped), 'icon-generic');
         await this.createTreeForObject(dataDesc.data.object, parent, 'object');
-        this.objectBranches[dataDesc.pathID] = parent + '-object';
+        this.objectBranches[dataDesc.data.pathID] = parent + '-object';
+
+        await this.removeNode(parent + '-placeholder');
+      } else if (dataDesc.type === 'typetree' && !(dataDesc.data.classID + '_' + dataDesc.data.scriptTypeIndex in this.typeTrees)) {
+        await this.createNode(parent, parent + 'classID', this.styleKeyValue('classID', dataDesc.data.classID), 'icon-generic');
+        await this.createNode(parent, parent + 'offset', this.styleKeyValue('offset', dataDesc.data.offset), 'icon-generic');
+        await this.createNode(parent, parent + 'scriptTypeIndex', this.styleKeyValue('scriptTypeIndex', dataDesc.data.scriptTypeIndex), 'icon-generic');
+        await this.createNode(parent, parent + 'isStripped', this.styleKeyValue('isStripped', dataDesc.data.isStripped), 'icon-generic');
+        await this.createTreeForObject(dataDesc.data.tree, parent, 'tree');
+        this.typeTrees[dataDesc.data.classID + '_' + dataDesc.data.scriptTypeIndex] = parent + '-tree';
 
         await this.removeNode(parent + '-placeholder');
       }
@@ -327,6 +369,9 @@ class AssetTree {
     switch (fileType) {
       case FileType.Bundle:
         await this.loadBundle();
+        break;
+      case FileType.Assets:
+        await this.loadAssets();
         break;
     }
   }

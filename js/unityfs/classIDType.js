@@ -24,6 +24,8 @@ import {Material} from "./classes/material";
 import {Sprite} from "./classes/sprite";
 import {AnimatorOverrideController} from "./classes/animatorOverrideController";
 import {CanvasRenderer} from "./classes/canvasRenderer";
+import {Font} from "./classes/font";
+import {Animator} from "./classes/animator";
 
 export default {
     0: UnityObject,
@@ -93,7 +95,7 @@ export default {
     92: 'GUILayer',
     93: 'RuntimeAnimatorController',
     94: 'ScriptMapper',
-    95: 'Animator',  // ------------
+    95: Animator,
     96: 'TrailRenderer',
     98: 'DelayedCallManager',
     102: 'TextMesh',
@@ -116,7 +118,7 @@ export default {
     125: 'HaloLayer',
     126: 'NavMeshAreas',
     127: 'HaloManager',
-    128: 'Font',
+    128: Font,
     129: 'PlayerSettings',
     130: 'NamedObject',
     131: 'GUITexture',

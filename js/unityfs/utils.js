@@ -1,5 +1,6 @@
 import {BasicStream} from "./stream";
 import LZMA from "../vendor/lzma";
+import ClassIDType from "./classIDType";
 
 export const lzmaDecompress = function (data, rawSize) {
   let dec = new LZMA.Decoder();
@@ -44,4 +45,12 @@ export async function requestExternalData(streamingInfo) {
     document.body.addEventListener('bundle-resolve-response', listener);
     document.body.dispatchEvent(new CustomEvent('bundle-resolve-request', {detail: streamingInfo.path}));
   });
+}
+
+export function getClassName(classID) {
+  let ct = ClassIDType[classID];
+  if (typeof ct == 'function') {
+    return ct.name;
+  }
+  return ct;
 }

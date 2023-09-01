@@ -16,10 +16,28 @@
 #define EXTERN
 #endif
 
+bool bgr2rgb(void* data, int32_t width, int32_t height) {
+    uint8_t* out = static_cast<uint8_t*>(data);
+    for (int i = 0; i < width * height; i++) {
+        int offset = i * 4;
+        uint8_t b = out[offset];
+        uint8_t g = out[offset + 1];
+        uint8_t r = out[offset + 2];
+        uint8_t a = out[offset + 3];
+        out[offset] = r;
+        out[offset + 1] = g;
+        out[offset + 2] = b;
+        out[offset + 3] = a;
+    }
+    return true;
+}
+
 T2D_API(bool32_t) DecodeDXT1(const void* data, int32_t width, int32_t height, void* image)
 {
     std::cout << "decoding DXT1: " << data << std::endl;
-	return decode_bc1(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_bc1(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+	return res;
 }
 
 T2D_API(bool32_t) DecodeDXT5(const void* data, int32_t width, int32_t height, void* image)

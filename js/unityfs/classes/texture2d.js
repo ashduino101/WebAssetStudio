@@ -754,6 +754,7 @@ export class Texture2D extends Texture {
 
   async createPreview() {
     let dataURL = await this.createDataUrl();
+    console.log('previewing with format:', this.textureFormat);
     let img = document.createElement('img');
     img.src = dataURL;
     img.style.maxWidth = '100%';
