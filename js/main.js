@@ -547,9 +547,12 @@ async function exportZip(tree) {
     }
     document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: true, data: match}}));
   });
-  await tree.downloadZip();
-  console.log('Done');
-  tree.isExporting = false;
+  setTimeout(async () => {
+    tree.downloadZip().then(() => {
+      console.log('Done');
+      tree.isExporting = false;
+    });
+  }, 0);
 }
 
 // MAIN
@@ -562,24 +565,27 @@ function main() {
     reader.onloadend = async b => {
       let arr = new Uint8Array(reader.result);
       await tree.loadFile(arr);
-      document.getElementById('export-zip').onclick = async () => await exportZip(tree);
+      document.getElementById('export-zip').onclick = async () => setTimeout(() => exportZip(tree), 0);
     }
     reader.readAsArrayBuffer(f);
   });
 }
 
-// main();
-const input = document.getElementById('file-input');
-input.addEventListener('change', e => {
-  let f = e.target.files[0];
-  let reader = new FileReader();
-  reader.onloadend = async b => {
-    let arr = new Uint8Array(reader.result);
-    const fsb = new FSB5(arr);
-    fsb.parse();
-    console.log(fsb);
-    console.log(fsb.format);
-    console.log(fsb.getSound(0));
-  }
-  reader.readAsArrayBuffer(f);
-});
+function testFSB() {
+  const input = document.getElementById('file-input');
+  input.addEventListener('change', e => {
+    let f = e.target.files[0];
+    let reader = new FileReader();
+    reader.onloadend = async b => {
+      let arr = new Uint8Array(reader.result);
+      const fsb = new FSB5(arr);
+      fsb.parse();
+      console.log(fsb);
+      console.log(fsb.format);
+      console.log(fsb.getSound(0));
+    }
+    reader.readAsArrayBuffer(f);
+  });
+}
+
+main();

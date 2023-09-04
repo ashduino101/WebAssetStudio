@@ -127,8 +127,14 @@ export class FSB5 {
 
   getSound(sampleIndex) {
     switch (this.format.value) {
+      case 1:  // PCM (8-bit)
+        return this._getWAV(sampleIndex, 1);
       case 2:  // PCM (16-bit)
         return this._getWAV(sampleIndex, 2);
+      case 3:  // PCM (24-bit)
+        return this._getWAV(sampleIndex, 3);
+      case 4:  // PCM (32-bit)
+        return this._getWAV(sampleIndex, 4);
     }
   }
 }
