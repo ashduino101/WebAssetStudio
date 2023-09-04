@@ -1,4 +1,4 @@
-import {BinaryReader} from "./reader";
+import {BinaryReader} from "./binaryReader";
 
 export class ObjectReader extends BinaryReader {
   constructor(data, version, unityVersion, platform, pathID, offset, length, classID, typeID) {

@@ -1,6 +1,6 @@
 import {decodeETC2} from "./unityfs/texture2d";
-import {AssetFile, ObjectCollection, ObjectInfo, TypeTreeReference} from "./unityfs/assetFile";
-import {BinaryReader} from "./unityfs/reader";
+import {AssetFile, ObjectCollection, TypeTreeReference} from "./unityfs/assetFile";
+import {BinaryReader} from "./unityfs/binaryReader";
 import {FileType, UnityFS} from "./unityfs/unityFile";
 import {FSB5} from "./fsb5/fsb5";
 import {testData} from "./test";
@@ -8,51 +8,9 @@ import {HexView} from "./hexview";
 import $ from 'jquery';
 import 'jstree';
 import '../css/vendor/jstree/style.min.css';
-import {BundleFile, NodeFile} from "./unityfs/bundleFile";
-import ClassIDType from "./unityfs/classIDType";
+import {NodeFile} from "./unityfs/bundleFile";
 import {getClassName} from "./unityfs/utils";
-
-function fsb5Test(data) {
-  let len = data.length;
-  let offset = 0;
-  let reader = new BinaryReader(data);
-  reader.endian = 'little';
-  while (reader.offset < len) {
-    const parser = new FSB5();
-    parser.reader = reader;
-    parser.parse();
-    if (parser.format.name === 'IMA ADPCM') {
-      console.log(parser);
-    }
-  }
-  console.log('done');
-}
-
-function imgTest(data) {
-  console.log(decodeETC2(data, 100, 100));
-}
-
-function inputTest() {
-  const input = document.getElementById('file-input');
-  input.addEventListener('change', e => {
-    let f = e.target.files[0];
-    // f.slice(0, 16).arrayBuffer().then(s => console.log(new Uint8Array(s)));
-    let reader = new FileReader();
-    reader.onloadend = b => {
-      let arr = new Uint8Array(reader.result);
-
-      const fsReader = new UnityFS(arr);
-      fsReader.parse();
-      // fsb5Test(arr);
-    }
-    reader.readAsArrayBuffer(f);
-  });
-}
-
-function dataTest() {
-  const reader = new UnityFS(testData);
-  reader.parse();
-}
+import JSZip from 'jszip';
 
 class AssetTree {
   constructor(selector) {
@@ -65,6 +23,10 @@ class AssetTree {
 
     this.objectBranches = {};
     this.typeTrees = {};
+
+    this.providedExternals = {};
+
+    this.isExporting = false;
   }
 
   htmlEscape(text) {
@@ -211,24 +173,20 @@ class AssetTree {
             newIcon = 'icon-generic';
             break;
         }
-        // we can just load bundles now
+        this.treeFiles.push({  // only asset/resource files
+          treeNode: rootNode + '-' + name,
+          fileName: obj.node.path,
+          type: file.fileType,
+          parser: file,
+        });
         if (file.fileType === FileType.Bundle) {
           file.parse();
           await this.createTreeForObject(file.parser, rootNode + '-' + name, 'Bundle', 'bundle', 'icon-bundle');
+        } else if (file.fileType === FileType.Assets) {
+          file.parse();
+          await this.createTreeForObject(file.parser, rootNode, obj.node.path, 'asset', 'icon-asset');
         } else {
-          this.treeFiles.push({  // only asset/resource files
-            treeNode: rootNode + '-' + name,
-            fileName: obj.node.path,
-            parser: file,
-          });
-          if (file.fileType === FileType.Assets) {
-            file.parse();
-            // this.treeObjects[name] = file.parser.objects.objects;
-            // file.parser.objects.fileID = name;
-            await this.createTreeForObject(file.parser, rootNode, obj.node.path, 'asset', 'icon-asset');
-          } else {
-            await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(obj.node.path, newStyle), newIcon, isOpened);
-          }
+          await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(obj.node.path, newStyle), newIcon, isOpened);
         }
       } else if (obj instanceof ObjectCollection) {
         await this.createTreeForObjectCollection(obj, rootNode);
@@ -240,60 +198,180 @@ class AssetTree {
     }
   }
 
-  async loadBundle() {
-    await this.createTreeForObject(this.parser, '#', 'Bundle', 'bundle', 'icon-bundle');
-
+  async setupResolver() {
+    const preview = document.getElementById('preview');
     document.body.addEventListener('bundle-resolve-request', data => {
+      if (this.isExporting) {
+        return false;  // another listener is set up
+      }
       let path = data.detail;
+      console.log('Received bundle resolution request for path', path);
       if (path.startsWith('archive:/')) {
         path = path.substring('archive:/'.length, path.length);
       }
       let matches = this.treeFiles.filter(f => f.fileName === path);
       let match;
       if (matches.length > 0) {
-        match = matches[0];
+        match = matches[0].parser.reader.data;
       } else {
         path = path.substring(path.indexOf('/') + 1, path.length);
         matches = this.treeFiles.filter(f => f.fileName === path);
         if (matches.length > 0) {
-          match = matches[0];
+          match = matches[0].parser.reader.data;
         } else {
-          console.warn('no matches, left with path:', path);
-          document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: false, data: null}}));
-          return false;
+          if (this.providedExternals[path] !== undefined) {
+            match = this.providedExternals[path];
+          } else if (path === '') {  // some textures have this -- not sure how to handle it
+            document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: false, data: null}}));
+          } else {
+            console.warn('no matches, left with path:', path);
+            const text = document.createElement('h2');
+            text.classList.add('no-preview');
+            text.innerText = `Requires file: ${path}`;
+            const br = document.createElement('br');
+            const input = document.createElement('input');
+            input.id = 'ext' + 'xxxxxxxx'.replaceAll('x', () => Math.floor(Math.random() * 256).toString(16));
+            input.classList.add('external-input');
+            input.type = 'file';
+            const label = document.createElement('label');
+            label.htmlFor = input.id;
+            label.classList.add('external-input-button');
+            label.innerText = 'Upload...';
+            input.addEventListener('change', () => {
+              let reader = new FileReader();
+              reader.onloadend = async b => {
+                this.providedExternals[path] = new Uint8Array(reader.result);
+                document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {
+                  detail: {
+                    status: true,
+                    data: this.providedExternals[path]
+                  }
+                }));
+              }
+              reader.readAsArrayBuffer(input.files[0]);
+            });
+            function cancelListener() {
+              document.body.removeEventListener('destroy-preview', cancelListener);
+              document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: false, data: null}}));
+            }
+            document.body.addEventListener('destroy-preview', cancelListener)
+
+            text.appendChild(br);
+            text.appendChild(input);
+            text.appendChild(label);
+            preview.innerHTML = '';
+            preview.appendChild(text);
+            return true;
+          }
         }
       }
-      let outData = match.parser.reader.data;
-      document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: true, data: outData}}));
+      document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: true, data: match}}));
     });
+  }
+
+  async exportAssets(root, parser) {
+    let objects = root.folder('Objects');
+    let objectInfo = objects.folder('Info');
+    let typetrees = root.folder('Type trees');
+    let externals = root.folder('Externals');
+    let reftypes = root.folder('Reference types');
+    let i = 0;
+    let total = parser.objects.objects.length;
+    for (let obj of parser.objects.objects) {
+      let object = obj.object;
+      let name = object.name;
+      if (name === '<unnamed>' || name === '<empty>' || (typeof name == 'undefined') || name === '') {
+        name = getClassName(obj.classID);
+      }
+      document.body.dispatchEvent(new CustomEvent('export-progress-update', {
+        detail: {
+          percent: i / parser.objects.objects.length * 100,
+          index: i,
+          total: total,
+          name: name
+        }
+      }));
+      await object.saveInfo(objectInfo,  name + '_' + i);
+      try {
+        await object.saveObject(objects, name + '_' + i);
+      } catch (e) {
+        objects.file('ERROR_' + name + '_' + i, 'ERROR: Failed to export object:' + e.toString());
+      }
+      i++;
+    }
+  }
+
+  async exportResource(root) {
+    root.file(
+        'README.txt',
+        `This file is a resource file, which contains raw data and has no use being exported.
+It was likely used while exporting other files (such as images or meshes), and contained
+data like pixels, vertices, and UV maps used by the asset.`
+    );
+  }
+
+  async exportOther(root) {
+    root.file(
+        'README.txt',
+        'Could not export file: could not determine file type.'
+    );
+  }
+
+  async exportFile(folder, type, parser) {
+    switch (type) {
+      case FileType.Assets:
+        await this.exportAssets(folder, parser);
+        break;
+      case FileType.Bundle:
+        break;
+      case FileType.Resource:
+        await this.exportResource(folder);
+        break;
+      default:
+        await this.exportOther(folder)
+        break;
+    }
+  }
+
+  async exportZip() {
+    let zip = new JSZip();
+    if (this.parser instanceof AssetFile) {
+      await this.exportFile(zip, FileType.Assets, this.parser);
+    } else {
+      for (let file of this.treeFiles) {
+        let folder = zip.folder(file.fileName);
+        await this.exportFile(folder, file.type, file.parser.parser);
+      }
+    }
+    return await zip.generateAsync({type: 'uint8array'});
+  }
+
+  saveBlob(filename, data, type) {
+    const file = new Blob(data, {type: type});
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(file);
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  async downloadZip() {
+    return this.saveBlob('bundle.zip', [await this.exportZip()], 'application/zip');
+  }
+
+  async loadBundle() {
+    await this.createTreeForObject(this.parser, '#', 'Bundle', 'bundle', 'icon-bundle');
+    await this.setupResolver();
   }
 
   async loadAssets() {
     await this.createTreeForObject(this.parser, '#', 'Asset', 'asset', 'icon-asset');
-
-    document.body.addEventListener('bundle-resolve-request', data => {
-      let path = data.detail;
-      if (path.startsWith('archive:/')) {
-        path = path.substring('archive:/'.length, path.length);
-      }
-      let matches = this.treeFiles.filter(f => f.fileName === path);
-      let match;
-      if (matches.length > 0) {
-        match = matches[0];
-      } else {
-        path = path.substring(path.indexOf('/') + 1, path.length);
-        matches = this.treeFiles.filter(f => f.fileName === path);
-        if (matches.length > 0) {
-          match = matches[0];
-        } else {
-          console.warn('no matches, left with path:', path);
-          document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: false, data: null}}));
-          return false;
-        }
-      }
-      let outData = match.parser.reader.data;
-      document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: true, data: outData}}));
-    });
+    await this.setupResolver();
   }
 
   async loadFile(data) {
@@ -322,6 +400,7 @@ class AssetTree {
     const preview = document.getElementById('preview');
     this.tree.on("select_node.jstree", async (evt, data) => {
       if (data.node.data.type === 'object') {
+        document.body.dispatchEvent(new CustomEvent('destroy-preview'));
         let object = data.node.data.data.object;
         if (typeof object.createPreview === 'function') {
           preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
@@ -365,6 +444,7 @@ class AssetTree {
     if (typeof this.parser.parser != 'undefined') {
       this.parser = this.parser.parser;
     }
+    console.log(this.parser)
 
     switch (fileType) {
       case FileType.Bundle:
@@ -389,6 +469,89 @@ function hexTest() {
 // inputTest();
 // hexTest();
 
+async function exportZip(tree) {
+  tree.isExporting = true;
+  const darken = document.getElementById('darken');
+  const modal = document.getElementById('modal');
+  darken.style.display = 'block';
+
+  let bar = document.createElement('div');
+  bar.classList.add('progress-bar');
+  let innerBar = document.createElement('div');
+  innerBar.classList.add('progress-bar-inner');
+  let title = document.createElement('h2');
+  title.classList.add('modal-title');
+  title.textContent = 'Export progress';
+  let subtitle = document.createElement('p');
+  subtitle.classList.add('modal-subtitle');
+  bar.appendChild(innerBar);
+  modal.appendChild(title);
+  modal.appendChild(bar);
+  modal.appendChild(subtitle);
+  document.body.addEventListener('export-progress-update', e => {
+    let percent = e.detail.percent;
+    innerBar.style.width = `${percent}%`;
+    subtitle.textContent = `${e.detail.index + 1} / ${e.detail.total} : ${e.detail.name}`;
+  });
+  document.body.addEventListener('bundle-resolve-request', data => {
+    let path = data.detail;
+    console.log('From exporter: Received bundle resolution request for path', path);
+    if (path.startsWith('archive:/')) {
+      path = path.substring('archive:/'.length, path.length);
+    }
+    let matches = tree.treeFiles.filter(f => f.fileName === path);
+    let match;
+    if (matches.length > 0) {
+      match = matches[0].parser.reader.data;
+    } else {
+      path = path.substring(path.indexOf('/') + 1, path.length);
+      matches = tree.treeFiles.filter(f => f.fileName === path);
+      if (matches.length > 0) {
+        match = matches[0].parser.reader.data;
+      } else {
+        if (tree.providedExternals[path] !== undefined) {
+          match = tree.providedExternals[path];
+        } else if (path === '') {
+          document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: false, data: null}}));
+        } else {
+          console.warn('no matches, left with path:', path);
+          subtitle.innerText = `External file required: ${path}`;
+          const input = document.createElement('input');
+          input.id = 'ext' + 'xxxxxxxx'.replaceAll('x', () => Math.floor(Math.random() * 256).toString(16));
+          input.classList.add('modal-external-input');
+          input.type = 'file';
+          const label = document.createElement('label');
+          label.htmlFor = input.id;
+          label.classList.add('modal-external-input-button');
+          label.innerText = 'Upload...';
+          input.addEventListener('change', () => {
+            let reader = new FileReader();
+            reader.onloadend = async b => {
+              tree.providedExternals[path] = new Uint8Array(reader.result);
+              document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {
+                detail: {
+                  status: true,
+                  data: tree.providedExternals[path]
+                }
+              }));
+              modal.removeChild(input);
+              modal.removeChild(label);
+            }
+            reader.readAsArrayBuffer(input.files[0]);
+          });
+          modal.appendChild(input);
+          modal.appendChild(label);
+          return true;
+        }
+      }
+    }
+    document.body.dispatchEvent(new CustomEvent('bundle-resolve-response', {detail: {status: true, data: match}}));
+  });
+  await tree.downloadZip();
+  console.log('Done');
+  tree.isExporting = false;
+}
+
 // MAIN
 function main() {
   const tree = new AssetTree('#tree');
@@ -399,9 +562,24 @@ function main() {
     reader.onloadend = async b => {
       let arr = new Uint8Array(reader.result);
       await tree.loadFile(arr);
+      document.getElementById('export-zip').onclick = async () => await exportZip(tree);
     }
     reader.readAsArrayBuffer(f);
   });
 }
 
-main();
+// main();
+const input = document.getElementById('file-input');
+input.addEventListener('change', e => {
+  let f = e.target.files[0];
+  let reader = new FileReader();
+  reader.onloadend = async b => {
+    let arr = new Uint8Array(reader.result);
+    const fsb = new FSB5(arr);
+    fsb.parse();
+    console.log(fsb);
+    console.log(fsb.format);
+    console.log(fsb.getSound(0));
+  }
+  reader.readAsArrayBuffer(f);
+});

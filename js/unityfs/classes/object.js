@@ -16,4 +16,35 @@ export class UnityObject {
     text.innerText = 'No preview available';
     return text;
   }
+
+  async saveInfo(zip, baseName) {
+    if (typeof this.exposedAttributes == 'undefined') {
+      zip.file(baseName + '.txt', 'Class unsupported');
+    }
+    function getAttrs(p) {
+      let j = {};
+      if (p != null && p.exposedAttributes?.length > 0) {
+        for (let prop of p.exposedAttributes) {  // exposedAttributes isn't set by default, but should be overridden
+          j[prop] = getAttrs(p[prop]);
+        }
+      } else if (p instanceof Array) {
+        j = [];
+        for (let item of p) {
+            j.push(getAttrs(item));
+        }
+      } else {
+        if (typeof p == 'bigint') {
+          j = Number(p);
+        } else {
+          j = p;
+        }
+      }
+      return j;
+    }
+    zip.file(baseName + '.json', JSON.stringify(getAttrs(this), undefined, 2));
+  }
+
+  async saveObject(zip, baseName) {
+    // To be implemented
+  }
 }

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500&family=JetBrains+Mono:wght@300;400&display=swap');
+
 html, body {
   margin: 0;
   padding: 0;
@@ -20,6 +22,7 @@ html, body {
   width: 20%;
   top: 0;
   left: 0;
+  border-right: 1px solid #ddd;
 }
 
 #center {
@@ -37,11 +40,80 @@ html, body {
   width: 40%;
   top: 0;
   right: 0;
+  border-left: 1px solid #ddd;
+}
+
+#darken {
+  z-index: 10000;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000000aa;
+  display: none;
+}
+
+#modal {
+  z-index: 10001;
+  top: 50%;
+  left: 50%;
+  background-color: #ffffff;
+  width: 25%;
+  height: auto;
+  position: absolute;
+  padding: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.modal-title {
+
+}
+
+.progress-bar {
+  width: 100%;
+  box-sizing: border-box;
+  height: 8px;
+}
+
+.progress-bar-inner {
+  width: 100%;
+  background-color: #00f;
+  height: 100%;
+}
+
+.modal-subtitle {
+  margin-top: 8px;
+}
+
+.modal-external-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+.modal-external-input-button {
+  width: 50%;
+  position: relative;
+  display: inline-block;
+  height: 40px;
+  text-align: center;
+  vertical-align: middle;
+  color: #fff;
+  background-color: #00f;
+  border-radius: 4px;
+  transform: translateX(-50%);
+  left: 50%;
 }
 
 #preview {
-  width: 50%;
-  max-width: 50%;
+  width: 100%;
+  max-width: 100%;
   aspect-ratio: 1/1;
   border: 3px dashed #aaa;
   box-sizing: border-box;
@@ -126,4 +198,25 @@ html, body {
 
 .value-undefined {
   color: #8a8a8a;
+}
+
+/* ------ */
+
+.external-input {
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  height: 30%;
+  top: 0;
+}
+
+.external-input-button {
+  border: none;
+  font-size: 16px;
+  background-color: #34f;
+  border-radius: 4px;
+  padding: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: normal;
 }

@@ -2,13 +2,20 @@ import * as THREE from 'three';
 import {AABB, PackedFloatVector, PackedIntVector} from "./animationClip";
 import {NamedObject} from "./namedObject";
 import {StreamingInfo} from "./texture2d";
-import {BinaryReader} from "../reader";
+import {BinaryReader} from "../binaryReader";
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {Matrix4x4} from "../basicTypes";
-import {Vector3} from "three";
-import {requestExternalData} from "../utils"; // using three's Vector3 for normalization
+import {OrbitControls} from "three/addons/controls/OrbitControls";
+import {requestExternalData} from "../utils";
+import $ from "jquery";
+import {Vector3} from "three"; // using three's Vector3 for normalization
 
 export class MinMaxAABB {
+  exposedAttributes = [
+    'min',
+    'max'
+  ];
+
   constructor(reader) {
     this.min = reader.readVector3();
     this.max = reader.readVector3();
@@ -16,6 +23,8 @@ export class MinMaxAABB {
 }
 
 export class CompressedMesh {
+  // not exposed - we'll expose them on the main mesh
+  exposedAttributes = [];
   constructor(reader) {
     this.vertices = new PackedFloatVector(reader);
     this.uv = new PackedFloatVector(reader);
@@ -47,6 +56,14 @@ export class CompressedMesh {
 }
 
 export class StreamInfo {
+  exposedAttributes = [
+    'channelMask',
+    'offset',
+    'stride',
+    'dividerOp',
+    'frequency'
+  ];
+
   constructor(reader) {
     if (typeof reader != 'undefined') {
       this.channelMask = reader.readUInt32();
@@ -64,6 +81,13 @@ export class StreamInfo {
 }
 
 export class ChannelInfo {
+  exposedAttributes = [
+    'stream',
+    'offset',
+    'format',
+    'dimension'
+  ];
+
   constructor(reader) {
     if (typeof reader != 'undefined') {
       this.stream = reader.read(1)[0];
@@ -151,6 +175,11 @@ function getVertexFormatReader(reader, format) {
 }
 
 export class VertexData {
+  exposedAttributes = [
+    'vertexCount',
+    'channels',
+    'streams'
+  ]
   constructor(reader) {
     const version = reader.version;
     if (version[0] < 2018) {
@@ -257,6 +286,11 @@ export class VertexData {
 }
 
 export class BoneWeights4 {
+  exposedAttributes = [
+    'weight',
+    'boneIndex'
+  ];
+
   constructor(reader) {
     if (typeof reader !== 'undefined') {
       this.weight = reader.readArrayT(reader.readFloat32.bind(reader), 4);
@@ -269,6 +303,13 @@ export class BoneWeights4 {
 }
 
 export class BlendShapeVertex {
+  exposedAttributes = [
+    'vertex',
+    'normal',
+    'tangent',
+    'index'
+  ];
+
   constructor(reader) {
     this.vertex = reader.readVector3();
     this.normal = reader.readVector3();
@@ -278,6 +319,13 @@ export class BlendShapeVertex {
 }
 
 export class MeshBlendShape {
+  exposedAttributes = [
+    'firstVertex',
+    'vertexCount',
+    'hasNormals',
+    'hasTangents'
+  ];
+
   constructor(reader) {
     if (reader.version[0] === 4 && reader.version[1] < 3) {
       this.name = reader.readAlignedString();
@@ -297,6 +345,13 @@ export class MeshBlendShape {
 }
 
 export class MeshBlendShapeChannel {
+  exposedAttributes = [
+    'name',
+    'nameHash',
+    'frameIndex',
+    'frameCount'
+  ];
+
   constructor(reader) {
     this.name = reader.readAlignedString();
     this.nameHash = reader.readUInt32();
@@ -306,6 +361,12 @@ export class MeshBlendShapeChannel {
 }
 
 export class BlendShapeData {
+  exposedAttributes = [
+    'shapes',
+    'channels',
+    'fullWeights'
+  ];
+
   constructor(reader) {
     if (reader.versionGTE(4, 3)) {
       let numVerts = reader.readInt32();
@@ -353,6 +414,15 @@ export const GfxPrimitiveType = {
 }
 
 export class SubMesh {
+  exposedAttributes = [
+    'firstByte',
+    'indexCount',
+    'topology',
+    'firstVertex',
+    'vertexCount',
+    'localAABB'
+  ];
+
   constructor(reader) {
     this.firstByte = reader.readUInt32();
     this.indexCount = reader.readUInt32();
@@ -372,6 +442,20 @@ export class SubMesh {
 }
 
 export class Mesh extends NamedObject {
+  exposedAttributes = [
+    'subMeshes',
+    'shapes',
+    'bindPose',
+    'boneNameHashes',
+    'rootBoneNameHash',
+    'meshCompression',
+    'isReadable',
+    'keepVertices',
+    'keepIndices',
+    'localAABB',
+    'meshUsageFlags'
+  ];
+
   constructor(reader) {
     super(reader);
 
@@ -547,8 +631,6 @@ export class Mesh extends NamedObject {
       this.decompressMesh();
     }
     this.getTriangles();
-
-    this.toModel();
   }
 
   processVertexData() {
@@ -878,9 +960,7 @@ export class Mesh extends NamedObject {
     }
   }
 
-  toModel() {
-    const scene = new THREE.Scene();
-
+  toGeometry() {
     const geometry = new THREE.BufferGeometry();
     let vertices = [];
     for (const vert of this.vertices) {
@@ -905,14 +985,89 @@ export class Mesh extends NamedObject {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
-    const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: '#000000'}));
+    return geometry;
+  }
+
+  async createPreview() {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x606060);
+
+    let mesh = new THREE.Mesh(this.toGeometry(), new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+      flatShading: true
+    }));
+    let max = new THREE.Box3().setFromObject(mesh).max;
+    let scale = 10 / max.z;
+    mesh.rotation.set(-1.61443, 0, 0);
+    mesh.position.set(0, -4, 0);
+    mesh.scale.set(scale, scale, scale);
+
     scene.add(mesh);
 
-    const exporter = new GLTFExporter();
-    exporter.parse(scene, gltf => {
-      console.log(gltf);
-    }, error => {
-      console.error('Error in GLTF exporter:', error)
-    }, {});
+    const camera = new THREE.PerspectiveCamera(70, 1, 0.01, 1000);
+
+    const renderer = new THREE.WebGLRenderer({antialias: true});
+    const prev = $('#preview');
+    renderer.setSize(prev.width(), prev.height());
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight1.position.set(5, 5, 7.5);
+
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight2.position.set(-5, 5, 7.5);
+
+    scene.add(dirLight2);
+
+    const dirLight3 = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight3.position.set(0, 5, -7.5);
+
+    scene.add(dirLight3);
+
+    const dirLight4 = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight4.position.set(0, -7.5, -0);
+
+    scene.add(dirLight4);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    camera.position.set(0, 0, 30);
+
+    let lastID = 0;
+    const animate = () => {
+      renderer.render(scene, camera);
+      lastID = requestAnimationFrame(animate);
+    }
+
+    function onDestroy() {
+      document.body.removeEventListener('destroy-preview', onDestroy);
+      cancelAnimationFrame(lastID);
+    }
+    document.body.addEventListener('destroy-preview', onDestroy);
+
+    animate();
+
+    return renderer.domElement;
+  }
+
+  saveObject(root, baseName) {
+    return new Promise(resolve => {
+      const scene = new THREE.Scene();
+      const mesh = new THREE.Mesh(this.toGeometry(), new THREE.MeshBasicMaterial({color: '#000000'}));
+      scene.add(mesh);
+
+      const exporter = new GLTFExporter();
+      exporter.parse(scene, gltf => {
+        root.file(baseName + '.gltf', JSON.stringify(gltf));
+        resolve();
+      }, error => {
+        console.error('Error in GLTF exporter:', error);
+        root.file(baseName + '.gltf', 'Error in GLTF exporter');
+        resolve();
+      }, {});
+    });
   }
 }

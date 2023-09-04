@@ -1,5 +1,5 @@
 import {PPtr} from "./pptr";
-import {BinaryReader} from "../reader";
+import {BinaryReader} from "../binaryReader";
 import {Quaternion} from "../basicTypes";
 
 export class Keyframe {

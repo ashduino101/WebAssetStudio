@@ -150,4 +150,8 @@ export class Font extends NamedObject {
     text.style.margin = '8px';
     return text;
   }
+
+  async saveObject(root, baseName) {
+    root.file(baseName, this.fontData);
+  }
 }

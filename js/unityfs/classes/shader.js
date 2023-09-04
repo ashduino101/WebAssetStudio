@@ -1,7 +1,17 @@
 import {NamedObject} from "./namedObject";
 import {PPtr} from "./pptr";
+import {KVPair} from "../basicTypes";
+import {decompressBlock} from "lz4js";
 
 export class VectorParameter {
+  exposedAttributes = [
+    'nameIndex',
+    'index',
+    'arraySize',
+    'type',
+    'dim'
+  ];
+
   constructor(reader) {
     this.nameIndex = reader.readInt32();
     this.index = reader.readInt32();
@@ -13,6 +23,14 @@ export class VectorParameter {
 }
 
 export class MatrixParameter {
+  exposedAttributes = [
+    'nameIndex',
+    'index',
+    'arraySize',
+    'type',
+    'rowCount'
+  ];
+
   constructor(reader) {
     this.nameIndex = reader.readInt32();
     this.index = reader.readInt32();
@@ -24,6 +42,15 @@ export class MatrixParameter {
 }
 
 export class StructParameter {
+  exposedAttributes = [
+    'nameIndex',
+    'index',
+    'arraySize',
+    'structSize',
+    'vectorParams',
+    'matrixParams'
+  ];
+
   constructor(reader) {
     this.nameIndex = reader.readInt32();
     this.index = reader.readInt32();
@@ -45,6 +72,11 @@ export class StructParameter {
 }
 
 export class SamplerParameter {
+  exposedAttributes = [
+    'sampler',
+    'bindPoint'
+  ];
+
   constructor(reader) {
     this.sampler = reader.readUInt32();
     this.bindPoint = reader.readInt32();
@@ -63,6 +95,11 @@ export const TextureDimension = {
 }
 
 export class SerializedTextureProperty {
+  exposedAttributes = [
+    'defaultName',
+    'textureDimension'
+  ];
+
   constructor(reader) {
     this.defaultName = reader.readAlignedString();
     this.textureDimension = TextureDimension[reader.readInt32()];
@@ -79,6 +116,16 @@ export const SerializedPropertyType = {
 }
 
 export class SerializedProperty {
+  exposedAttributes = [
+    'name',
+    'description',
+    'attributes',
+    'type',
+    'flags',
+    'defaultValue',
+    'defaultTexture'
+  ];
+
   constructor(reader) {
     this.name = reader.readAlignedString();
     this.description = reader.readAlignedString();
@@ -91,6 +138,10 @@ export class SerializedProperty {
 }
 
 export class SerializedProperties {
+  exposedAttributes = [
+    'properties'
+  ];
+
   constructor(reader) {
     let numProps = reader.readInt32();
     this.properties = [];
@@ -101,6 +152,11 @@ export class SerializedProperties {
 }
 
 export class SerializedShaderFloatValue {
+  exposedAttributes = [
+    'name',
+    'value'
+  ];
+
   constructor(reader) {
     this.value = reader.readFloat32();
     this.name = reader.readAlignedString();
@@ -108,6 +164,16 @@ export class SerializedShaderFloatValue {
 }
 
 export class SerializedShaderRTBlendState {
+  exposedAttributes = [
+    'sourceBlend',
+    'destinationBlend',
+    'sourceBlendAlpha',
+    'destinationBlendAlpha',
+    'blendOperation',
+    'blendOperationAlpha',
+    'colorMask'
+  ];
+
   constructor(reader) {
     this.sourceBlend = new SerializedShaderFloatValue(reader);
     this.destinationBlend = new SerializedShaderFloatValue(reader);
@@ -120,6 +186,13 @@ export class SerializedShaderRTBlendState {
 }
 
 export class SerializedStencilOp {
+  exposedAttributes = [
+    'pass',
+    'fail',
+    'zFail',
+    'comp'
+  ];
+
   constructor(reader) {
     this.pass = new SerializedShaderFloatValue(reader);
     this.fail = new SerializedShaderFloatValue(reader);
@@ -129,6 +202,13 @@ export class SerializedStencilOp {
 }
 
 export class SerializedShaderVectorValue {
+  exposedAttributes = [
+    'name',
+    'x',
+    'y',
+    'z',
+    'w'
+  ]
   constructor(reader) {
     this.x = new SerializedShaderFloatValue(reader);
     this.y = new SerializedShaderFloatValue(reader);
@@ -139,12 +219,16 @@ export class SerializedShaderVectorValue {
 }
 
 export class SerializedTagMap {
+  exposedAttributes = [
+    'tags'
+  ];
+
   constructor(reader) {
     let numTags = reader.readInt32();
-    this.tags = {};
+    this.tags = [];
     for (let i = 0; i < numTags; i++) {
       let key = reader.readAlignedString();
-      this.tags[key] = reader.readAlignedString();
+      this.tags.push(new KVPair(key, reader.readAlignedString()));
     }
   }
 }
@@ -158,13 +242,40 @@ export const FogMode = {
 }
 
 export class SerializedShaderState {
+  exposedAttributes = [
+    'name',
+    'rtBlend',
+    'rtSeparateBlend',
+    'zTest',
+    'zWrite',
+    'culling',
+    'offsetFactor',
+    'offsetUnits',
+    'alphaToMask',
+    'stencilOp',
+    'stencilOpFront',
+    'stencilOpBack',
+    'stencilReadMask',
+    'stencilWriteMask',
+    'stencilRef',
+    'fogStart',
+    'fogEnd',
+    'fogDensity',
+    'fogColor',
+    'fogMode',
+    'gpuProgramID',
+    'tags',
+    'lod',
+    'lighting'
+  ];
+
   constructor(reader) {
     this.name = reader.readAlignedString();
     this.rtBlend = [];
     for (let i = 0; i < 8; i++) {
       this.rtBlend.push(new SerializedShaderRTBlendState(reader));
     }
-    this.rtSeperateBlend = reader.readBool();
+    this.rtSeparateBlend = reader.readBool();
     reader.align(4);
     if (reader.versionGTE(2017, 2)) {
       this.zClip = new SerializedShaderFloatValue(reader);
@@ -198,6 +309,11 @@ export class SerializedShaderState {
 }
 
 export class ShaderBindChannel {
+  exposedAttributes = [
+    'source',
+    'target'
+  ];
+
   constructor(reader) {
     this.source = reader.readInt8();
     this.target = reader.readInt8();
@@ -205,6 +321,11 @@ export class ShaderBindChannel {
 }
 
 export class ParserBindChannels {
+  exposedAttributes = [
+    'channels',
+    'sourceMap'
+  ];
+
   constructor(reader) {
     let numChannels = reader.readInt32();
     this.channels = [];
@@ -217,6 +338,13 @@ export class ParserBindChannels {
 }
 
 export class TextureParameter {
+  exposedAttributes = [
+    'nameIndex',
+    'index',
+    'samplerIndex',
+    'dim'
+  ];
+
   constructor(reader) {
     this.nameIndex = reader.readInt32();
     this.index = reader.readInt32();
@@ -230,6 +358,11 @@ export class TextureParameter {
 }
 
 export class BufferBinding {
+  exposedAttributes = [
+    'nameIndex',
+    'index'
+  ];
+
   constructor(reader) {
     this.nameIndex = reader.readInt32();
     this.index = reader.readInt32();
@@ -240,6 +373,13 @@ export class BufferBinding {
 }
 
 export class ConstantBuffer {
+  exposedAttributes = [
+    'nameIndex',
+    'matrixParams',
+    'vectorParams',
+    'size'
+  ];
+
   constructor(reader) {
     this.nameIndex = reader.readInt32();
     let numMatrixParams = reader.readInt32();
@@ -279,6 +419,12 @@ export class ConstantBuffer {
 }
 
 export class UAVParameter {
+  exposedAttributes = [
+    'nameIndex',
+    'index',
+    'originalIndex'
+  ];
+
   constructor(reader) {
     this.nameIndex = reader.readInt32();
     this.index = reader.readInt32();
@@ -323,6 +469,16 @@ export const ShaderGpuProgramType = {
 }
 
 export class SerializedProgramParameters {
+  exposedAttributes = [
+    'vectorParams',
+    'matrixParams',
+    'textureParams',
+    'bufferBindings',
+    'constantBuffers',
+    'constantBufferBindings',
+    'uavParams'
+  ];
+
   constructor(reader) {
     let numVectorParams = reader.readInt32();
     this.vectorParams = [];
@@ -377,6 +533,13 @@ export class SerializedProgramParameters {
 }
 
 export class SerializedSubProgram {
+  exposedAttributes = [
+    'blobIndex',
+    'channels',
+    'shaderHardwareTier',
+    'gpuProgramType',
+    'parameters'
+  ];
   constructor(reader) {
     this.blobIndex = reader.readUInt32();
     this.channels = new ParserBindChannels(reader);
@@ -411,6 +574,10 @@ export class SerializedSubProgram {
 }
 
 export class SerializedProgram {
+  exposedAttributes = [
+    'subPrograms'
+  ];
+
   constructor(reader) {
     let numSubPrograms = reader.readInt32();
     this.subPrograms = [];
@@ -443,6 +610,23 @@ export const PassType = {
 }
 
 export class SerializedPass {
+  exposedAttributes = [
+    'nameIndices',
+    'type',
+    'state',
+    'programMask',
+    'progVertex',
+    'progFragment',
+    'progGeometry',
+    'progHull',
+    'progDomain',
+    'hasInstancingVariant',
+    'useName',
+    'name',
+    'textureName',
+    'tags'
+  ];
+
   constructor(reader) {
     if (reader.versionGTE(2020, 2)) {
       let numEditorDataHashes = reader.readInt32();
@@ -462,10 +646,10 @@ export class SerializedPass {
     }
 
     let numIndices = reader.readInt32();
-    this.nameIndices = {}
+    this.nameIndices = []
     for (let i = 0; i < numIndices; i++) {
       let key = reader.readAlignedString();
-      this.nameIndices[key] = reader.readInt32();
+      this.nameIndices.push(new KVPair(key, reader.readInt32()));
     }
 
     this.type = PassType[reader.readInt32()];
@@ -496,6 +680,12 @@ export class SerializedPass {
 }
 
 export class SerializedSubShader {
+  exposedAttributes = [
+    'passes',
+    'tags',
+    'lod'
+  ];
+
   constructor(reader) {
     let numPasses = reader.readInt32();
     this.passes = [];
@@ -509,6 +699,11 @@ export class SerializedSubShader {
 }
 
 export class SerializedShaderDependency {
+  exposedAttributes = [
+    'from',
+    'to'
+  ];
+
   constructor(reader) {
     this.from = reader.readAlignedString();
     this.to = reader.readAlignedString();
@@ -516,6 +711,11 @@ export class SerializedShaderDependency {
 }
 
 export class SerializedCustomEditorForRenderPipeline {
+  exposedAttributes = [
+    'customEditorName',
+    'renderPipelineType'
+  ];
+
   constructor(reader) {
     this.customEditorName = reader.readAlignedString();
     this.renderPipelineType = reader.readAlignedString();
@@ -523,6 +723,16 @@ export class SerializedCustomEditorForRenderPipeline {
 }
 
 export class SerializedShader {
+  exposedAttributes = [
+    'propInfo',
+    'subShaders',
+    'name',
+    'customName',
+    'fallbackName',
+    'dependencies',
+    'disableNoSubshadersMessage'
+  ];
+
   constructor(reader) {
     this.propInfo = new SerializedProperties(reader);
 
@@ -591,6 +801,16 @@ export const ShaderCompilerPlatform = {
 }
 
 export class Shader extends NamedObject {
+  exposedAttributes = [
+    'parsedForm',
+    'platforms',
+    'offsets',
+    'compressedLengths',
+    'decompressedLengths',
+    'dependencies',
+    'shaderIsBaked'
+  ];
+
   constructor(reader) {
     super(reader);
     if (reader.versionGTE(5, 5)) {
@@ -634,5 +854,17 @@ export class Shader extends NamedObject {
         this.subProgramBlob = reader.read(reader.readUInt32());
       }
     }
+  }
+
+  async saveObject(root, baseName) {
+    let uncompressedSize = 0;
+    for (let s of this.decompressedLengths) {
+      for (let v of s) {
+        uncompressedSize += s;
+      }
+    }
+    let dst = new Uint8Array(uncompressedSize);
+    decompressBlock(this.compressedBlob, dst, 0, uncompressedSize, 0);
+    root.file(baseName + '.shader', dst);
   }
 }

@@ -2,6 +2,11 @@ import {Component} from "./component";
 import {PPtr} from "./pptr";
 
 export class StaticBatchInfo {
+  exposedAttributes = [
+    'firstSubMesh',
+    'subMeshCount'
+  ];
+
   constructor(reader) {
     this.firstSubMesh = reader.readUInt16();
     this.subMeshCount = reader.readUInt16();
@@ -9,6 +14,27 @@ export class StaticBatchInfo {
 }
 
 export class Renderer extends Component {
+  exposedAttributes = [
+    'gameObject',
+    'enabled',
+    'castShadows',
+    'receiveShadows',
+    'motionVectors',
+    'lightProbeUsage',
+    'reflectionProbeUsage',
+    'lightmapIndex',
+    'lightmapIndexDynamic',
+    'lightmapTilingOffset',
+    'lightmapTilingOffsetDynamic',
+    'materials',
+    'staticBatchInfo',
+    'staticBatchRoot',
+    'probeAnchor',
+    'lightProbeVolumeOverride',
+    'sortingLayerID',
+    'sortingOrder'
+  ];
+
   constructor(reader) {
     super(reader);
     if (reader.version[0] < 5) {

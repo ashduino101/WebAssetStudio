@@ -20,12 +20,18 @@ import {
   decodePVRTC,
   unpackCrunch, unpackUnityCrunch
 } from "../texture2d";
-import {BinaryReader} from "../reader";
+import {BinaryReader} from "../binaryReader";
 import crc32 from 'crc/crc32';
 import pako from 'pako'
 import {requestExternalData} from "../utils";
 
 export class StreamingInfo {
+  exposedAttributes = [
+    'offset',
+    'size',
+    'path'
+  ];
+
   constructor(reader) {
     if (reader.version[0] >= 2020) {
       this.offset = Number(reader.readInt64());
@@ -38,6 +44,13 @@ export class StreamingInfo {
 }
 
 export class GLTextureSettings {
+  exposedAttributes = [
+    'filterMode',
+    'anisotropicFiltering',
+    'mipBias',
+    'wrapMode'
+  ];
+
   constructor(reader) {
     this.filterMode = reader.readInt32();
     this.anisotropicFiltering = reader.readInt32();
@@ -124,6 +137,21 @@ export const TextureFormat = {
 }
 
 export class Texture2D extends Texture {
+  exposedAttributes = [
+    'name',
+    'width',
+    'height',
+    'completeSize',
+    'textureFormat',
+    'mipCount',
+    'isReadable',
+    'imageCount',
+    'textureDimension',
+    'textureSettings',
+    'lightmapFormat',
+    'colorSpace',
+    'streamData',
+  ];
   constructor(reader) {
     super(reader);
 
@@ -181,13 +209,19 @@ export class Texture2D extends Texture {
       this.streamData = new StreamingInfo(reader);
       this.data = new Uint8Array(0);
     } else {
+      this.streamData = null;
       this.data = reader.read(imageDataSize);
     }
   }
 
   async loadData() {
-    if (typeof this.streamData !== 'undefined') {
-      this.data = await requestExternalData(this.streamData);
+    if (this.streamData != null) {
+      try {
+        this.data = await requestExternalData(this.streamData);
+      } catch {
+        console.error('Failed to load image data, creating empty image');
+        this.data = new Uint8Array(this.streamData.size).fill(0);
+      }
     }
   }
 
@@ -735,14 +769,18 @@ export class Texture2D extends Texture {
     encodeChunk('IHDR', ihdr);
     let raw = await this.decodeRaw();
     let dat = [];
-    for (let y = this.height - 1; y > 0; y--) {
+    for (let y = this.height - 1; y >= 0; y--) {
       dat.push(0x00);
       for (let x = 0; x < this.width; x++) {
         let b = (y * this.width + x) * 4;
         dat.push(raw[b], raw[b + 1], raw[b + 2], raw[b + 3]);
       }
     }
-    encodeChunk('IDAT', pako.deflate(new Uint8Array(dat)));
+    let compressedData = pako.deflate(new Uint8Array(dat));
+    const chunkSize = 16384;
+    for (let i = 0; i < Math.ceil(compressedData.length / chunkSize); i++) {
+      encodeChunk('IDAT', compressedData.slice(i * chunkSize, (i + 1) * chunkSize));
+    }
     encodeChunk('IEND', []);
     return new Uint8Array(data);
   }
@@ -766,5 +804,9 @@ export class Texture2D extends Texture {
     img.style.left = '50%';
     img.style.transform = 'translate(-50%, -50%)';
     return img;
+  }
+
+  async saveObject(root, baseName) {
+    root.file(baseName + '.png', await this.createPNG());
   }
 }

@@ -2,6 +2,33 @@ import {Renderer} from "./renderer";
 import {PPtr} from "./pptr";
 
 export class SkinnedMeshRenderer extends Renderer {
+  exposedAttributes = [
+    'gameObject',
+    'enabled',
+    'castShadows',
+    'receiveShadows',
+    'motionVectors',
+    'lightProbeUsage',
+    'reflectionProbeUsage',
+    'lightmapIndex',
+    'lightmapIndexDynamic',
+    'lightmapTilingOffset',
+    'lightmapTilingOffsetDynamic',
+    'materials',
+    'staticBatchInfo',
+    'staticBatchRoot',
+    'probeAnchor',
+    'lightProbeVolumeOverride',
+    'sortingLayerID',
+    'sortingOrder',
+    'quality',
+    'updateWhenOffscreen',
+    'skinNormals',
+    'mesh',
+    'bones',
+    'blendShapeWeights'
+  ];
+  
   constructor(reader) {
     super(reader);
     this.quality = reader.readInt32();

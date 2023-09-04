@@ -11,7 +11,6 @@ export class Animator extends Behaviour {
     'updateMode',
     'applyRootMotion',
     'linearVelocityBlending',
-    'animatePhysics',
     'hasTransformHierarchy',
     'allowConstantClipSamplingOptimization',
   ];

@@ -34,7 +34,6 @@ bool bgr2rgb(void* data, int32_t width, int32_t height) {
 
 T2D_API(bool32_t) DecodeDXT1(const void* data, int32_t width, int32_t height, void* image)
 {
-    std::cout << "decoding DXT1: " << data << std::endl;
     bool res = decode_bc1(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
     bgr2rgb(image, width, height);
 	return res;
@@ -42,101 +41,121 @@ T2D_API(bool32_t) DecodeDXT1(const void* data, int32_t width, int32_t height, vo
 
 T2D_API(bool32_t) DecodeDXT5(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_bc3(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+	bool res = decode_bc3(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodePVRTC(const void* data, int32_t width, int32_t height, void* image, bool32_t is2bpp)
 {
-	return decode_pvrtc(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image), is2bpp ? 1 : 0);
+    bool res = decode_pvrtc(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image), is2bpp ? 1 : 0);
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeETC1(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_etc1(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_etc1(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeETC2(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_etc2(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_etc2(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeETC2A1(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_etc2a1(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_etc2a1(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeETC2A8(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_etc2a8(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_etc2a8(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeEACR(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_eacr(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_eacr(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeEACRSigned(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_eacr_signed(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_eacr_signed(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeEACRG(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_eacrg(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_eacrg(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeEACRGSigned(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_eacrg_signed(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_eacrg_signed(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeBC4(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_bc4(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_bc4(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeBC5(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_bc5(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_bc5(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeBC6(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_bc6(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_bc6(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeBC7(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_bc7(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_bc7(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeATCRGB4(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_atc_rgb4(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_atc_rgb4(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeATCRGBA8(const void* data, int32_t width, int32_t height, void* image)
 {
-	return decode_atc_rgba8(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bool res = decode_atc_rgba8(static_cast<const uint8_t*>(data), width, height, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(bool32_t) DecodeASTC(const void* data, int32_t width, int32_t height, int32_t blockWidth, int32_t blockHeight, void* image)
 {
-	return decode_astc(static_cast<const uint8_t*>(data), width, height, blockWidth, blockHeight, static_cast<uint32_t*>(image));
-}
-
-T2D_API(void) DisposeBuffer(void** ppBuffer)
-{
-	if (ppBuffer == nullptr)
-	{
-		return;
-	}
-
-	auto ppTypedBuffer = reinterpret_cast<uint8_t**>(ppBuffer);
-
-	delete[](*ppTypedBuffer);
-
-	*ppBuffer = nullptr;
+    bool res = decode_astc(static_cast<const uint8_t*>(data), width, height, blockWidth, blockHeight, static_cast<uint32_t*>(image));
+    bgr2rgb(image, width, height);
+    return res;
 }
 
 T2D_API(void) UnpackCrunch(const void* data, uint32_t dataSize, void** ppResult, uint32_t* pResultSize)

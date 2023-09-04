@@ -1,6 +1,6 @@
 import ClassIDType from "./classIDType";
 import {SharedStrings} from "./sharedStrings";
-import {BinaryReader, SEEK_CUR} from "./reader";
+import {BinaryReader, SEEK_CUR} from "./binaryReader";
 import {BuildTarget} from "./buildTarget";
 import {ObjectReader} from "./objectReader";
 import {UnityObject} from "./classes/object";

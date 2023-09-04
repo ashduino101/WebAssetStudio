@@ -26,4 +26,8 @@ export class TextAsset extends NamedObject {
     text.style.boxSizing = 'border-box';
     return text;
   }
+
+  async saveObject(root, baseName) {
+    root.file(baseName + '.txt', this.text);
+  }
 }

@@ -137,17 +137,13 @@ export class BinaryReader {
     return this.readT('BigInt64', 8);
   }
 
-  _clz(n) {  // stupid clz implementation
-    return n.toString(2).indexOf('0') - 1;
-  }
-
   readFloat16() {  // extremely jank fp16 implementation
     let raw = new DataView(this.read(2).buffer).getUint16(0, true);
     // Convert to fp32
     const w = raw * 65536;  // avoid javascript issues
     const sign = w & 0x80000000;
     const nonsign = w & 0x7FFFFFFF;
-    let renormShift = this._clz(nonsign);
+    let renormShift = Math.clz32(nonsign);
     renormShift = renormShift > 5 ? renormShift - 5 : 0;
     const infNanMask = ((nonsign + 0x04000000) >> 8) & 0x7F800000;
     const zeroMask = (nonsign - 1) >> 31;

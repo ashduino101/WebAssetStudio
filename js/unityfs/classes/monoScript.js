@@ -1,6 +1,15 @@
 import {NamedObject} from "./namedObject";
 
 export class MonoScript extends NamedObject {
+  exposedAttributes = [
+    'name',
+    'executionOrder',
+    'propertiesHash',
+    'className',
+    'namespace',
+    'assemblyName'
+  ];
+
   constructor(reader) {
     super(reader);
     if (reader.versionGTE(3, 4)) {
@@ -9,7 +18,7 @@ export class MonoScript extends NamedObject {
     if (reader.version[0] < 5) {
       this.propertiesHash = reader.readUInt32();
     } else {
-      this.propertiesHash = reader.read(16);
+      this.propertiesHash = [...reader.read(16)].map(i => i.toString(16).padStart(2, '0')).join('');
     }
     if (reader.version[0] < 3) {
       this.pathName = reader.readAlignedString();

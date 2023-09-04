@@ -8,6 +8,15 @@ const PhysicCombine = {
 }
 
 export class PhysicMaterial extends NamedObject {
+  exposedAttributes = [
+    'name',
+    'dynamicFriction',
+    'staticFriction',
+    'bounciness',
+    'frictionCombine',
+    'bounceCombine'
+  ];
+
   constructor(reader) {
     super(reader);
     this.dynamicFriction = reader.readFloat32();

@@ -26,6 +26,7 @@ import {AnimatorOverrideController} from "./classes/animatorOverrideController";
 import {CanvasRenderer} from "./classes/canvasRenderer";
 import {Font} from "./classes/font";
 import {Animator} from "./classes/animator";
+import {AudioClip} from "./classes/audioClip";
 
 export default {
     0: UnityObject,
@@ -84,7 +85,7 @@ export default {
     78: 'TagManager',
     81: AudioListener,
     82: 'AudioSource',
-    83: 'AudioClip',
+    83: AudioClip,
     84: 'RenderTexture',
     86: 'CustomRenderTexture',
     87: 'MeshParticleEmitter',

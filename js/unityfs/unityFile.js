@@ -1,5 +1,5 @@
 import {BundleFile} from "./bundleFile";
-import {BinaryReader} from "./reader";
+import {BinaryReader} from "./binaryReader";
 import {AssetFile} from "./assetFile";
 
 export const FileType = {
@@ -54,16 +54,12 @@ export class UnityFS {
     let fileSize = BigInt(this.reader.readUInt32());
     const version = this.reader.readUInt32();
     let dataOffset = BigInt(this.reader.readUInt32());
-    this.reader.readUInt8();
-    this.reader.read(3);
-    this.reader.seek(0);
     if (version >= 22) {
-      if (fileSize < 48) {
+      if (this.reader.data.length < 48) {
         return false;
       }
-      this.reader.readUInt32();
-      fileSize = this.reader.readUInt64();
       dataOffset = this.reader.readUInt64();
+      fileSize = this.reader.readUInt64();
     }
     this.reader.seek(0);
     if (fileSize !== BigInt(this.reader.data.length)) {
