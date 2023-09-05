@@ -1,7 +1,6 @@
 import {AssetFile, ObjectCollection, TypeTreeReference} from "./unityfs/assetFile";
 import {FileType, UnityFS} from "./unityfs/unityFile";
 import {FSB5} from "./fsb5/fsb5";
-import {testData} from "./test";
 import {HexView} from "./hexview";
 import $ from 'jquery';
 import 'jstree';
