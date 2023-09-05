@@ -27,6 +27,11 @@ import {CanvasRenderer} from "./classes/canvasRenderer";
 import {Font} from "./classes/font";
 import {Animator} from "./classes/animator";
 import {AudioClip} from "./classes/audioClip";
+import {Cubemap} from "./classes/cubemap";
+import {AnimationClip} from "./classes/animationClip";
+import {RuntimeAnimatorController} from "./classes/runtimeAnimatorController";
+import {AnimatorController} from "./classes/animatorController";
+import {ParticleSystemRenderer} from "./classes/particleSystemRenderer";
 
 export default {
     0: UnityObject,
@@ -79,7 +84,7 @@ export default {
     68: 'EdgeCollider2D',
     70: 'CapsuleCollider2D',
     72: 'ComputeShader',
-    74: 'AnimationClip',  // ---------
+    74: AnimationClip,
     75: 'ConstantForce',
     76: 'WorldParticleCollider',
     78: 'TagManager',
@@ -90,11 +95,11 @@ export default {
     86: 'CustomRenderTexture',
     87: 'MeshParticleEmitter',
     88: 'ParticleEmitter',
-    89: 'Cubemap',
+    89: Cubemap,
     90: Avatar,
-    91: 'AnimatorController',
+    91: AnimatorController,
     92: 'GUILayer',
-    93: 'RuntimeAnimatorController',
+    93: RuntimeAnimatorController,
     94: 'ScriptMapper',
     95: Animator,
     96: 'TrailRenderer',
@@ -178,7 +183,7 @@ export default {
     196: 'NavMeshSettings',
     197: 'LightProbesLegacy',
     198: 'ParticleSystem',
-    199: 'ParticleSystemRenderer',
+    199: ParticleSystemRenderer,
     200: 'ShaderVariantCollection',
     205: 'LODGroup',
     206: 'BlendTree',

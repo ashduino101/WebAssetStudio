@@ -18,7 +18,8 @@ import {
   decodeETC2A1,
   decodeETC2A8,
   decodePVRTC,
-  unpackCrunch, unpackUnityCrunch
+  unpackCrunch,
+  unpackUnityCrunch
 } from "../texture2d";
 import {BinaryReader} from "../binaryReader";
 import * as CRC32 from 'crc-32';
@@ -157,6 +158,8 @@ export class Texture2D extends Texture {
 
     this._version = reader.version;
     this._platform = reader.platform;
+
+    this.cachedRaw = null;
 
     this.width = reader.readInt32();
     this.height = reader.readInt32();
@@ -615,137 +618,141 @@ export class Texture2D extends Texture {
     }
   }
 
-  async decodeRaw() {
-    await this.loadData();
-    let data = this.data;
-    switch (this.textureFormat) {
-      case 'Alpha8':
-        return this.decodeAlpha8();
-      case 'ARGB4444':
-        this.swapBytesForXbox(data);
-        return this.decodeARGB4444();
-      case 'RGB24':
-        return this.decodeRGB24();
-      case 'RGBA32':
-        return this.decodeRGBA32();
-      case 'ARGB32':
-        return this.decodeARGB32();
-      case 'RGB565':
-        this.swapBytesForXbox(data);
-        return this.decodeRGB565();
-      case 'R16':
-        return this.decodeR16();
-      case 'DXT1':
-        this.swapBytesForXbox(data);
-        return await this.decodeDXT1();
-      case 'DXT3':
-        console.warn('DXT3 is known, but unsupported.');
-        return;
-      case 'DXT5':
-        this.swapBytesForXbox(data);
-        return await this.decodeDXT5();
-      case 'RGBA4444':
-        return this.decodeRGBA4444();
-      case 'BGRA32':
-        return this.decodeBGRA32();
-      case 'RHalf':
-        return this.decodeRHalf();
-      case 'RGHalf':
-        return this.decodeRGHalf();
-      case 'RGBAHalf':
-        return this.decodeRGBAHalf();
-      case 'RFloat':
-        return this.decodeRFloat();
-      case 'RGFloat':
-        return this.decodeRGFloat();
-      case 'RGBAFloat':
-        return this.decodeRGBAFloat();
-      case 'YUY2':
-        return this.decodeYUY2();
-      case 'RGB9e5Float':
-        return this.decodeRGB9e5Float();
-      case 'BC6H':
-        return await this.decodeBC6H();
-      case 'BC7':
-        return await this.decodeBC7();
-      case 'BC4':
-        return await this.decodeBC4();
-      case 'BC5':
-        return await this.decodeBC5();
-      case 'DXT1Crunched':
-        return await this.decodeDXT1Crunched();
-      case 'DXT5Crunched':
-        return await this.decodeDXT5Crunched();
-      case 'PVRTC_RGB2':
-      case 'PVRTC_RGBA2':
-        return await this.decodePVRTC(true);
-      case 'PVRTC_RGB4':
-      case 'PVRTC_RGBA4':
-        return await this.decodePVRTC(false);
-      case 'ETC_RGB4':
-      case 'ETC_RGB4_3DS':
-        return await this.decodeETC1();
-      case 'ATC_RGB4':
-        return await this.decodeATCRGB4();
-      case 'ATC_RGBA8':
-        return await this.decodeATCRGBA8();
-      case 'EAC_R':
-        return await this.decodeEACR();
-      case 'EAC_R_SIGNED':
-        return await this.decodeEACRSigned();
-      case 'EAC_RG':
-        return await this.decodeEACRG();
-      case 'EAC_RG_SIGNED':
-        return await this.decodeEACRGSigned();
-      case 'ETC2_RGB':
-        return await this.decodeETC2();
-      case 'ETC2_RGBA1':
-        return await this.decodeETC2A1();
-      case 'ETC2_RGBA8':
-      case 'ETC2_RGBA8_3DS':
-        return await this.decodeETC2A8();
-      case 'ASTC_RGB_4x4':
-      case 'ASTC_RGBA_4x4':
-      case 'ASTC_HDR_4x4':
-        return await this.decodeASTC(4, 4);
-      case 'ASTC_RGB_5x5':
-      case 'ASTC_RGBA_5x5':
-      case 'ASTC_HDR_5x5':
-        return await this.decodeASTC(5, 5);
-      case 'ASTC_RGB_6x6':
-      case 'ASTC_RGBA_6x6':
-      case 'ASTC_HDR_6x6':
-        return await this.decodeASTC(6, 6);
-      case 'ASTC_RGB_8x8':
-      case 'ASTC_RGBA_8x8':
-      case 'ASTC_HDR_8x8':
-        return await this.decodeASTC(8, 8);
-      case 'ASTC_RGB_10x10':
-      case 'ASTC_RGBA_10x10':
-      case 'ASTC_HDR_10x10':
-        return await this.decodeASTC(10, 10);
-      case 'ASTC_RGB_12x12':
-      case 'ASTC_RGBA_12x12':
-      case 'ASTC_HDR_12x12':
-        return await this.decodeASTC(12, 12);
-      case 'RG16':
-        return this.decodeRG16();
-      case 'R8':
-        return this.decodeR8();
-      case 'ETC_RGB4Crunched':
-        return await this.decodeETC1Crunched();
-      case 'ETC2_RGBA8Crunched':
-        return await this.decodeETC2A8Crunched();
-      case 'RG32':
-        return this.decodeRG32();
-      case 'RGB48':
-        return this.decodeRGB48();
-      case 'RGBA64':
-        return this.decodeRGBA64();
+  async decodeRaw(imageNum) {
+    if (this.cachedRaw == null) {
+      await this.loadData();
+      let data = this.data.slice(this.completeSize * imageNum, this.completeSize * (imageNum + 1));
+      switch (this.textureFormat) {
+        case 'Alpha8':
+          return this.decodeAlpha8();
+        case 'ARGB4444':
+          this.swapBytesForXbox(data);
+          return this.decodeARGB4444();
+        case 'RGB24':
+          return this.decodeRGB24();
+        case 'RGBA32':
+          return this.decodeRGBA32();
+        case 'ARGB32':
+          return this.decodeARGB32();
+        case 'RGB565':
+          this.swapBytesForXbox(data);
+          return this.decodeRGB565();
+        case 'R16':
+          return this.decodeR16();
+        case 'DXT1':
+          this.swapBytesForXbox(data);
+          return await this.decodeDXT1();
+        case 'DXT3':
+          console.warn('DXT3 is known, but unsupported.');
+          return;
+        case 'DXT5':
+          this.swapBytesForXbox(data);
+          return await this.decodeDXT5();
+        case 'RGBA4444':
+          return this.decodeRGBA4444();
+        case 'BGRA32':
+          return this.decodeBGRA32();
+        case 'RHalf':
+          return this.decodeRHalf();
+        case 'RGHalf':
+          return this.decodeRGHalf();
+        case 'RGBAHalf':
+          return this.decodeRGBAHalf();
+        case 'RFloat':
+          return this.decodeRFloat();
+        case 'RGFloat':
+          return this.decodeRGFloat();
+        case 'RGBAFloat':
+          return this.decodeRGBAFloat();
+        case 'YUY2':
+          return this.decodeYUY2();
+        case 'RGB9e5Float':
+          return this.decodeRGB9e5Float();
+        case 'BC6H':
+          return await this.decodeBC6H();
+        case 'BC7':
+          return await this.decodeBC7();
+        case 'BC4':
+          return await this.decodeBC4();
+        case 'BC5':
+          return await this.decodeBC5();
+        case 'DXT1Crunched':
+          return await this.decodeDXT1Crunched();
+        case 'DXT5Crunched':
+          return await this.decodeDXT5Crunched();
+        case 'PVRTC_RGB2':
+        case 'PVRTC_RGBA2':
+          return await this.decodePVRTC(true);
+        case 'PVRTC_RGB4':
+        case 'PVRTC_RGBA4':
+          return await this.decodePVRTC(false);
+        case 'ETC_RGB4':
+        case 'ETC_RGB4_3DS':
+          return await this.decodeETC1();
+        case 'ATC_RGB4':
+          return await this.decodeATCRGB4();
+        case 'ATC_RGBA8':
+          return await this.decodeATCRGBA8();
+        case 'EAC_R':
+          return await this.decodeEACR();
+        case 'EAC_R_SIGNED':
+          return await this.decodeEACRSigned();
+        case 'EAC_RG':
+          return await this.decodeEACRG();
+        case 'EAC_RG_SIGNED':
+          return await this.decodeEACRGSigned();
+        case 'ETC2_RGB':
+          return await this.decodeETC2();
+        case 'ETC2_RGBA1':
+          return await this.decodeETC2A1();
+        case 'ETC2_RGBA8':
+        case 'ETC2_RGBA8_3DS':
+          return await this.decodeETC2A8();
+        case 'ASTC_RGB_4x4':
+        case 'ASTC_RGBA_4x4':
+        case 'ASTC_HDR_4x4':
+          return await this.decodeASTC(4, 4);
+        case 'ASTC_RGB_5x5':
+        case 'ASTC_RGBA_5x5':
+        case 'ASTC_HDR_5x5':
+          return await this.decodeASTC(5, 5);
+        case 'ASTC_RGB_6x6':
+        case 'ASTC_RGBA_6x6':
+        case 'ASTC_HDR_6x6':
+          return await this.decodeASTC(6, 6);
+        case 'ASTC_RGB_8x8':
+        case 'ASTC_RGBA_8x8':
+        case 'ASTC_HDR_8x8':
+          return await this.decodeASTC(8, 8);
+        case 'ASTC_RGB_10x10':
+        case 'ASTC_RGBA_10x10':
+        case 'ASTC_HDR_10x10':
+          return await this.decodeASTC(10, 10);
+        case 'ASTC_RGB_12x12':
+        case 'ASTC_RGBA_12x12':
+        case 'ASTC_HDR_12x12':
+          return await this.decodeASTC(12, 12);
+        case 'RG16':
+          return this.decodeRG16();
+        case 'R8':
+          return this.decodeR8();
+        case 'ETC_RGB4Crunched':
+          return await this.decodeETC1Crunched();
+        case 'ETC2_RGBA8Crunched':
+          return await this.decodeETC2A8Crunched();
+        case 'RG32':
+          return this.decodeRG32();
+        case 'RGB48':
+          return this.decodeRGB48();
+        case 'RGBA64':
+          return this.decodeRGBA64();
+      }
+    } else {
+      return this.cachedRaw;
     }
   }
 
-  async createPNG() {
+  async createPNG(imageNum) {
     let data = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
     function writeI32(v, a) {
@@ -767,7 +774,7 @@ export class Texture2D extends Texture {
     writeI32(this.height, ihdr);
     ihdr.push(8, 6, 0, 0, 0);
     encodeChunk('IHDR', ihdr);
-    let raw = await this.decodeRaw();
+    let raw = await this.decodeRaw(imageNum);
     let dat = [];
     for (let y = this.height - 1; y >= 0; y--) {
       dat.push(0x00);
@@ -785,16 +792,57 @@ export class Texture2D extends Texture {
     return new Uint8Array(data);
   }
 
-  async createDataUrl() {
-    let pngData = await this.createPNG();
+  async createDataUrl(imageNum) {
+    let pngData = await this.createPNG(imageNum);
     return URL.createObjectURL(new Blob([pngData], {type: 'image/png'}));
   }
 
   async createPreview() {
-    let dataURL = await this.createDataUrl();
-    console.log('previewing with format:', this.textureFormat);
+    const container = document.createElement('div');
+    container.style.display = 'block';
+    container.style.position = 'relative';
+    container.style.width = '100%';
+    container.style.height = '100%';
+
+    const btns = document.createElement('t2d-btns');
+    btns.style.zIndex = '10';
+    btns.style.position = 'absolute';
+    const btnPrev = document.createElement('t2d-tabulate');
+    const btnNext = document.createElement('t2d-tabulate');
+
+    btnPrev.style.color = '#fff';
+    btnPrev.style.display = 'inline-block';
+    btnPrev.style.backgroundColor = '#34f';
+    btnPrev.style.borderRadius = '4px';
+    btnPrev.style.width = '32px';
+    btnPrev.style.height = '32px';
+    btnPrev.style.fontSize = '24px';
+    btnPrev.style.margin = '2px';
+    btnPrev.style.textAlign = 'center';
+    btnPrev.style.userSelect = 'none';
+    btnPrev.style.cursor = 'pointer';
+    btnPrev.textContent = '<';
+
+    btnNext.style.color = '#fff';
+    btnNext.style.display = 'inline-block';
+    btnNext.style.backgroundColor = '#34f';
+    btnNext.style.borderRadius = '4px';
+    btnNext.style.width = '32px';
+    btnNext.style.height = '32px';
+    btnNext.style.fontSize = '24px';
+    btnNext.style.margin = '2px';
+    btnNext.style.textAlign = 'center';
+    btnNext.style.userSelect = 'none';
+    btnNext.style.cursor = 'pointer';
+    btnNext.textContent = '>';
+
+    btns.appendChild(btnPrev);
+    btns.appendChild(btnNext);
+
+    container.appendChild(btns);
+
+    let imageNum = 0;
     let img = document.createElement('img');
-    img.src = dataURL;
     img.style.maxWidth = '100%';
     img.style.maxHeight = '100%';
     img.style.display = 'block';
@@ -803,10 +851,64 @@ export class Texture2D extends Texture {
     img.style.top = '50%';
     img.style.left = '50%';
     img.style.transform = 'translate(-50%, -50%)';
-    return img;
+    container.appendChild(img);
+
+    const setDisabled = elem => {
+      elem.style.backgroundColor = '#777';
+      elem.style.color = '#aaa';
+      elem.style.cursor = 'not-allowed';
+    }
+    const setEnabled = elem => {
+      elem.style.backgroundColor = '#34d';
+      elem.style.color = '#fff';
+      elem.style.cursor = 'pointer';
+    }
+
+    const validate = () => {
+      if (imageNum <= 0) {
+        setDisabled(btnPrev);
+      } else {
+        setEnabled(btnPrev);
+      }
+      if ((imageNum + 1) >= this.imageCount) {
+        setDisabled(btnNext);
+      } else {
+        setEnabled(btnNext);
+      }
+    }
+
+    validate();
+
+    btnPrev.addEventListener('click', async () => {
+      if (imageNum > 0) {
+        imageNum--;
+      }
+      validate();
+      console.log(imageNum);
+      await preview();
+    });
+
+    btnNext.addEventListener('click', async () => {
+      if ((imageNum + 1) < this.imageCount) {
+        imageNum++;
+      }
+      validate();
+      console.log(imageNum);
+      await preview();
+    });
+
+    const preview = async () => {
+      img.src = await this.createDataUrl(imageNum);
+    }
+
+    await preview();
+
+    return container;
   }
 
   async saveObject(root, baseName) {
-    root.file(baseName + '.png', await this.createPNG());
+    for (let i = 0; i < this.imageCount; i++) {
+      root.file(baseName + '_' + i + '.png', await this.createPNG(i));
+    }
   }
 }

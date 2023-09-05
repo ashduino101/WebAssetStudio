@@ -1,6 +1,8 @@
 import {PPtr} from "./pptr";
 import {BinaryReader} from "../binaryReader";
 import {Quaternion} from "../basicTypes";
+import ClassIDType from "../classIDType";
+import {NamedObject} from "./namedObject";
 
 export class Keyframe {
   exposedAttributes = [
@@ -35,7 +37,7 @@ export class AnimationCurve {
     let numCurves = reader.readInt32();
     this.curve = [];
     for (let i = 0; i < numCurves; i++) {
-      this.curve.push(new Keyframe(reader, func));
+      this.curve.push(new Keyframe(reader, func.bind(reader)));
     }
     this.preInfinity = reader.readInt32();
     this.postInfinity = reader.readInt32();
@@ -322,9 +324,9 @@ export class AnimTransform {
   ];
 
   constructor(reader) {
-    this.t = reader.version[0] > 5 || (reader.version[0] === 5 && reader.version[1] >= 4) ? reader.readVector3() : reader.readVector4();
+    this.t = reader.versionGTE(5, 4) ? reader.readVector3() : reader.readVector4();
     this.q = reader.readQuaternion();
-    this.s = reader.version[0] > 5 || (reader.version[0] === 5 && reader.version[1] >= 4) ? reader.readVector3() : reader.readVector4();
+    this.s = reader.versionGTE(5, 4) ? reader.readVector3() : reader.readVector4();
   }
 }
 
@@ -340,7 +342,7 @@ export class HandPose {
 
   constructor(reader) {
     this.grabX = new AnimTransform(reader);
-    this.doFArray = reader.readArrayT(reader.readFloat32, reader.readUInt32());
+    this.doFArray = reader.readArrayT(reader.readFloat32.bind(reader), reader.readUInt32());
     this.override = reader.readFloat32();
     this.closeOpen = reader.readFloat32();
     this.inOut = reader.readFloat32();
@@ -362,7 +364,7 @@ export class HumanGoal {
     this.weightT = reader.readFloat32();
     this.weightR = reader.readFloat32();
     if (reader.version[0] >= 5) {
-      this.hintT = reader.version[0] > 5 || (reader.version[0] === 5 && reader.version[1] >= 4) ? reader.readVector3() : reader.readVector4();
+      this.hintT = reader.versionGTE(5, 4) ? reader.readVector3() : reader.readVector4();
       this.hintWeightT = reader.readFloat32();
     }
   }
@@ -382,7 +384,7 @@ export class HumanPose {
 
   constructor(reader) {
     this.rootX = new AnimTransform(reader);
-    this.lookAtPosition = reader.version[0] > 5 || (reader.version[0] === 5 && reader.version[1] >= 4) ? reader.readVector3() : reader.readVector4();
+    this.lookAtPosition = reader.versionGTE(5, 4) ? reader.readVector3() : reader.readVector4();
     this.lookAtWeight = reader.readVector4();
 
     let numGoals = reader.readInt32();
@@ -393,12 +395,12 @@ export class HumanPose {
     this.leftHandPose = new HandPose(reader);
     this.rightHandPose = new HandPose(reader);
 
-    this.doFArray = reader.readArrayT(reader.readFloat32, reader.readUInt32());
+    this.doFArray = reader.readArrayT(reader.readFloat32.bind(reader), reader.readUInt32());
     if (reader.version[0] > 5 || (reader.version[0] === 5 && reader.version[1] >= 2)) {
       let numTDoF = reader.readUInt32();
       this.tDoFArray = [];
       for (let i = 0; i < numTDoF; i++) {
-        this.tDoFArray.push(reader.version[0] > 5 || (reader.version[0] === 5 && reader.version[1] >= 4) ? reader.readVector3() : reader.readVector4());
+        this.tDoFArray.push(reader.versionGTE(5, 4) ? reader.readVector3() : reader.readVector4());
       }
     }
   }
@@ -414,7 +416,7 @@ export class StreamedCurveKey {
 
   constructor(reader) {
     this.index = reader.readInt32();
-    this.coefficient = reader.readArrayT(reader.readFloat32, 4);
+    this.coefficient = reader.readArrayT(reader.readFloat32.bind(reader), 4);
     this.outSlope = this.coefficient[2];
     this.value = this.coefficient[2];
   }
@@ -495,7 +497,7 @@ export class DenseClip {
     this.curveCount = reader.readUInt32();
     this.sampleRate = reader.readFloat32();
     this.beginTime = reader.readFloat32();
-    this.samples = reader.readArrayT(reader.readFloat32, reader.readUInt32());
+    this.samples = reader.readArrayT(reader.readFloat32.bind(reader), reader.readUInt32());
   }
 }
 
@@ -505,6 +507,317 @@ export class ConstantClip {
   ];
 
   constructor(reader) {
-    this.data = reader.readArrayT(reader.readFloat32, reader.readUInt32());
+    this.data = reader.readArrayT(reader.readFloat32.bind(reader), reader.readUInt32());
+  }
+}
+
+export class ValueConstant {
+  exposedAttributes = [
+    'id',
+    'type',
+    'index'
+  ];
+
+  constructor(reader) {
+    this.id = reader.readUInt32();
+    if (reader.versionLT(5, 5)) {
+      this.typeID = reader.readUInt32();
+    }
+    this.type = reader.readUInt32();
+    this.index = reader.readUInt32();
+  }
+}
+
+export class ValueArrayConstant {
+  exposedAttributes = [
+    'values'
+  ];
+
+  constructor(reader) {
+    let numValues = reader.readInt32();
+    this.values = [];
+    for (let i = 0; i < numValues; i++) {
+      this.values.push(new ValueConstant(reader));
+    }
+  }
+}
+
+export class Clip {
+  exposedAttributes = [
+    'streamedClip',
+    'denseClip',
+    'constantClip'
+  ];
+
+  constructor(reader) {
+    this.streamedClip = new StreamedClip(reader);
+    this.denseClip = new DenseClip(reader);
+    if (reader.versionGTE(4, 3)) {
+      this.constantClip = new ConstantClip(reader);
+    }
+    if (reader.versionLT(2018, 3)) {
+      this.binding = new ValueArrayConstant(reader);
+    }
+  }
+}
+
+export class ValueDelta {
+  exposedAttributes = [
+    'start',
+    'stop'
+  ];
+
+  constructor(reader) {
+    this.start = reader.readFloat32();
+    this.stop = reader.readFloat32();
+  }
+}
+
+export class ClipMuscleConstant {
+  exposedAttributes = [
+    'deltaPose',
+    'startX',
+    'stopX',
+    'leftFootStartX',
+    'averageSpeed',
+    'clip',
+    'startTime',
+    'stopTime',
+    'orientationOffsetY',
+    'level',
+    'cycleOffset',
+    'averageAngularSpeed',
+    'indexArray',
+    'valueDeltas',
+    'valueReferencePoses',
+    'mirror',
+    'loopTime',
+    'loopBlend',
+    'loopBlendOrientation',
+    'loopBlendPositionY',
+    'loopBlendPositionXZ',
+    'startAtOrigin',
+    'keepOriginalOrientation',
+    'keepOriginalPositionY',
+    'keepOriginalPositionXZ',
+    'heightFromFeet',
+  ];
+
+  constructor(reader) {
+    this.deltaPose = new HumanPose(reader);
+    this.startX = new AnimTransform(reader);
+    if (reader.versionGTE(5, 5)) {
+      this.stopX = new AnimTransform(reader);
+    }
+    this.leftFootStartX = new AnimTransform(reader);
+    this.rightFootStartX = new AnimTransform(reader);
+    if (reader.version[0] < 5) {
+      this.motionStartX = new AnimTransform(reader);
+      this.motionStopX = new AnimTransform(reader);
+    }
+    this.averageSpeed = reader.versionGTE(5, 4) ? reader.readVector3() : reader.readVector4();
+    this.clip = new Clip(reader);
+    this.startTime = reader.readFloat32();
+    this.stopTime = reader.readFloat32();
+    this.orientationOffsetY = reader.readFloat32();
+    this.level = reader.readFloat32();
+    this.cycleOffset = reader.readFloat32();
+    this.averageAngularSpeed = reader.readFloat32();
+
+    this.indexArray = reader.readArrayT(reader.readInt32.bind(reader), reader.readUInt32());
+    if (reader.versionLT(4, 3)) {
+      this.additionalCurveIndexArray = reader.readArrayT(reader.readInt32.bind(reader), reader.readUInt32());
+    }
+    let numDeltas = reader.readInt32();
+    this.valueDeltas = [];
+    for (let i = 0; i < numDeltas; i++) {
+      this.valueDeltas.push(new ValueDelta(reader));
+    }
+    if (reader.versionGTE(5, 3)) {
+      this.valueReferencePoses = reader.readArrayT(reader.readFloat32.bind(reader), reader.readUInt32());
+    }
+    this.mirror = reader.readBool();
+    if (reader.versionGTE(4, 3)) {
+      this.loopTime = reader.readBool();
+    }
+    this.loopBlend = reader.readBool();
+    this.loopBlendOrientation = reader.readBool();
+    this.loopBlendPositionY = reader.readBool();
+    this.loopBlendPositionXZ = reader.readBool();
+    if (reader.versionGTE(5, 5)) {
+      this.startAtOrigin = reader.readBool();
+    }
+    this.keepOriginalOrientation = reader.readBool();
+    this.keepOriginalPositionY = reader.readBool();
+    this.keepOriginalPositionXZ = reader.readBool();
+    this.heightFromFeet = reader.readBool();
+    reader.align(4);
+  }
+}
+
+export class GenericBinding {
+  exposedAttributes = [
+    'path',
+    'attribute',
+    'script',
+    'typeID',
+    'customType',
+    'isPPtrCurve',
+    'isIntCurve'
+  ];
+
+  constructor(reader) {
+    this.path = reader.readUInt32();
+    this.attribute = reader.readUInt32();
+    this.script = new PPtr(reader);
+    if (reader.versionGTE(5, 6)) {
+      this.typeID = ClassIDType[reader.readInt32()];
+    } else {
+      this.typeID = ClassIDType[reader.readUInt16()];
+    }
+    this.customType = reader.readUInt8();
+    this.isPPtrCurve = reader.readUInt8();
+    if (reader.versionGTE(2022, 1)) {
+      this.isIntCurve = reader.readUInt8();
+    }
+    reader.align(4);
+  }
+}
+
+export class AnimationClipBindingConstant {
+  exposedAttributes = [
+    'genericBindings',
+    'pptrCurveMapping'
+  ];
+
+  constructor(reader) {
+    let numBindings = reader.readInt32();
+    this.genericBindings = [];
+    for (let i = 0; i < numBindings; i++) {
+      this.genericBindings.push(new GenericBinding(reader));
+    }
+    let numMappings = reader.readInt32();
+    this.pptrCurveMapping = [];
+    for (let i = 0; i < numMappings; i++) {
+      this.pptrCurveMapping.push(new PPtr(reader));
+    }
+  }
+}
+
+export class AnimationEvent {
+  exposedAttributes = [
+    'time',
+    'functionName',
+    'data',
+    'objectReferenceParameter',
+    'floatParameter',
+    'intParameter',
+    'messageOptions'
+  ];
+
+  constructor(reader) {
+    this.time = reader.readFloat32();
+    this.functionName = reader.readAlignedString();
+    this.data = reader.readAlignedString();
+    this.objectReferenceParameter = new PPtr(reader);
+    this.floatParameter = reader.readFloat32();
+    if (reader.version[0] >= 3) {
+      this.intParameter = reader.readInt32();
+    }
+    this.messageOptions = reader.readInt32();
+  }
+}
+
+const AnimationType = {
+  1: 'Legacy',
+  2: 'Generic',
+  3: 'Humanoid'
+}
+
+export class AnimationClip extends NamedObject {
+  exposedAttributes = [
+    'name',
+    'legacy',
+    'compressed',
+    'useHighQualityCurve',
+    'rotationCurves',
+    'compressedRotationCurves',
+    'eulerCurves',
+    'positionCurves',
+    'scaleCurves',
+    'floatCurves',
+    'pptrCurves',
+    'sampleRate',
+    'wrapMode',
+    'bounds',
+    'muscleClipSize',
+    'muscleClip'
+  ];
+
+  constructor(reader) {
+    super(reader);
+
+    if (reader.version[0] >= 5) {
+      this.legacy = reader.readBool();
+    } else if (reader.version[0] >= 4) {
+      this.animationType = AnimationType[reader.readUInt32()];
+      this.legacy = this.animationType === 'Legacy';
+    } else {
+      this.legacy = true;
+    }
+    this.compressed = reader.readBool();
+    if (reader.versionGTE(4, 3)) {
+      this.useHighQualityCurve = reader.readBool();
+    }
+    reader.align(4);
+    let numRCurves = reader.readInt32();
+    this.rotationCurves = [];
+    for (let i = 0; i < numRCurves; i++) {
+      this.rotationCurves.push(new QuaternionCurve(reader));
+    }
+    let numCRCurves = reader.readInt32();
+    this.compressedRotationCurves = [];
+    for (let i = 0; i < numCRCurves; i++) {
+      this.compressedRotationCurves.push(new CompressedAnimationCurve(reader));
+    }
+    if (reader.versionGTE(5, 3)) {
+      let numEulerCurves = reader.readInt32();
+      this.eulerCurves = [];
+      for (let i = 0; i < numEulerCurves; i++) {
+        this.eulerCurves.push(new Vector3Curve(reader));
+      }
+    }
+    let numPCurves = reader.readInt32();
+    this.positionCurves = [];
+    for (let i = 0; i < numPCurves; i++) {
+      this.positionCurves.push(new Vector3Curve(reader));
+    }
+    let numSCurves = reader.readInt32();
+    this.scaleCurves = [];
+    for (let i = 0; i < numSCurves; i++) {
+      this.scaleCurves.push(new Vector3Curve(reader));
+    }
+    let numFCurves = reader.readInt32();
+    this.floatCurves = [];
+    for (let i = 0; i < numFCurves; i++) {
+      this.floatCurves.push(new FloatCurve(reader));
+    }
+    if (reader.versionGTE(4, 3)) {
+      let numPPtrCurves = reader.readInt32();
+      this.pptrCurves = [];
+      for (let i = 0; i < numPPtrCurves; i++) {
+        this.pptrCurves.push(new PPtr(reader));
+      }
+    }
+
+    this.sampleRate = reader.readFloat32();
+    this.wrapMode = reader.readInt32();
+    if (reader.versionGTE(3, 4)) {
+      this.bounds = new AABB(reader);
+    }
+    if (reader.version[0] >= 4) {
+      this.muscleClipSize = reader.readUInt32();
+      this.muscleClip = new ClipMuscleConstant(reader);
+    }
   }
 }

@@ -1,8 +1,14 @@
 export class UnityObject {
+  exposedAttributes = [];
+
   constructor(reader) {
     reader.seek(0);  // ObjectReaders are expected to have a relative offset - this should not be a regular BinaryReader
     if (reader.platform === 'No Target') {
       this.objectHideFlags = reader.readUInt32();
+    }
+    if (this.constructor.name === 'UnityObject') {  // not overridden
+      this._noOverride = true;
+      this._raw = reader.read((typeof this.objectHideFlags == 'undefined') ? reader.length : (reader.length - 4));
     }
   }
 
@@ -20,11 +26,12 @@ export class UnityObject {
   async saveInfo(zip, baseName) {
     if (typeof this.exposedAttributes == 'undefined') {
       zip.file(baseName + '.txt', 'Class unsupported');
+      return;
     }
     function getAttrs(p) {
       let j = {};
       if (p != null && p.exposedAttributes?.length > 0) {
-        for (let prop of p.exposedAttributes) {  // exposedAttributes isn't set by default, but should be overridden
+        for (let prop of p.exposedAttributes) {
           j[prop] = getAttrs(p[prop]);
         }
       } else if (p instanceof Array) {
@@ -45,6 +52,9 @@ export class UnityObject {
   }
 
   async saveObject(zip, baseName) {
-    // To be implemented
+    // Fallback for objects that are not supported
+    if (this._noOverride) {
+      zip.file(baseName + '.dat', this._raw);
+    }
   }
 }

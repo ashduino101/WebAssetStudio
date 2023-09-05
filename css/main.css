@@ -6,10 +6,10 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  font-family: Helvetica, sans-serif;
 }
 
 #tree {
-  /*font-family: sans-serif;*/
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
   height: 100%;
@@ -19,28 +19,102 @@ html, body {
 #left {
   position: absolute;
   height: 100%;
-  width: 20%;
+  width: 25%;
   top: 0;
   left: 0;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid #ccc;
+  background-color: #dedede;
+}
+
+#left-upper {
+  box-sizing: border-box;
+  height: 40%;
+  width: 100%;
+  padding: 8px;
+  position: relative;
+}
+
+#file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  width: 100%;
+  height: 30%;
+}
+
+.button {
+  background-color: #34f;
+  display: block;
+  height: 40px;
+  color: white;
+  border-radius : 4px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 16px;
+  padding: 10px;
+  box-sizing: border-box;
+  border: none;
+}
+
+#file-input-label {
+  width: 100px;
+}
+
+#export-zip {
+  position: absolute;
+  bottom: 8px;
+}
+
+#left-lower {
+  position: absolute;
+  left: 0;
+  top: 40%;
+  border-top: 1px solid #ccc;
+  padding: 8px;
+  height: 60%;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.heading {
+  width: 100%;
+}
+
+#info {
+  overflow-y: auto;
+  width: 100%;
+  height: calc(100% - 50px);
+}
+
+#donation {
+  position: absolute;
+  bottom: 0;
 }
 
 #center {
   position: relative;
   height: 100%;
-  width: 40%;
+  width: 41%;
   top: 0;
-  left: 20%;
+  left: 25%;
   margin: 0;
+}
+
+#no-tree {
+  height: auto;
+  top: 20%;
 }
 
 #right {
   position: absolute;
   height: 100%;
-  width: 40%;
+  width: 34%;  /* needs to be even to render correctly */
   top: 0;
   right: 0;
-  border-left: 1px solid #ddd;
+  border-left: 1px solid #ccc;
+  box-sizing: border-box;
+  background-color: #dedede;
 }
 
 #darken {
@@ -80,7 +154,7 @@ html, body {
 
 .progress-bar-inner {
   width: 100%;
-  background-color: #00f;
+  background-color: #34f;
   height: 100%;
 }
 
@@ -105,7 +179,7 @@ html, body {
   text-align: center;
   vertical-align: middle;
   color: #fff;
-  background-color: #00f;
+  background-color: #34f;
   border-radius: 4px;
   transform: translateX(-50%);
   left: 50%;
@@ -117,6 +191,8 @@ html, body {
   aspect-ratio: 1/1;
   border: 3px dashed #aaa;
   box-sizing: border-box;
+  background-color: #fff;
+  outline: 1px solid #ddd;
 }
 
 .no-preview {

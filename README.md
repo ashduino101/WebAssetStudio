@@ -4,6 +4,8 @@
 WebAssetStudio is an online tool to view and extract game asset bundles, inspired by Perfare's [AssetStudio](https://github.com/Perfare/AssetStudio/) (archived).
 It runs entirely inside your browser using JavaScript and WebAssembly.
 
+**This tool and its creator, sponsors, and users are not affiliated or endorsed by Unity or any other company with a supported product.**
+
 ## Supported formats
 WebAssetStudio currently supports the following formats:
  - UnityFS (`.unity3d`, `.assets`, `level*`)
@@ -41,6 +43,7 @@ These Unity classes are currently supported:
  - `Animation`
  - `AnimationClip`
  - `Animator`
+ - `AnimatorController`
  - `AnimatorOverrideController`
  - `AssetBundle`
  - `AudioClip`
@@ -49,6 +52,7 @@ These Unity classes are currently supported:
  - `Behaviour`
  - `CanvasRenderer`
  - `Component`
+ - `Cubemap`
  - `EditorExtension`
  - `FlareLayer`
  - `Font`
@@ -60,9 +64,11 @@ These Unity classes are currently supported:
  - `MonoBehaviour`
  - `MonoScript`
  - `NamedObject`
+ - `ParticleSystemRenderer`
  - `PhysicMaterial`
  - `PPtr` (note 1)
  - `Renderer`
+ - `RuntimeAnimatorController`
  - `Shader`
  - `SkinnedMeshRenderer`
  - `Sprite`

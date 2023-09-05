@@ -1,6 +1,4 @@
-import {decodeETC2} from "./unityfs/texture2d";
 import {AssetFile, ObjectCollection, TypeTreeReference} from "./unityfs/assetFile";
-import {BinaryReader} from "./unityfs/binaryReader";
 import {FileType, UnityFS} from "./unityfs/unityFile";
 import {FSB5} from "./fsb5/fsb5";
 import {testData} from "./test";
@@ -378,6 +376,7 @@ data like pixels, vertices, and UV maps used by the asset.`
     this.parser = new UnityFS(data);
     this.parser.parse();
 
+    this.tree.empty();
     this.tree.jstree({
       "core" : {
         "themes" : {
@@ -551,6 +550,7 @@ async function exportZip(tree) {
     tree.downloadZip().then(() => {
       console.log('Done');
       tree.isExporting = false;
+      darken.style.display = 'none';
     });
   }, 0);
 }
