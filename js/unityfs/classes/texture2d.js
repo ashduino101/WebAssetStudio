@@ -21,7 +21,7 @@ import {
   unpackCrunch, unpackUnityCrunch
 } from "../texture2d";
 import {BinaryReader} from "../binaryReader";
-import crc32 from 'crc/crc32';
+import * as CRC32 from 'crc-32';
 import pako from 'pako'
 import {requestExternalData} from "../utils";
 
@@ -759,7 +759,7 @@ export class Texture2D extends Texture {
       let encCC = new TextEncoder().encode(fourcc);
       data.push(...encCC);
       for (let v of chunk) data.push(v);
-      writeI32(crc32([...encCC, ...chunk]), data);
+      writeI32(CRC32.buf([...encCC, ...chunk]), data);
     }
 
     let ihdr = [];

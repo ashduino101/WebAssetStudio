@@ -10,18 +10,12 @@
     "start": "vite"
   },
   "devDependencies": {
-    "@parcel/core": "^2.9.3",
-    "@parcel/packager-raw-url": "^2.9.3",
-    "@parcel/reporter-dev-server": "^2.9.3",
-    "@parcel/transformer-webmanifest": "^2.9.3",
-    "parcel": "^2.9.3",
-    "parcel-bundler": "^1.12.4",
     "path-browserify": "^1.0.1",
     "stream-browserify": "^3.0.0"
   },
   "dependencies": {
     "av": "^0.4.9",
-    "crc": "^4.3.2",
+    "crc-32": "^1.2.2",
     "jquery": "^3.7.0",
     "jstree": "^3.3.15",
     "jszip": "^3.10.1",
