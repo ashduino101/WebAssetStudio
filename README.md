@@ -1,7 +1,7 @@
 # WebAssetStudio
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/ashduino101)
 
-WebAssetStudio is an online tool to view and extract game asset bundles, inspired by Perfare's [AssetStudio](https://github.com/Perfare/AssetStudio/) (archived).
+WebAssetStudio is an online tool to view and extract game asset bundles, inspired by Perfare's [AssetStudio](https://github.com/Perfare/AssetStudio) (archived).
 It runs entirely inside your browser using JavaScript and WebAssembly.
 
 **This tool and its creator, sponsors, and users are not affiliated or endorsed by Unity or any other company with a supported product.**
@@ -78,3 +78,10 @@ These Unity classes are currently supported:
  - `Transform`
  
 Note 1: In this implementation, PPtrs do not explicitly declare a type. The type is inferred by the resolved path.
+
+## Credits
+
+- [AssetStudio](https://github.com/Perfare/AssetStudio)
+- [mikunyan](https://github.com/Ishotihadus/mikunyan)
+- [Crunch](https://github.com/BinomialLLC/crunch)
+- [UnityCrunch](https://github.com/Unity-Technologies/crunch/tree/unity)
