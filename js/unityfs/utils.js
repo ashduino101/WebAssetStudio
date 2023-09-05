@@ -49,8 +49,8 @@ export async function requestExternalData(streamingInfo) {
 
 export function getClassName(classID) {
   let ct = ClassIDType[classID];
-  if (typeof ct == 'function') {
-    return ct.name;
+  if (ct instanceof Array) {
+    return ct[0];
   }
   return ct;
 }

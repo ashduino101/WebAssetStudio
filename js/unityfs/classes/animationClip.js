@@ -3,6 +3,7 @@ import {BinaryReader} from "../binaryReader";
 import {Quaternion} from "../basicTypes";
 import ClassIDType from "../classIDType";
 import {NamedObject} from "./namedObject";
+import {getClassName} from "../utils";
 
 export class Keyframe {
   exposedAttributes = [
@@ -671,9 +672,9 @@ export class GenericBinding {
     this.attribute = reader.readUInt32();
     this.script = new PPtr(reader);
     if (reader.versionGTE(5, 6)) {
-      this.typeID = ClassIDType[reader.readInt32()];
+      this.typeID = getClassName(reader.readInt32());
     } else {
-      this.typeID = ClassIDType[reader.readUInt16()];
+      this.typeID = getClassName(reader.readUInt16());
     }
     this.customType = reader.readUInt8();
     this.isPPtrCurve = reader.readUInt8();

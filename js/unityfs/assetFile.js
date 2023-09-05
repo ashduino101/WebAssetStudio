@@ -180,7 +180,7 @@ export class ObjectInfo {
       console.error('unsupported class:', cls);
       return UnityObject;  // safe fallback
     }
-    return cls;
+    return cls[1];
   }
 
   get object() {
