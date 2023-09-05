@@ -88,8 +88,20 @@ html, body {
 }
 
 #donation {
+  position: relative;
+  bottom: 0;
+}
+
+#author {
+  margin: 0;
+  right: 0;
   position: absolute;
   bottom: 0;
+  user-select: none;
+}
+
+.bottom-inline {
+  display: inline-block;
 }
 
 #center {
