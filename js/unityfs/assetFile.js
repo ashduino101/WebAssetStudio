@@ -151,6 +151,8 @@ export class ObjectInfo {
     this._version = version;
     this._unityVersion = unityVersion;
     this._targetPlatform = targetPlatform;
+
+    this.enableCaching = true;
   }
 
   getClassName() {
@@ -183,7 +185,19 @@ export class ObjectInfo {
     return cls[1];
   }
 
+  setCaching(enabled) {
+    this.enableCaching = enabled;
+  }
+
   get object() {
+    if (!this.enableCaching) {
+      let cls = this._tryGetClass();
+      if (cls) {
+        return new cls(this._createReader());
+      } else {
+        return {};
+      }
+    }
     if (typeof this.cachedObject == 'undefined') {
       let cls = this._tryGetClass();
       if (cls) {

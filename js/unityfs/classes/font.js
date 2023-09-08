@@ -52,6 +52,7 @@ export class Font extends NamedObject {
     // 'kerningValues',
     'pixelScale'
   ];
+  exportExtension = '.font';  // variable, maybe this should be a getter and detect the format?
 
   constructor(reader) {
     super(reader);
@@ -151,7 +152,7 @@ export class Font extends NamedObject {
     return text;
   }
 
-  async saveObject(root, baseName) {
-    root.file(baseName, this.fontData);
+  async getExport() {
+    return this.fontData;
   }
 }

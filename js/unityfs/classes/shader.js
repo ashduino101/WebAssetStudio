@@ -810,6 +810,7 @@ export class Shader extends NamedObject {
     'dependencies',
     'shaderIsBaked'
   ];
+  exportExtension = '.shader';
 
   constructor(reader) {
     super(reader);
@@ -856,7 +857,7 @@ export class Shader extends NamedObject {
     }
   }
 
-  async saveObject(root, baseName) {
+  async getExport() {
     let uncompressedSize = 0;
     for (let s of this.decompressedLengths) {
       for (let v of s) {
@@ -865,6 +866,6 @@ export class Shader extends NamedObject {
     }
     let dst = new Uint8Array(uncompressedSize);
     decompressBlock(this.compressedBlob, dst, 0, uncompressedSize, 0);
-    root.file(baseName + '.shader', dst);
+    return dst;
   }
 }

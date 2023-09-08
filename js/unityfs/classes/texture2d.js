@@ -25,6 +25,7 @@ import {BinaryReader} from "../binaryReader";
 import * as CRC32 from 'crc-32';
 import pako from 'pako'
 import {requestExternalData} from "../utils";
+import JSZip from "jszip";
 
 export class StreamingInfo {
   exposedAttributes = [
@@ -215,6 +216,8 @@ export class Texture2D extends Texture {
       this.streamData = null;
       this.data = reader.read(imageDataSize);
     }
+
+    this.exportExtension = (this.imageCount === 1) ? '.png' : '.zip';
   }
 
   async loadData() {
@@ -906,9 +909,15 @@ export class Texture2D extends Texture {
     return container;
   }
 
-  async saveObject(root, baseName) {
-    for (let i = 0; i < this.imageCount; i++) {
-      root.file(baseName + '_' + i + '.png', await this.createPNG(i));
+  async getExport() {
+    if (this.imageCount === 1) {
+      return this.createPNG(0);
+    } else {
+      let zip = new JSZip();
+      for (let i = 0; i > this.imageCount; i++) {
+        zip.file(`${i}.png`, this.createPNG(i));
+      }
+      return await zip.generateAsync({type: 'uint8array'});
     }
   }
 }

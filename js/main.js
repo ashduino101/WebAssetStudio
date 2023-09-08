@@ -90,6 +90,7 @@ class AssetTree {
   async createTreeForObjectCollection(collection, rootNode) {
     await this.createNode(rootNode, rootNode + '-objects', this.styleTextAs('objects', 'generic'), 'icon-generic', true);
     for (let obj of collection.objects) {
+      obj.setCaching(false);
       await this.createNode(
         rootNode + '-objects',
         rootNode + '-objects-' + obj.pathID,
@@ -407,6 +408,17 @@ data like pixels, vertices, and UV maps used by the asset.`
             preview.appendChild(prev);
           });
         }
+        let name = object.name;
+        if (name === '<unnamed>' || name === '<empty>' || (typeof name == 'undefined') || name === '') {
+          name = getClassName(data.node.data.data.classID);
+        }
+
+        document.getElementById('download-info').onclick = async () => {
+          this.saveBlob(name + '.json', [JSON.stringify(await object.getInfo(), undefined, 2)]);
+        };
+        document.getElementById('download-object').onclick = async () => {
+          this.saveBlob(name + object.exportExtension, [await object.getAnyExport()]);
+        };
       }
     })
 
@@ -547,7 +559,6 @@ async function exportZip(tree) {
   });
   setTimeout(async () => {
     tree.downloadZip().then(() => {
-      console.log('Done');
       tree.isExporting = false;
       darken.style.display = 'none';
     });

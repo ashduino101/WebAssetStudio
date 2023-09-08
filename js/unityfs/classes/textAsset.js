@@ -3,7 +3,8 @@ import {NamedObject} from "./namedObject";
 export class TextAsset extends NamedObject {
   exposedAttributes = [
     'text'
-  ]
+  ];
+  exportExtension = '.txt';
 
   constructor(reader) {
     super(reader);
@@ -27,7 +28,7 @@ export class TextAsset extends NamedObject {
     return text;
   }
 
-  async saveObject(root, baseName) {
-    root.file(baseName + '.txt', this.text);
+  async getExport() {
+    return this.text;
   }
 }

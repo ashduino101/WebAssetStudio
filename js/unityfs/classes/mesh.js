@@ -455,6 +455,7 @@ export class Mesh extends NamedObject {
     'localAABB',
     'meshUsageFlags'
   ];
+  exportExtension = '.gltf';
 
   constructor(reader) {
     super(reader);
@@ -1053,7 +1054,7 @@ export class Mesh extends NamedObject {
     return renderer.domElement;
   }
 
-  saveObject(root, baseName) {
+  async getExport() {
     return new Promise(resolve => {
       const scene = new THREE.Scene();
       const mesh = new THREE.Mesh(this.toGeometry(), new THREE.MeshBasicMaterial({color: '#000000'}));
@@ -1061,12 +1062,10 @@ export class Mesh extends NamedObject {
 
       const exporter = new GLTFExporter();
       exporter.parse(scene, gltf => {
-        root.file(baseName + '.gltf', JSON.stringify(gltf));
-        resolve();
+        resolve(JSON.stringify(gltf));
       }, error => {
         console.error('Error in GLTF exporter:', error);
-        root.file(baseName + '.gltf', 'Error in GLTF exporter');
-        resolve();
+        resolve('Error in GLTF exporter');
       }, {});
     });
   }
