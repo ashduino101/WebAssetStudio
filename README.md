@@ -19,7 +19,11 @@ WebAssetStudio plans to eventually support the following formats:
 Feel free to suggest formats as GitHub issues.
 
 ## Exporting
-Currently, only ZIP exporting is supported, as well as downloading files individually by selecting the object and clicking the "Download" button in the bottom left.
+Currently, only ZIP exporting is supported, as well as 
+downloading files individually by selecting the object and 
+clicking the "Download object" (for the significant converted data) or "Download info" (for the object properties) button 
+below the preview.
+
 A guide to the ZIP directory layout is as follows:
 
 ```
