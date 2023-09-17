@@ -4,7 +4,7 @@ import {UnityFS} from "./unityFile";
 import {decompressBlock} from "lz4js";
 
 export class BundleFlags {
-  exposedAttributes = [
+  static exposedAttributes = [
     'compressionType',
     'hasDirInfo',
     'blockInfoAtEnd',
@@ -22,7 +22,7 @@ export class BundleFlags {
 }
 
 export class BlockFlags {
-  exposedAttributes = [
+  static exposedAttributes = [
     'compressionType',
     'isStreamed'
   ];
@@ -34,7 +34,7 @@ export class BlockFlags {
 }
 
 export class StorageBlock {
-  exposedAttributes = [
+  static exposedAttributes = [
     'compressedSize',
     'uncompressedSize',
     'flags'
@@ -48,7 +48,7 @@ export class StorageBlock {
 }
 
 export class Node {
-  exposedAttributes = [
+  static exposedAttributes = [
     'offset',
     'size',
     'flags',
@@ -79,7 +79,7 @@ export const CompressionType = {
 }
 
 export class BundleFile {
-  exposedAttributes = [
+  static exposedAttributes = [
     'magic',
     'version',
     'unityVersion',

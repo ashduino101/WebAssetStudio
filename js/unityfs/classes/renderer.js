@@ -2,7 +2,7 @@ import {Component} from "./component";
 import {PPtr} from "./pptr";
 
 export class StaticBatchInfo {
-  exposedAttributes = [
+  static exposedAttributes = [
     'firstSubMesh',
     'subMeshCount'
   ];
@@ -14,7 +14,7 @@ export class StaticBatchInfo {
 }
 
 export class Renderer extends Component {
-  exposedAttributes = [
+  static exposedAttributes = [
     'gameObject',
     'enabled',
     'castShadows',

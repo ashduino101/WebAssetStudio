@@ -2,7 +2,7 @@ import {Behaviour} from './behaviour';
 import {PPtr} from "./pptr";
 
 export class Animator extends Behaviour {
-  exposedAttributes = [
+  static exposedAttributes = [
     'gameObject',
     'enabled',
     'avatar',

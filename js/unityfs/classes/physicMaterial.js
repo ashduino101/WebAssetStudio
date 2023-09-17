@@ -8,7 +8,7 @@ const PhysicCombine = {
 }
 
 export class PhysicMaterial extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'dynamicFriction',
     'staticFriction',

@@ -32,6 +32,7 @@ import {AnimationClip} from "./classes/animationClip";
 import {RuntimeAnimatorController} from "./classes/runtimeAnimatorController";
 import {AnimatorController} from "./classes/animatorController";
 import {ParticleSystemRenderer} from "./classes/particleSystemRenderer";
+import {VideoClip} from "./classes/videoClip";
 
 export default {
     0: ['UnityObject', UnityObject],
@@ -249,7 +250,7 @@ export default {
     319: 'AvatarMask',
     320: 'PlayableDirector',
     328: 'VideoPlayer',
-    329: 'VideoClip',
+    329: ['VideoClip', VideoClip],
     330: 'ParticleSystemForceField',
     331: 'SpriteMask',
     362: 'WorldAnchor',

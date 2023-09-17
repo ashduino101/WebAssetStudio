@@ -3,7 +3,7 @@ import {PPtr} from "./pptr";
 import {KVPair} from "../basicTypes";
 
 export class AssetInfo {
-  exposedAttributes = [
+  static exposedAttributes = [
     'preloadIndex',
     'preloadSize',
     'asset'
@@ -17,7 +17,7 @@ export class AssetInfo {
 }
 
 export class AssetBundle extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'preloadTable',
     'container',

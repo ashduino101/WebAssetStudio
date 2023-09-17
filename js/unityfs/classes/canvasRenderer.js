@@ -1,7 +1,7 @@
 import {Component} from "./component";
 
 export class CanvasRenderer extends Component {
-  exposedAttributes = [
+  static exposedAttributes = [
     'gameObject',
     'cullTransparentMesh'
   ]

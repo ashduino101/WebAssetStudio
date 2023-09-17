@@ -1,7 +1,7 @@
 import {EditorExtension} from "./editorExtension";
 
 export class NamedObject extends EditorExtension {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name'
   ];
 

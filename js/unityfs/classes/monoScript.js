@@ -1,7 +1,7 @@
 import {NamedObject} from "./namedObject";
 
 export class MonoScript extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'executionOrder',
     'propertiesHash',

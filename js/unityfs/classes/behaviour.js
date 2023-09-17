@@ -1,7 +1,7 @@
 import {Component} from './component';
 
 export class Behaviour extends Component {
-  exposedAttributes = [
+  static exposedAttributes = [
     'gameObject',
     'enabled'
   ];

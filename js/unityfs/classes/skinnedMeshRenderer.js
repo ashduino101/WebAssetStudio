@@ -2,7 +2,7 @@ import {Renderer} from "./renderer";
 import {PPtr} from "./pptr";
 
 export class SkinnedMeshRenderer extends Renderer {
-  exposedAttributes = [
+  static exposedAttributes = [
     'gameObject',
     'enabled',
     'castShadows',

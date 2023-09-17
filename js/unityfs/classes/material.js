@@ -3,7 +3,7 @@ import {PPtr} from "./pptr";
 import {KVPair} from "../basicTypes";
 
 export class UnityTexEnv {
-  exposedAttributes = [
+  static exposedAttributes = [
     'texture',
     'scale',
     'offset'
@@ -16,7 +16,7 @@ export class UnityTexEnv {
 }
 
 export class UnityPropertySheet {
-  exposedAttributes = [
+  static exposedAttributes = [
     'texEnvs',
     'ints',
     'floats',
@@ -56,7 +56,7 @@ export class UnityPropertySheet {
 }
 
 export class Material extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'shader',
     'shaderKeywords',

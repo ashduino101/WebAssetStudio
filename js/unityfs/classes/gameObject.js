@@ -2,7 +2,7 @@ import {EditorExtension} from "./editorExtension";
 import {PPtr} from "./pptr";
 
 export class GameObject extends EditorExtension {
-  exposedAttributes = [
+  static exposedAttributes = [
     'components',
     'layer',
     'name'

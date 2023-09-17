@@ -3,7 +3,7 @@ import {AnimTransform} from "./animationClip";
 import {KVPair} from "../basicTypes";
 
 export class AvatarNode {
-  exposedAttributes = [
+  static exposedAttributes = [
     'parentID',
     'axesID'
   ];
@@ -15,7 +15,7 @@ export class AvatarNode {
 }
 
 export class Limit {
-  exposedAttributes = [
+  static exposedAttributes = [
     'min',
     'max',
   ];
@@ -32,7 +32,7 @@ export class Limit {
 }
 
 export class Axes {
-  exposedAttributes = [
+  static exposedAttributes = [
     'preQ',
     'postQ',
     'sgn',
@@ -56,7 +56,7 @@ export class Axes {
 }
 
 export class Skeleton {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nodes',
     'id',
     'axes',
@@ -79,7 +79,7 @@ export class Skeleton {
 }
 
 export class SkeletonPose {
-  exposedAttributes = [
+  static exposedAttributes = [
     'transforms',
   ];
   constructor(reader) {
@@ -92,7 +92,7 @@ export class SkeletonPose {
 }
 
 export class Hand {
-  exposedAttributes = [
+  static exposedAttributes = [
     'handBoneIndex',
   ];
   constructor(reader) {
@@ -101,7 +101,7 @@ export class Hand {
 }
 
 export class Handle {
-  exposedAttributes = [
+  static exposedAttributes = [
     'transform',
     'parentHumanIndex',
     'id',
@@ -114,7 +114,7 @@ export class Handle {
 }
 
 export class Collider {
-  exposedAttributes = [
+  static exposedAttributes = [
     'transform',
     'type',
     'xMotionType',
@@ -139,7 +139,7 @@ export class Collider {
 }
 
 export class Human {
-  exposedAttributes = [
+  static exposedAttributes = [
     'rootTransform',
     'skeleton',
     'skeletonPose',
@@ -205,7 +205,7 @@ export class Human {
 }
 
 export class AvatarConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'avatarSkeleton',
     'avatarSkeletonPose',
     'defaultPose',
@@ -247,7 +247,7 @@ export class AvatarConstant {
 }
 
 export class Avatar extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'avatarSize',
     'avatar',

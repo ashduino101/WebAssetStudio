@@ -8,6 +8,8 @@ import '../css/vendor/jstree/style.min.css';
 import {NodeFile} from "./unityfs/bundleFile";
 import {getClassName} from "./unityfs/utils";
 import JSZip from 'jszip';
+import {Resource} from "./godot/resource";
+import {BinaryReader} from "./unityfs/binaryReader";
 
 class AssetTree {
   constructor(selector) {
@@ -121,15 +123,19 @@ class AssetTree {
     await this.createNode(
       rootNode + '-trees-' + obj.classID + '_' + obj.scriptTypeIndex,
       rootNode + '-trees-' + obj.classID + '_' + obj.scriptTypeIndex + '-placeholder',
-      '&lt;not loaded&gt;',
+      '&lt;structure not available&gt;',
       'icon-generic'
     );
   }
 
   async createTreeForObject(obj, rootNode, name, style = 'generic', icon = 'icon-generic', isOpened = false) {
-    if (typeof obj.exposedAttributes != 'undefined') {
+    if (obj == null) {
+      await this.createNode(rootNode, rootNode + '-' + name, this.styleKeyValue(name, obj), icon, true);
+      return;
+    }
+    if (typeof obj.constructor.exposedAttributes != 'undefined') {
       await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened);
-      for (let attr of obj.exposedAttributes) {
+      for (let attr of obj.constructor.exposedAttributes) {
         let val = obj[attr];
         if (typeof val == 'undefined') {
           // Try calling a function to get the value - maybe it's dynamic
@@ -598,4 +604,19 @@ function testFSB() {
   });
 }
 
+function testRSRC() {
+  const input = document.getElementById('file-input');
+  input.addEventListener('change', e => {
+    let f = e.target.files[0];
+    let reader = new FileReader();
+    reader.onloadend = async b => {
+      let arr = new Uint8Array(reader.result);
+      const rsrc = new Resource(new BinaryReader(arr));
+      console.log(rsrc);
+    }
+    reader.readAsArrayBuffer(f);
+  });
+}
+
 main();
+// testRSRC();

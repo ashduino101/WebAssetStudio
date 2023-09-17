@@ -6,7 +6,7 @@ import {NamedObject} from "./namedObject";
 import {getClassName} from "../utils";
 
 export class Keyframe {
-  exposedAttributes = [
+  static exposedAttributes = [
     'time',
     'value',
     'inSlope',
@@ -27,7 +27,7 @@ export class Keyframe {
 }
 
 export class AnimationCurve {
-  exposedAttributes = [
+  static exposedAttributes = [
     'curve',
     'preInfinity',
     'postInfinity',
@@ -49,7 +49,7 @@ export class AnimationCurve {
 }
 
 export class QuaternionCurve {
-  exposedAttributes = [
+  static exposedAttributes = [
     'curve',
     'path'
   ];
@@ -61,7 +61,7 @@ export class QuaternionCurve {
 }
 
 export class PackedFloatVector {
-  exposedAttributes = [
+  static exposedAttributes = [
     'length',
     'range',
     'start',
@@ -113,7 +113,7 @@ export class PackedFloatVector {
 }
 
 export class PackedIntVector {
-  exposedAttributes = [
+  static exposedAttributes = [
     'length',
     'bitSize'
   ];
@@ -153,7 +153,7 @@ export class PackedIntVector {
 }
 
 export class PackedQuaternionVector {
-  exposedAttributes = [
+  static exposedAttributes = [
     'length',
     'bitSize'
   ];
@@ -222,7 +222,7 @@ export class PackedQuaternionVector {
 }
 
 export class CompressedAnimationCurve {
-  exposedAttributes = [
+  static exposedAttributes = [
     'path',
     'times',
     'values',
@@ -242,7 +242,7 @@ export class CompressedAnimationCurve {
 }
 
 export class Vector3Curve {
-  exposedAttributes = [
+  static exposedAttributes = [
     'curve',
     'path'
   ];
@@ -254,7 +254,7 @@ export class Vector3Curve {
 }
 
 export class FloatCurve {
-  exposedAttributes = [
+  static exposedAttributes = [
     'curve',
     'attribute',
     'path',
@@ -272,7 +272,7 @@ export class FloatCurve {
 }
 
 export class PPtrKeyframe {
-  exposedAttributes = [
+  static exposedAttributes = [
     'time',
     'value',
   ];
@@ -284,7 +284,7 @@ export class PPtrKeyframe {
 }
 
 export class PPtrCurve {
-  exposedAttributes = [
+  static exposedAttributes = [
     'curve',
     'attribute',
     'path',
@@ -306,7 +306,7 @@ export class PPtrCurve {
 }
 
 export class AABB {
-  exposedAttributes = [
+  static exposedAttributes = [
     'center',
     'extent',
   ];
@@ -318,7 +318,7 @@ export class AABB {
 }
 
 export class AnimTransform {
-  exposedAttributes = [
+  static exposedAttributes = [
     't',
     'q',
     's',
@@ -332,7 +332,7 @@ export class AnimTransform {
 }
 
 export class HandPose {
-  exposedAttributes = [
+  static exposedAttributes = [
     'grabX',
     'doFArray',
     'override',
@@ -352,7 +352,7 @@ export class HandPose {
 }
 
 export class HumanGoal {
-  exposedAttributes = [
+  static exposedAttributes = [
     'x',
     'weightT',
     'weightR',
@@ -372,7 +372,7 @@ export class HumanGoal {
 }
 
 export class HumanPose {
-  exposedAttributes = [
+  static exposedAttributes = [
     'rootX',
     'lookAtPosition',
     'lookAtWeight',
@@ -408,7 +408,7 @@ export class HumanPose {
 }
 
 export class StreamedCurveKey {
-  exposedAttributes = [
+  static exposedAttributes = [
     'index',
     'coefficient',
     'outSlope',
@@ -436,7 +436,7 @@ export class StreamedCurveKey {
 }
 
 export class StreamedFrame {
-  exposedAttributes = [
+  static exposedAttributes = [
     'time',
     'keys',
   ];
@@ -452,7 +452,7 @@ export class StreamedFrame {
 }
 
 export class StreamedClip {
-  exposedAttributes = [
+  static exposedAttributes = [
     'curveCount',
   ];
 
@@ -485,7 +485,7 @@ export class StreamedClip {
 }
 
 export class DenseClip {
-  exposedAttributes = [
+  static exposedAttributes = [
     'frameCount',
     'curveCount',
     'sampleRate',
@@ -503,7 +503,7 @@ export class DenseClip {
 }
 
 export class ConstantClip {
-  exposedAttributes = [
+  static exposedAttributes = [
     'data'
   ];
 
@@ -513,7 +513,7 @@ export class ConstantClip {
 }
 
 export class ValueConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'id',
     'type',
     'index'
@@ -530,7 +530,7 @@ export class ValueConstant {
 }
 
 export class ValueArrayConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'values'
   ];
 
@@ -544,7 +544,7 @@ export class ValueArrayConstant {
 }
 
 export class Clip {
-  exposedAttributes = [
+  static exposedAttributes = [
     'streamedClip',
     'denseClip',
     'constantClip'
@@ -563,7 +563,7 @@ export class Clip {
 }
 
 export class ValueDelta {
-  exposedAttributes = [
+  static exposedAttributes = [
     'start',
     'stop'
   ];
@@ -575,7 +575,7 @@ export class ValueDelta {
 }
 
 export class ClipMuscleConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'deltaPose',
     'startX',
     'stopX',
@@ -657,7 +657,7 @@ export class ClipMuscleConstant {
 }
 
 export class GenericBinding {
-  exposedAttributes = [
+  static exposedAttributes = [
     'path',
     'attribute',
     'script',
@@ -686,7 +686,7 @@ export class GenericBinding {
 }
 
 export class AnimationClipBindingConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'genericBindings',
     'pptrCurveMapping'
   ];
@@ -706,7 +706,7 @@ export class AnimationClipBindingConstant {
 }
 
 export class AnimationEvent {
-  exposedAttributes = [
+  static exposedAttributes = [
     'time',
     'functionName',
     'data',
@@ -736,7 +736,7 @@ const AnimationType = {
 }
 
 export class AnimationClip extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'legacy',
     'compressed',

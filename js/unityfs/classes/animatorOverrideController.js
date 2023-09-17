@@ -2,7 +2,7 @@ import {PPtr} from "./pptr";
 import {NamedObject} from "./namedObject";
 
 export class AnimationClipOverride {
-  exposedAttributes = [
+  static exposedAttributes = [
     'originalClip',
     'overrideClip',
   ];
@@ -14,7 +14,7 @@ export class AnimationClipOverride {
 }
 
 export class AnimatorOverrideController extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'controller',
     'clips',

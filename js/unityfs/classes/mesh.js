@@ -11,7 +11,7 @@ import $ from "jquery";
 import {Vector3} from "three"; // using three's Vector3 for normalization
 
 export class MinMaxAABB {
-  exposedAttributes = [
+  static exposedAttributes = [
     'min',
     'max'
   ];
@@ -24,7 +24,7 @@ export class MinMaxAABB {
 
 export class CompressedMesh {
   // not exposed - we'll expose them on the main mesh
-  exposedAttributes = [];
+  static exposedAttributes = [];
   constructor(reader) {
     this.vertices = new PackedFloatVector(reader);
     this.uv = new PackedFloatVector(reader);
@@ -56,7 +56,7 @@ export class CompressedMesh {
 }
 
 export class StreamInfo {
-  exposedAttributes = [
+  static exposedAttributes = [
     'channelMask',
     'offset',
     'stride',
@@ -81,7 +81,7 @@ export class StreamInfo {
 }
 
 export class ChannelInfo {
-  exposedAttributes = [
+  static exposedAttributes = [
     'stream',
     'offset',
     'format',
@@ -175,7 +175,7 @@ function getVertexFormatReader(reader, format) {
 }
 
 export class VertexData {
-  exposedAttributes = [
+  static exposedAttributes = [
     'vertexCount',
     'channels',
     'streams'
@@ -286,7 +286,7 @@ export class VertexData {
 }
 
 export class BoneWeights4 {
-  exposedAttributes = [
+  static exposedAttributes = [
     'weight',
     'boneIndex'
   ];
@@ -303,7 +303,7 @@ export class BoneWeights4 {
 }
 
 export class BlendShapeVertex {
-  exposedAttributes = [
+  static exposedAttributes = [
     'vertex',
     'normal',
     'tangent',
@@ -319,7 +319,7 @@ export class BlendShapeVertex {
 }
 
 export class MeshBlendShape {
-  exposedAttributes = [
+  static exposedAttributes = [
     'firstVertex',
     'vertexCount',
     'hasNormals',
@@ -345,7 +345,7 @@ export class MeshBlendShape {
 }
 
 export class MeshBlendShapeChannel {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'nameHash',
     'frameIndex',
@@ -361,7 +361,7 @@ export class MeshBlendShapeChannel {
 }
 
 export class BlendShapeData {
-  exposedAttributes = [
+  static exposedAttributes = [
     'shapes',
     'channels',
     'fullWeights'
@@ -414,7 +414,7 @@ export const GfxPrimitiveType = {
 }
 
 export class SubMesh {
-  exposedAttributes = [
+  static exposedAttributes = [
     'firstByte',
     'indexCount',
     'topology',
@@ -442,7 +442,7 @@ export class SubMesh {
 }
 
 export class Mesh extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'subMeshes',
     'shapes',
     'bindPose',

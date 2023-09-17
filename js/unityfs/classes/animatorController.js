@@ -4,7 +4,7 @@ import {KVPair} from "../basicTypes";
 import {PPtr} from "./pptr";
 
 export class HumanPoseMask {
-  exposedAttributes = [
+  static exposedAttributes = [
     'word0',
     'word1',
     'word2'
@@ -20,7 +20,7 @@ export class HumanPoseMask {
 }
 
 export class SkeletonMaskElement {
-  exposedAttributes = [
+  static exposedAttributes = [
     'pathHash',
     'weight'
   ];
@@ -32,7 +32,7 @@ export class SkeletonMaskElement {
 }
 
 export class SkeletonMask {
-  exposedAttributes = [
+  static exposedAttributes = [
     'data'
   ];
 
@@ -46,7 +46,7 @@ export class SkeletonMask {
 }
 
 export class LayerConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'stateMachineIndex',
     'stateMachineMotionSetIndex',
     'bodyMask',
@@ -77,7 +77,7 @@ export class LayerConstant {
 }
 
 export class ConditionConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'conditionMode',
     'eventID',
     'eventThreshold',
@@ -93,7 +93,7 @@ export class ConditionConstant {
 }
 
 export class TransitionConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'conditionConstants',
     'destinationState',
     'fullPathID',
@@ -144,7 +144,7 @@ export class TransitionConstant {
 }
 
 export class LeafInfoConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'idArray',
     'indexOffset'
   ];
@@ -156,7 +156,7 @@ export class LeafInfoConstant {
 }
 
 export class MotionNeighbourList {
-  exposedAttributes = [
+  static exposedAttributes = [
     'neighbours'
   ];
   constructor(reader) {
@@ -165,7 +165,7 @@ export class MotionNeighbourList {
 }
 
 export class Blend2DDataConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'childPositions',
     'childMagnitudes',
     'childPairVectors',
@@ -188,7 +188,7 @@ export class Blend2DDataConstant {
 }
 
 export class Blend1DDataConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'childThresholds'
   ];
 
@@ -198,7 +198,7 @@ export class Blend1DDataConstant {
 }
 
 export class BlendDirectDataConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'childBlendEventIDs',
     'normalizedBlendValues'
   ];
@@ -211,7 +211,7 @@ export class BlendDirectDataConstant {
 }
 
 export class BlendTreeNodeConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'blendType',
     'blendEventID',
     'blendEventYID',
@@ -260,7 +260,7 @@ export class BlendTreeNodeConstant {
 }
 
 export class BlendTreeConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nodes'
   ];
 
@@ -277,7 +277,7 @@ export class BlendTreeConstant {
 }
 
 export class StateConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'transitionConstants',
     'blendTreeConstantIndices',
     'blendTreeConstants',
@@ -348,7 +348,7 @@ export class StateConstant {
 }
 
 export class SelectorTransitionConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'destination',
     'conditionConstants'
   ];
@@ -364,7 +364,7 @@ export class SelectorTransitionConstant {
 }
 
 export class SelectorStateConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'transitionConstants',
     'fullPathID',
     'isEntry'
@@ -383,7 +383,7 @@ export class SelectorStateConstant {
 }
 
 export class StateMachineConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'stateConstants',
     'anyStateTransitionConstants',
     'selectorStateConstants',
@@ -415,7 +415,7 @@ export class StateMachineConstant {
 }
 
 export class ValueArray {
-  exposedAttributes = [
+  static exposedAttributes = [
     'positionValues',
     'quaternionValues',
     'scaleValues',
@@ -459,7 +459,7 @@ export class ValueArray {
 }
 
 export class ControllerConstant {
-  exposedAttributes = [
+  static exposedAttributes = [
     'layers',
     'stateMachines',
     'values',
@@ -485,7 +485,7 @@ export class ControllerConstant {
 }
 
 export class AnimatorController extends RuntimeAnimatorController {
-  exposedAttributes = [
+  static exposedAttributes = [
     'controllerSize',
     'controller',
     'tos',

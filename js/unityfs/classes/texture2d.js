@@ -28,7 +28,7 @@ import {requestExternalData} from "../utils";
 import JSZip from "jszip";
 
 export class StreamingInfo {
-  exposedAttributes = [
+  static exposedAttributes = [
     'offset',
     'size',
     'path'
@@ -46,7 +46,7 @@ export class StreamingInfo {
 }
 
 export class GLTextureSettings {
-  exposedAttributes = [
+  static exposedAttributes = [
     'filterMode',
     'anisotropicFiltering',
     'mipBias',
@@ -139,7 +139,7 @@ export const TextureFormat = {
 }
 
 export class Texture2D extends Texture {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'width',
     'height',
@@ -152,7 +152,7 @@ export class Texture2D extends Texture {
     'textureSettings',
     'lightmapFormat',
     'colorSpace',
-    'streamData',
+    'streamData'
   ];
   constructor(reader) {
     super(reader);
@@ -209,6 +209,7 @@ export class Texture2D extends Texture {
       reader.align(4);
     }
     let imageDataSize = reader.readInt32();
+    this.streamData = null;
     if (imageDataSize === 0 && reader.versionGTE(5, 3)) {
       this.streamData = new StreamingInfo(reader);
       this.data = new Uint8Array(0);

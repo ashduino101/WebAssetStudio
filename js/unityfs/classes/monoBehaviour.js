@@ -2,7 +2,7 @@ import {Behaviour} from "./behaviour";
 import {PPtr} from "./pptr";
 
 export class MonoBehaviour extends Behaviour {
-  exposedAttributes = [
+  static exposedAttributes = [
     'gameObject',
     'enabled',
     'script',

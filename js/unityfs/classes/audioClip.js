@@ -49,7 +49,7 @@ export const AudioCompressionFormat = {
 }
 
 export class AudioClip extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'loadType',
     'channels',

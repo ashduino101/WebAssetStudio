@@ -4,7 +4,7 @@ import {Rectf} from "./sprite";
 import {KVPair} from "../basicTypes";
 
 export class CharacterRect {
-  exposedAttributes = [
+  static exposedAttributes = [
     'index',
     'uv',
     'vert',
@@ -25,7 +25,7 @@ export class CharacterRect {
 }
 
 export class KerningValue {
-  exposedAttributes = [
+  static exposedAttributes = [
     'pairFirst',
     'pairSecond',
     'second'
@@ -39,7 +39,7 @@ export class KerningValue {
 }
 
 export class Font extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'lineSpacing',
     'defaultMaterial',

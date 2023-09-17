@@ -2,7 +2,7 @@ import {Component} from "./component";
 import {PPtr} from "./pptr";
 
 export class Transform extends Component {
-  exposedAttributes = [
+  static exposedAttributes = [
     'localPosition',
     'localRotation',
     'localScale',

@@ -1,5 +1,5 @@
 export class PPtr {
-  exposedAttributes = [
+  static exposedAttributes = [
     'fileID',
     'pathID'
   ]

@@ -84,6 +84,11 @@ export class BinaryReader {
     return new TextDecoder('utf-8').decode(this.read(count));
   }
 
+  readString() {
+    /* not aligned */
+    return this.readChars(this.readUInt32()).split('\0')[0];
+  }
+
   readAlignedString() {
     let s = this.readChars(this.readUInt32());
     this.align(4);
@@ -187,6 +192,9 @@ export class BinaryReader {
   }
   readVector4() {
     return new Vector4(this.readFloat32(), this.readFloat32(), this.readFloat32(), this.readFloat32());
+  }
+  readIVector4() {
+    return new Vector4(this.readInt32(), this.readInt32(), this.readInt32(), this.readInt32());
   }
   readQuaternion() {
     return new Quaternion(this.readFloat32(), this.readFloat32(), this.readFloat32(), this.readFloat32());

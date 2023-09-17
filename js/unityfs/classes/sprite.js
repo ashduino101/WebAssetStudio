@@ -4,7 +4,7 @@ import {BoneWeights4, SubMesh, VertexData} from "./mesh";
 import {KVPair} from "../basicTypes";
 
 export class SecondarySpriteTexture {
-  exposedAttributes = [
+  static exposedAttributes = [
     'texture',
     'name'
   ];
@@ -34,7 +34,7 @@ export const SpriteMeshType = {
 }
 
 export class SpriteSettings {
-  exposedAttributes = [
+  static exposedAttributes = [
     'packed',
     'packingMode',
     'packingRotation',
@@ -51,7 +51,7 @@ export class SpriteSettings {
 }
 
 export class SpriteVertex {
-  exposedAttributes = [
+  static exposedAttributes = [
     'pos',
     'uv'
   ];
@@ -66,7 +66,7 @@ export class SpriteVertex {
 }
 
 export class SpriteRenderData {
-  exposedAttributes = [
+  static exposedAttributes = [
     'texture',
     'alphaTexture',
     'secondaryTextures',
@@ -147,7 +147,7 @@ export class SpriteRenderData {
 }
 
 export class Rectf {
-  exposedAttributes = [
+  static exposedAttributes = [
     'x', 'y', 'width', 'height'
   ];
 
@@ -160,7 +160,7 @@ export class Rectf {
 }
 
 export class Sprite extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'rect',
     'offset',

@@ -7,7 +7,7 @@ import {UnityObject} from "./classes/object";
 import {getClassName} from "./utils";
 
 export class TypeTree {
-  exposedAttributes = [
+  static exposedAttributes = [
     'level',
     'type',
     'name',
@@ -118,7 +118,7 @@ export class TypeTree {
 }
 
 export class TypeTreeReference {
-  constructor(reader, version, classID, isStripped, scriptTypeIndex, scriptID, oldTypeHash, offset) {
+  constructor(reader, version, classID, isStripped, scriptTypeIndex, scriptID, oldTypeHash, offset, enableTypeTrees) {
     this.reader = reader;
     this.version = version;
     this.classID = classID;
@@ -127,21 +127,22 @@ export class TypeTreeReference {
     this.scriptID = scriptID;
     this.oldTypeHash = oldTypeHash;
     this.offset = offset;
+    this.enableTypeTrees = enableTypeTrees;
   }
 
   get tree() {
     this.reader.seek(this.offset);
 
-    // if (this.enableTypeTrees) {
-    let tree = new TypeTree(this.version, this.reader);
-    if (this.version >= 12 || this.version === 10) {
-      tree.readBlob();
-    } else {
-      tree.readLegacy();
+    if (this.enableTypeTrees) {
+      let tree = new TypeTree(this.version, this.reader);
+      if (this.version >= 12 || this.version === 10) {
+        tree.readBlob();
+      } else {
+        tree.readLegacy();
+      }
+      return tree;
     }
-    // }
-
-    return tree;
+    return '(not present)';
   }
 }
 
@@ -226,7 +227,7 @@ export class ObjectInfo {
 }
 
 export class LocalObjectIdentifier {
-  exposedAttributes = [
+  static exposedAttributes = [
     'localFileIndex',
     'localIdentifier'
   ];
@@ -236,7 +237,7 @@ export class LocalObjectIdentifier {
 }
 
 export class FileIdentifier {
-  exposedAttributes = [
+  static exposedAttributes = [
     'guid',
     'type',
     'path'
@@ -275,7 +276,7 @@ export class ObjectCollection {
 }
 
 export class AssetFile {
-  exposedAttributes = [
+  static exposedAttributes = [
     'version',
     'metadataSize',
     'fileSize',
@@ -484,7 +485,8 @@ export class AssetFile {
       info.scriptTypeIndex,
       info.scriptID,
       info.oldTypeHash,
-      offset
+      offset,
+      this.enableTypeTrees
     )
   }
 

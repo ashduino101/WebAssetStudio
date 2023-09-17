@@ -1,7 +1,7 @@
 import {NamedObject} from "./namedObject";
 
 export class TextAsset extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'text'
   ];
   exportExtension = '.txt';

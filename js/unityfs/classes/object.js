@@ -1,5 +1,5 @@
 export class UnityObject {
-  exposedAttributes = [];
+  static exposedAttributes = [];
   exportExtension = '.dat';
 
   constructor(reader) {
@@ -14,7 +14,18 @@ export class UnityObject {
     reader.seek(0);
   }
 
-  static getName(_) {
+  static getName(reader) {
+    if (this.exposedAttributes.indexOf('name') > -1) {
+      return new this(reader).name;
+    }
+    let length = reader.readUInt32();
+    if (length < 1024) {  // max length for a non-overridden name - we don't know if this is actually named
+      try {
+        return reader.readChars(length);
+      } catch {
+        return '<unnamed>';
+      }
+    }
     return '<unnamed>';
   }
 
@@ -28,8 +39,8 @@ export class UnityObject {
   async getInfo() {
     function getAttrs(p) {
       let j = {};
-      if (p != null && p.exposedAttributes?.length > 0) {
-        for (let prop of p.exposedAttributes) {
+      if (p != null && p.constructor.exposedAttributes?.length > 0) {
+        for (let prop of p.constructor.exposedAttributes) {
           j[prop] = getAttrs(p[prop]);
         }
       } else if (p instanceof Array) {
@@ -50,7 +61,7 @@ export class UnityObject {
   }
 
   async saveInfo(zip, baseName) {
-    if (typeof this.exposedAttributes == 'undefined') {
+    if (typeof this.constructor.exposedAttributes == 'undefined') {
       zip.file(baseName + '.txt', 'Class unsupported');
       return;
     }

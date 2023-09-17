@@ -2,7 +2,7 @@ import {Component} from "./component";
 import {PPtr} from "./pptr";
 
 export class MeshFilter extends Component {
-  exposedAttributes = [
+  static exposedAttributes = [
     'gameObject',
     'mesh'
   ];

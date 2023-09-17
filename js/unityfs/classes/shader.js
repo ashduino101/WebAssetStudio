@@ -4,7 +4,7 @@ import {KVPair} from "../basicTypes";
 import {decompressBlock} from "lz4js";
 
 export class VectorParameter {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndex',
     'index',
     'arraySize',
@@ -23,7 +23,7 @@ export class VectorParameter {
 }
 
 export class MatrixParameter {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndex',
     'index',
     'arraySize',
@@ -42,7 +42,7 @@ export class MatrixParameter {
 }
 
 export class StructParameter {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndex',
     'index',
     'arraySize',
@@ -72,7 +72,7 @@ export class StructParameter {
 }
 
 export class SamplerParameter {
-  exposedAttributes = [
+  static exposedAttributes = [
     'sampler',
     'bindPoint'
   ];
@@ -95,7 +95,7 @@ export const TextureDimension = {
 }
 
 export class SerializedTextureProperty {
-  exposedAttributes = [
+  static exposedAttributes = [
     'defaultName',
     'textureDimension'
   ];
@@ -116,7 +116,7 @@ export const SerializedPropertyType = {
 }
 
 export class SerializedProperty {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'description',
     'attributes',
@@ -138,7 +138,7 @@ export class SerializedProperty {
 }
 
 export class SerializedProperties {
-  exposedAttributes = [
+  static exposedAttributes = [
     'properties'
   ];
 
@@ -152,7 +152,7 @@ export class SerializedProperties {
 }
 
 export class SerializedShaderFloatValue {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'value'
   ];
@@ -164,7 +164,7 @@ export class SerializedShaderFloatValue {
 }
 
 export class SerializedShaderRTBlendState {
-  exposedAttributes = [
+  static exposedAttributes = [
     'sourceBlend',
     'destinationBlend',
     'sourceBlendAlpha',
@@ -186,7 +186,7 @@ export class SerializedShaderRTBlendState {
 }
 
 export class SerializedStencilOp {
-  exposedAttributes = [
+  static exposedAttributes = [
     'pass',
     'fail',
     'zFail',
@@ -202,7 +202,7 @@ export class SerializedStencilOp {
 }
 
 export class SerializedShaderVectorValue {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'x',
     'y',
@@ -219,7 +219,7 @@ export class SerializedShaderVectorValue {
 }
 
 export class SerializedTagMap {
-  exposedAttributes = [
+  static exposedAttributes = [
     'tags'
   ];
 
@@ -242,7 +242,7 @@ export const FogMode = {
 }
 
 export class SerializedShaderState {
-  exposedAttributes = [
+  static exposedAttributes = [
     'name',
     'rtBlend',
     'rtSeparateBlend',
@@ -309,7 +309,7 @@ export class SerializedShaderState {
 }
 
 export class ShaderBindChannel {
-  exposedAttributes = [
+  static exposedAttributes = [
     'source',
     'target'
   ];
@@ -321,7 +321,7 @@ export class ShaderBindChannel {
 }
 
 export class ParserBindChannels {
-  exposedAttributes = [
+  static exposedAttributes = [
     'channels',
     'sourceMap'
   ];
@@ -338,7 +338,7 @@ export class ParserBindChannels {
 }
 
 export class TextureParameter {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndex',
     'index',
     'samplerIndex',
@@ -358,7 +358,7 @@ export class TextureParameter {
 }
 
 export class BufferBinding {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndex',
     'index'
   ];
@@ -373,7 +373,7 @@ export class BufferBinding {
 }
 
 export class ConstantBuffer {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndex',
     'matrixParams',
     'vectorParams',
@@ -419,7 +419,7 @@ export class ConstantBuffer {
 }
 
 export class UAVParameter {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndex',
     'index',
     'originalIndex'
@@ -469,7 +469,7 @@ export const ShaderGpuProgramType = {
 }
 
 export class SerializedProgramParameters {
-  exposedAttributes = [
+  static exposedAttributes = [
     'vectorParams',
     'matrixParams',
     'textureParams',
@@ -533,7 +533,7 @@ export class SerializedProgramParameters {
 }
 
 export class SerializedSubProgram {
-  exposedAttributes = [
+  static exposedAttributes = [
     'blobIndex',
     'channels',
     'shaderHardwareTier',
@@ -574,7 +574,7 @@ export class SerializedSubProgram {
 }
 
 export class SerializedProgram {
-  exposedAttributes = [
+  static exposedAttributes = [
     'subPrograms'
   ];
 
@@ -610,7 +610,7 @@ export const PassType = {
 }
 
 export class SerializedPass {
-  exposedAttributes = [
+  static exposedAttributes = [
     'nameIndices',
     'type',
     'state',
@@ -680,7 +680,7 @@ export class SerializedPass {
 }
 
 export class SerializedSubShader {
-  exposedAttributes = [
+  static exposedAttributes = [
     'passes',
     'tags',
     'lod'
@@ -699,7 +699,7 @@ export class SerializedSubShader {
 }
 
 export class SerializedShaderDependency {
-  exposedAttributes = [
+  static exposedAttributes = [
     'from',
     'to'
   ];
@@ -711,7 +711,7 @@ export class SerializedShaderDependency {
 }
 
 export class SerializedCustomEditorForRenderPipeline {
-  exposedAttributes = [
+  static exposedAttributes = [
     'customEditorName',
     'renderPipelineType'
   ];
@@ -723,7 +723,7 @@ export class SerializedCustomEditorForRenderPipeline {
 }
 
 export class SerializedShader {
-  exposedAttributes = [
+  static exposedAttributes = [
     'propInfo',
     'subShaders',
     'name',
@@ -801,7 +801,7 @@ export const ShaderCompilerPlatform = {
 }
 
 export class Shader extends NamedObject {
-  exposedAttributes = [
+  static exposedAttributes = [
     'parsedForm',
     'platforms',
     'offsets',
