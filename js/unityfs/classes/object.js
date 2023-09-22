@@ -15,16 +15,20 @@ export class UnityObject {
   }
 
   static getName(reader) {
-    if (this.exposedAttributes.indexOf('name') > -1) {
-      return new this(reader).name;
-    }
-    let length = reader.readUInt32();
-    if (length < 1024) {  // max length for a non-overridden name - we don't know if this is actually named
-      try {
-        return reader.readChars(length);
-      } catch {
-        return '<unnamed>';
+    try {
+      if (this.exposedAttributes.indexOf('name') > -1) {
+        return new this(reader).name;
       }
+      let length = reader.readUInt32();
+      if (length < 1024) {  // max length for a non-overridden name - we don't know if this is actually named
+        try {
+          return reader.readChars(length);
+        } catch {
+          return '<unnamed>';
+        }
+      }
+    } catch {
+      return '<unnamed>';
     }
     return '<unnamed>';
   }
