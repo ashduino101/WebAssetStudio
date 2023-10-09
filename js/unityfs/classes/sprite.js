@@ -208,7 +208,7 @@ export class Sprite extends NamedObject {
     this.spriteAtlas = null;
     if (reader.version[0] >= 2017) {
       let key = [...reader.read(16)].map(x => x.toString(16).padStart(2, '0')).join('');
-      this.renderDataKey = new KVPair(key, reader.readInt64());
+      this.renderDataKey = new KVPair(key, Number(reader.readInt64()));
       this.atlasTags = reader.readArrayT(() => reader.readAlignedString(), reader.readInt32());
       this.spriteAtlas = new PPtr(reader);
     }

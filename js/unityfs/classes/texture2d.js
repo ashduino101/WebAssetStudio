@@ -21,7 +21,7 @@ import {
   unpackCrunch,
   unpackUnityCrunch
 } from "../texture2d";
-import {BinaryReader} from "../binaryReader";
+import {BinaryReader} from "../../binaryReader";
 import * as CRC32 from 'crc-32';
 import pako from 'pako'
 import {requestExternalData} from "../utils";
@@ -912,11 +912,11 @@ export class Texture2D extends Texture {
 
   async getExport() {
     if (this.imageCount === 1) {
-      return this.createPNG(0);
+      return await this.createPNG(0);
     } else {
       let zip = new JSZip();
-      for (let i = 0; i > this.imageCount; i++) {
-        zip.file(`${i}.png`, this.createPNG(i));
+      for (let i = 0; i < this.imageCount; i++) {
+        zip.file(`${i}.png`, await this.createPNG(i));
       }
       return await zip.generateAsync({type: 'uint8array'});
     }

@@ -36,7 +36,12 @@ export async function requestExternalData(streamingInfo) {
     const listener = result => {
       document.body.removeEventListener('bundle-resolve-response', listener);
       if (result.detail.status) {
-        let outData = result.detail.data.slice(streamingInfo.offset, streamingInfo.offset + streamingInfo.size);
+        let outData = result.detail.data.slice(
+          streamingInfo.offset,
+          streamingInfo.offset + (
+            (streamingInfo.size === -1) ? result.detail.data.length : streamingInfo.size
+          )
+        );
         resolve(outData);
       } else {
         reject('Failed to resolve external image data');

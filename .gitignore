@@ -5,3 +5,5 @@ node_modules
 dist
 .cache
 /AssetStudio/
+/dotnet-utils/bin/
+/dotnet-utils/obj/

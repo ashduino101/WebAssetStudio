@@ -1,5 +1,5 @@
 import {BundleFile} from "./bundleFile";
-import {BinaryReader} from "./binaryReader";
+import {BinaryReader} from "../binaryReader";
 import {AssetFile} from "./assetFile";
 
 export const FileType = {

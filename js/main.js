@@ -9,7 +9,9 @@ import {NodeFile} from "./unityfs/bundleFile";
 import {getClassName} from "./unityfs/utils";
 import JSZip from 'jszip';
 import {Resource} from "./godot/resource";
-import {BinaryReader} from "./unityfs/binaryReader";
+import {BinaryReader} from "./binaryReader";
+import {PakFile} from "./unreal/pakfile";
+import {CSharpDecompiler} from "./cs-decomp/decompiler";
 
 class AssetTree {
   constructor(selector) {
@@ -142,7 +144,8 @@ class AssetTree {
           if (typeof obj.get == 'function') {
             val = obj.get(attr);
           } else {
-            throw new Error(`value "${attr}" not present in object and no getter function found`);
+            // throw new Error(`value "${attr}" not present in object and no getter function found`);
+            val = null;
           }
         }
         await this.createTreeForObject(val, rootNode + '-' + name, attr);
@@ -511,7 +514,7 @@ async function exportZip(tree) {
   });
   document.body.addEventListener('bundle-resolve-request', data => {
     let path = data.detail;
-    console.log('From exporter: Received bundle resolution request for path', path);
+    // console.log('From exporter: Received bundle resolution request for path', path);
     if (path.startsWith('archive:/')) {
       path = path.substring('archive:/'.length, path.length);
     }
@@ -587,36 +590,19 @@ function main() {
   });
 }
 
-function testFSB() {
+function testClass() {
   const input = document.getElementById('file-input');
   input.addEventListener('change', e => {
     let f = e.target.files[0];
     let reader = new FileReader();
     reader.onloadend = async b => {
       let arr = new Uint8Array(reader.result);
-      const fsb = new FSB5(arr);
-      fsb.parse();
-      console.log(fsb);
-      console.log(fsb.format);
-      console.log(fsb.getSound(0));
-    }
-    reader.readAsArrayBuffer(f);
-  });
-}
-
-function testRSRC() {
-  const input = document.getElementById('file-input');
-  input.addEventListener('change', e => {
-    let f = e.target.files[0];
-    let reader = new FileReader();
-    reader.onloadend = async b => {
-      let arr = new Uint8Array(reader.result);
-      const rsrc = new Resource(new BinaryReader(arr));
-      console.log(rsrc);
+      const obj = new FSB5(arr);
+      await obj.playAudio();
     }
     reader.readAsArrayBuffer(f);
   });
 }
 
 main();
-// testRSRC();
+// testClass();

@@ -78,15 +78,15 @@ export class Matrix4x4 {
   }
 
   toString() {
-    return `Matrix4x4<>`;  // tbd
+    return `Matrix4x4<${this.values}>`;
   }
 }
 
 export class KVPair {
-  exposedAttributes = [
+  static exposedAttributes = [
     'key',
     'value'
-  ]
+  ];
   constructor(key, value) {
     this.key = key;
     this.value = value;

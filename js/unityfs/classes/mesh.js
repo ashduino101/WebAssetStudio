@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {AABB, PackedFloatVector, PackedIntVector} from "./animationClip";
 import {NamedObject} from "./namedObject";
 import {StreamingInfo} from "./texture2d";
-import {BinaryReader} from "../binaryReader";
+import {BinaryReader} from "../../binaryReader";
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {Matrix4x4} from "../basicTypes";
 import {OrbitControls} from "three/addons/controls/OrbitControls";

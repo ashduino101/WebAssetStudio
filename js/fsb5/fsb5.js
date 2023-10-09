@@ -1,140 +1,183 @@
-import {BinaryReader} from "../unityfs/binaryReader";
-import {BinaryWriter} from "../unityfs/binaryWriter";
-
-export function FSB5Format(value) {
-  for (let k in FSB5Format) {
-    if (FSB5Format[k]?.value === value) {
-      return FSB5Format[k];
-    }
-  }
-  return FSB5Format.NONE;
-}
-
-FSB5Format.NONE = {name: 'None', value: 0};
-FSB5Format.PCM8 = {name: 'PCM (8-bit)', value: 1};
-FSB5Format.PCM16 = {name: 'PCM (16-bit)', value: 2};
-FSB5Format.PCM24 = {name: 'PCM (24-bit)', value: 3};
-FSB5Format.PCM32 = {name: 'PCM (32-bit)', value: 4};
-FSB5Format.PCMFLOAT = {name: 'PCM (float)', value: 5};
-FSB5Format.GCADPCM = {name: 'GC ADPCM', value: 6};
-FSB5Format.IMAADPCM = {name: 'IMA ADPCM', value: 7};
-FSB5Format.VAG = {name: 'VAG', value: 8};
-FSB5Format.HEVAG = {name: 'HE-VAG', value: 9};
-FSB5Format.XMA = {name: 'XMA', value: 10};
-FSB5Format.MPEG = {name: 'MPEG-3', value: 11};
-FSB5Format.CELT = {name: 'CELT', value: 12};
-FSB5Format.AT9 = {name: 'AT9', value: 13};
-FSB5Format.XWMA = {name: 'XWMA', value: 14};
-FSB5Format.VORBIS = {name: 'Vorbis', value: 15};
-
-export class FSB5Sample {
-  constructor(value) {
-    this.nextChunk = value & 1;
-    this.frequency = (value  & 0x1f) >> 1;
-    this.numChannels = ((value  & 0x3f) >> 5) + 1;
-    this.dataOffset = (value & 0x3ffffffff) >> 6;
-    // JS fuckery not allowing bitshifts with an rvalue greater than 32 -
-    // we have to use division instead (this constant is equivalent to 1 << 34)
-    this.sampleRate = Math.floor(value / 0x400000000);
-  }
-}
-
-export class FSB5SampleChunk {
-  constructor(value) {
-    this.nextChunk = value & 1;
-    this.chunkSize = (value & 0x1ffffff) >> 1;
-    this.chunkType = (value & 0xffffffff) >> 25;
-  }
-}
+import FMODModule from "../vendor/fmod/fmod";
+import {BinaryWriter} from "../binaryWriter";
 
 export class FSB5 {
   constructor(data) {
-    this.reader = new BinaryReader(data);
-    this.reader.endian = 'little';
+    this.data = data;
+
+    this.fmodModule = null;
+    this.system = null;
   }
 
-  parse() {
-    let _start = this.reader.tell();
-    this.start = _start;
-
-    if ((this.magic = this.reader.readChars(4)) !== 'FSB5') {
-      throw Error('Invalid magic "' + this.magic + '"!');
-    }
-
-    this.version = this.reader.readInt32();
-    this.numSamples = this.reader.readInt32();
-    this.sampleHeaderSize = this.reader.readUInt32();
-    this.nameTableSize = this.reader.readUInt32();
-    this.dataSize = this.reader.readUInt32();
-    this.format = FSB5Format(this.reader.readInt32());
-    this._u1 = this.reader.readUInt64();  // seems to be 1 if the sampleHeaderSize is greater than 36
-    this.hash = this.reader.read(16);
-    this._u2 = this.reader.readUInt64();
-
-    this.samples = [];
-    for (let i = 0; i < this.numSamples; i++) {
-      let sample = new FSB5Sample(Number(this.reader.readUInt64()));
-      let nextChunk = sample.nextChunk;
-      sample.chunks = [];
-      while (nextChunk) {
-        let chunk = new FSB5SampleChunk(this.reader.readUInt32());
-        nextChunk = chunk.nextChunk;
-        chunk.data = this.reader.read(chunk.chunkSize);
-        sample.chunks.push(chunk);
+  async _initModule() {
+    return new Promise(resolve => {
+      if (typeof window.global_fmodModule != "undefined") {
+        this.fmodModule = window.global_fmodModule;
       }
-      this.samples.push(sample);
-    }
-
-    if (this.nameTableSize > 0) {
-      let nameOffsets = [];
-      for (let i = 0; i < this.numSamples; i++) {
-        nameOffsets.push(this.reader.readUInt32());
+      if (typeof window.global_fmodSystem != "undefined") {
+        this.system = window.global_fmodSystem;
       }
-
-      for (let i = 0; i < this.numSamples; i++) {
-        this.reader.seek(_start + nameOffsets[i]);
-        this.samples[i].name = this.reader.readCString();
+      if (this.fmodModule != null && this.system != null) {
+        resolve();
+        return;
       }
-    }
-
-    this.reader.seek(_start + 60 + this.sampleHeaderSize + this.nameTableSize);
-    for (let i = 0; i < this.numSamples; i++) {
-      this.samples[i].data = this.reader.read(this.dataSize);
-    }
-
-    return this.reader.offset;
+      this.fmodModule = {};
+      this.system = {};
+      this.fmodModule['preRun'] = () => {
+      }
+      this.fmodModule['onRuntimeInitialized'] = () => {
+        const systemOut = {};
+        if (this.fmodModule.System_Create(systemOut) !== 0) {
+          console.error('Failed to initialize FMOD system');
+        }
+        this.system = systemOut.val;
+        if (this.system.init(1024, this.fmodModule.INIT_NORMAL, null) !== 0) {
+          console.error('Failed to initialize FMOD system');
+        }
+        window.global_fmodModule = this.fmodModule;
+        window.global_fmodSystem = this.system;
+        resolve();
+      };
+      this.fmodModule['INITIAL_MEMORY'] = 64 * 1024 * 1024;
+      FMODModule(this.fmodModule);
+    });
   }
 
-  _getWAV(sampleIndex, bytesPerSample) {
-    const sample = this.samples[sampleIndex];
-    const writer = new BinaryWriter(sample.data.length + 44, 'little');
-    writer.writeChars('RIFF');
-    writer.writeUInt32(sample.data.length + 36);
-    writer.writeChars('WAVE');
-    writer.writeChars('fmt ');
-    writer.writeInt32(16);  // size of fmt chunk
-    writer.writeInt16(1);  // PCM
-    writer.writeInt16(sample.numChannels);
-    writer.writeInt32(sample.sampleRate);
-    writer.writeInt32(sample.numChannels * sample.sampleRate * bytesPerSample);
-    writer.writeInt16(sample.numChannels * bytesPerSample);
-    writer.writeInt16(bytesPerSample * 8);
-    writer.writeChars('data');
-    writer.writeInt32(sample.data.length);
-    writer.write(sample.data);
+  async reset() {
+    window.global_fmodModule = undefined;
+    window.global_fmodSystem = undefined;
+    await this._initModule();
+  }
+
+  async getSound() {
+    if (this.system == null) {
+      await this._initModule();
+    }
+
+    const info = new this.fmodModule.CREATESOUNDEXINFO();
+    info.length = this.data.length;
+    const soundOut = {};
+    if (this.system.createSound(this.data, this.fmodModule.OPENMEMORY, info, soundOut) !== 0) {
+      console.error('Could not create sound');
+    }
+    const sound = soundOut.val;
+    let numSubSounds = {};
+    if (sound.getNumSubSounds(numSubSounds) !== 0) {
+      console.error('Could not get number of subsounds');
+    }
+    let subSound;
+    if (numSubSounds.val > 0) {
+      const subSoundOut = {};
+      if (sound.getSubSound(0, subSoundOut) !== 0) {
+        console.error('Could not get subsound');
+      }
+      subSound = subSoundOut.val;
+    } else {
+      subSound = sound;
+    }
+    return subSound;
+  }
+
+  async getAudio(isRetry=false) {
+    try {
+      const sound = await this.getSound();
+      const wav = await this.convertSound(sound);
+      sound.release();
+      this.fmodModule.Memory_Free(sound.$$.ptr);  // releasing doesn't actually free the memory
+      return wav;
+    } catch (e) {
+      if (isRetry) {
+        console.error('failed on retry - not exporting');
+        return null;
+      }
+      console.warn('error exporting - resetting module and retrying');
+      console.warn(e.name);
+      await this.reset();
+      return await this.getAudio(true);
+    }
+  }
+
+  async playAudio() {
+    if (this.system == null) {
+      await this._initModule();
+    }
+    document.body.click();  // stupid hack to focus the page
+    this.system.playSound(await this.getSound(), null, false, {});
+  }
+
+  async convertSound(sound) {
+    let type = {};
+    let format = {};
+    let channels = {};
+    let bits = {};
+    if (sound.getFormat(type, format, channels, bits) !== 0) {
+      console.error('Could not get sound format');
+    }
+    channels = channels.val;
+    bits = bits.val;
+    format = format.val;
+    const frequency = {};
+    const priority = {};
+    if (sound.getDefaults(frequency, priority) !== 0) {
+      console.error('Could not get sound frequency');
+    }
+    const sampleRate = Math.floor(frequency.val);
+    let length = {};
+    if (sound.getLength(length, this.fmodModule.TIMEUNIT_PCMBYTES) !== 0) {
+      console.error('Could not get sound length');
+    }
+    length = length.val;
+    // console.log(channels, bits, sampleRate, length);
+
+    // if ((res = sound.lock(0, 128, ptr1, ptr2, len1, len2)) !== 0) {  // lock to read 128 bytes (0-128)
+    //   console.error('Could not lock sound for reading', res);
+    // }
+
+    // i fucking hate proprietary software
+    // there's a bug in fmod where Sound.lock doesn't
+    // work at all so we have to parse the WASM heap to get the audio data
+    const sndOffset = new DataView(
+      this.fmodModule.HEAPU8.slice(sound.$$.ptr, sound.$$.ptr + 4).buffer
+    ).getUint32(0, true);
+    const intSndOffset = new DataView(
+      this.fmodModule.HEAPU8.slice(sndOffset + 228, sndOffset + 232).buffer
+    ).getUint32(0, true);
+    const soundData = this.fmodModule.HEAPU8.slice(intSndOffset, intSndOffset + length);
+
+    // encode WAV
+    const writer = new BinaryWriter(soundData.length + 44, 'little');
+    writer.writeChars('RIFF');  // RIFF header
+    writer.writeUInt32(soundData.length + 36);  // Length (minus RIFF/length)
+    writer.writeChars('WAVE');  // RIFF format
+    // Format chunk
+    writer.writeChars('fmt ');  // Header
+    writer.writeUInt32(16);  // Length
+    let wavFormat = 0;
+    switch (format) {
+      case this.fmodModule.SOUND_FORMAT_PCM8:
+      case this.fmodModule.SOUND_FORMAT_PCM16:
+      case this.fmodModule.SOUND_FORMAT_PCM24:
+      case this.fmodModule.SOUND_FORMAT_PCM32:
+        wavFormat = 1;  // PCM
+        break;
+      case this.fmodModule.SOUND_FORMAT_PCMFLOAT:
+        wavFormat = 3;  // Float
+        break;
+      default:
+        console.error(`Unsupported sound format ${format}!`);
+        return null;
+    }
+    writer.writeUInt16(wavFormat);  // Format
+    writer.writeUInt16(channels);  // # of channels
+    writer.writeUInt32(sampleRate);  // Sample rate
+    writer.writeUInt32(sampleRate * channels * bits / 8);  // Byte rate
+    writer.writeUInt16(channels * bits / 8);  // Block align
+    writer.writeUInt16(bits);  // Bits per sample
+    // Data chunk
+    writer.writeChars('data');  // Header
+    writer.writeUInt32(soundData.length);  // Length
+    writer.write(soundData);  // Data
+
     return writer.data;
-  }
-
-  getSound(sampleIndex) {
-    switch (this.format.value) {
-      case 1:  // PCM (8-bit)
-        return this._getWAV(sampleIndex, 1);
-      case 2:  // PCM (16-bit)
-        return this._getWAV(sampleIndex, 2);
-      case 3:  // PCM (24-bit)
-        return this._getWAV(sampleIndex, 3);
-      case 4:  // PCM (32-bit)
-        return this._getWAV(sampleIndex, 4);
-    }
   }
 }

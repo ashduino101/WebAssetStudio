@@ -66,6 +66,7 @@ export class AudioClip extends NamedObject {
     'size',
     'compressionFormat'
   ];
+  exportExtension = '.wav';
   constructor(reader) {
     super(reader);
     if (reader.version[0] < 5) {
@@ -100,7 +101,6 @@ export class AudioClip extends NamedObject {
       this.offset = Number(reader.readInt64());
       this.size = Number(reader.readInt64());
       this.compressionFormat = AudioCompressionFormat[reader.readInt32()];
-      console.log('compressed:', this.compressionFormat);
     }
   }
 
@@ -110,15 +110,29 @@ export class AudioClip extends NamedObject {
     }
     if (typeof this.fsb == 'undefined') {
       this.fsb = new FSB5(this.data);
-      this.fsb.parse();
-      // console.log('header checksum:', new DataView(this.fsb.samples[0].chunks[0].data.buffer).getUint32(0, true));
-      // console.log('vorbis data:', fsb.samples[0].chunks[0].data);
-      console.log(this.fsb);
-      console.log('sound', this.fsb.getSound(0));
     }
   }
 
+  async createDataUrl() {
+    let wavData = await this.fsb.getAudio();
+    return URL.createObjectURL(new Blob([wavData], {type: 'audio/wav'}));
+  }
+
   async createPreview() {
-    return document.createElement('div');
+    await this.loadFSB();
+    const elem = document.createElement('audio');
+    elem.style.display = 'block';
+    elem.style.position = 'relative';
+    elem.style.top = '50%';
+    elem.style.left = '50%';
+    elem.style.transform = 'translate(-50%, -50%)';
+    elem.src = await this.createDataUrl();
+    elem.controls = true;
+    return elem;
+  }
+
+  async getExport() {
+    await this.loadFSB();
+    return await this.fsb.getAudio();
   }
 }

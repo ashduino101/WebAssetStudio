@@ -1,4 +1,4 @@
-import {Vector2, Vector3, Vector4, Quaternion, Color, Matrix4x4} from "./basicTypes";
+import {Vector2, Vector3, Vector4, Quaternion, Color, Matrix4x4} from "./unityfs/basicTypes";
 
 export const SEEK_SET = 0;
 export const SEEK_CUR = 1;
@@ -44,6 +44,10 @@ export class BinaryReader {
    */
   tell() {
     return this.offset;
+  }
+
+  get size() {
+    return this.data.length;
   }
 
   align(alignment) {

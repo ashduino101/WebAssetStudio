@@ -1,5 +1,5 @@
 import {PPtr} from "./pptr";
-import {BinaryReader} from "../binaryReader";
+import {BinaryReader} from "../../binaryReader";
 import {Quaternion} from "../basicTypes";
 import ClassIDType from "../classIDType";
 import {NamedObject} from "./namedObject";

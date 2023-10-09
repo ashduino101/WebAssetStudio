@@ -1,4 +1,4 @@
-import {BinaryReader} from "./binaryReader";
+import {BinaryReader} from "../binaryReader";
 import {lzmaDecompress} from "./utils";
 import {UnityFS} from "./unityFile";
 import {decompressBlock} from "lz4js";
