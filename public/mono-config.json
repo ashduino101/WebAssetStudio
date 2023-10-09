@@ -1,6 +1,6 @@
 {
   "mainAssemblyName": "wasmDecomp.dll",
-  "assemblyRootFolder": "../managed",
+  "assemblyRootFolder": "..",
   "debugLevel": -1,
   "assets": [
     {
@@ -694,7 +694,7 @@
     {
       "virtualPath": "runtimeconfig.bin",
       "behavior": "vfs",
-      "name": "../supportFiles/0_runtimeconfig.bin"
+      "name": "../0_runtimeconfig.bin"
     },
     {
       "loadRemote": false,
