@@ -851,6 +851,9 @@ export class SerializedShaderSubProgram {
 }
 
 export class SerializedShaderProgram {
+  static exposedAttributes = [
+    'programs'
+  ];
   constructor(reader) {
     let numSubPrograms = reader.readInt32();
     this.subProgramEntries = [];
@@ -858,9 +861,9 @@ export class SerializedShaderProgram {
        this.subProgramEntries.push(new SerializedShaderSubProgramEntry(reader));
     }
 
-    this.programs = [];
+    this.subPrograms = [];
     for (let entry of this.subProgramEntries) {
-      this.programs.push(new SerializedShaderSubProgram(reader));
+      this.subPrograms.push(new SerializedShaderSubProgram(reader));
     }
   }
 }
