@@ -2,6 +2,7 @@ import {NamedObject} from "./namedObject";
 import {PPtr} from "./pptr";
 import {KVPair} from "../basicTypes";
 import {decompressBlock} from "lz4js";
+import {BinaryReader, SEEK_CUR} from "../../binaryReader";
 
 export class VectorParameter {
   static exposedAttributes = [
@@ -798,6 +799,70 @@ export const ShaderCompilerPlatform = {
   22: 'GameCoreScarlett',
   23: 'PS5',
   24: 'PS5NGGC',
+}
+
+export class SerializedShaderSubProgramEntry {
+  constructor(reader) {
+    this.offset = reader.readInt32();
+    this.length = reader.readInt32();
+  }
+}
+
+export class SerializedShaderSubProgram {
+  static exposedAttributes = [
+    'version',
+    'programType',
+    'keywords'
+  ];
+  constructor(reader) {
+    this.version = reader.readInt32();
+    this.programType = ShaderGpuProgramType[reader.readInt32()];
+    reader.seek(12, SEEK_CUR);
+    if (this.version >= 201608170) {
+      reader.seek(4, SEEK_CUR);
+    }
+    let numKeywords = reader.readInt32();
+    this.keywords = [];
+    for (let i = 0; i < numKeywords; i++) {
+      this.keywords.push(reader.readAlignedString());
+    }
+    if (this.version >= 201806140 && this.version < 202012090) {
+       let numLocalKeywords = reader.readInt32();
+       this.localKeywords = [];
+       for (let i = 0; i < numLocalKeywords; i++) {
+         this.localKeywords.push(reader.readAlignedString());
+       }
+    }
+    this.byteCode = reader.read(reader.readInt32());
+    this.code = "// Cannot disassemble shader code";
+    switch (this.programType) {
+      case 'GLLegacy':
+      case 'GLES31AEP':
+      case 'GLES31':
+      case 'GLES3':
+      case 'GLES':
+      case 'GLCore32':
+      case 'GLCore41':
+      case 'GLCore43':
+        this.code = new TextDecoder('utf-8').decode(this.byteCode);
+    }
+    reader.align(4);
+  }
+}
+
+export class SerializedShaderProgram {
+  constructor(reader) {
+    let numSubPrograms = reader.readInt32();
+    this.subProgramEntries = [];
+    for (let i = 0; i < numSubPrograms; i++) {
+       this.subProgramEntries.push(new SerializedShaderSubProgramEntry(reader));
+    }
+
+    this.programs = [];
+    for (let entry of this.subProgramEntries) {
+      this.programs.push(new SerializedShaderSubProgram(reader));
+    }
+  }
 }
 
 export class Shader extends NamedObject {
