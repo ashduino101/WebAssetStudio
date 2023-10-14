@@ -614,7 +614,7 @@ export class SerializedPass {
   static exposedAttributes = [
     'nameIndices',
     'type',
-    'state',
+    // 'state',
     'programMask',
     'progVertex',
     'progFragment',

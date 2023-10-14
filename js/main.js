@@ -285,24 +285,28 @@ class AssetTree {
     let i = 0;
     let total = parser.objects.objects.length;
     for (let obj of parser.objects.objects) {
-      let object = obj.object;
-      let name = object.name;
-      if (name === '<unnamed>' || name === '<empty>' || (typeof name == 'undefined') || name === '') {
-        name = getClassName(obj.classID);
-      }
-      document.body.dispatchEvent(new CustomEvent('export-progress-update', {
-        detail: {
-          percent: i / parser.objects.objects.length * 100,
-          index: i,
-          total: total,
-          name: name
-        }
-      }));
-      await object.saveInfo(objectInfo,  name + '_' + i);
       try {
-        await object.saveObject(objects, name + '_' + i);
+        let object = obj.object;
+        let name = object.name;
+        if (name === '<unnamed>' || name === '<empty>' || (typeof name == 'undefined') || name === '') {
+          name = getClassName(obj.classID);
+        }
+        document.body.dispatchEvent(new CustomEvent('export-progress-update', {
+          detail: {
+            percent: i / parser.objects.objects.length * 100,
+            index: i,
+            total: total,
+            name: name
+          }
+        }));
+        await object.saveInfo(objectInfo, name + '_' + i);
+        try {
+          await object.saveObject(objects, name + '_' + i);
+        } catch (e) {
+          objects.file('ERROR_' + name + '_' + i, 'ERROR: Failed to export object:' + e.toString());
+        }
       } catch (e) {
-        objects.file('ERROR_' + name + '_' + i, 'ERROR: Failed to export object:' + e.toString());
+        console.error(`Error while exporting asset #${i}:`, e);
       }
       i++;
     }

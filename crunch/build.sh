@@ -1,0 +1,1 @@
+em++ crunch.cpp unitycrunch.cpp dllmain.cpp -Oz -o crunch_native.js -s NO_EXIT_RUNTIME=1 -s 'EXPORTED_RUNTIME_METHODS=["ccall", "cwrap"]' -s 'EXPORTED_FUNCTIONS=["_malloc", "_free", "_UnpackCrunch", "_UnpackUnityCrunch"]' -s ALLOW_MEMORY_GROWTH=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=loadCrunch

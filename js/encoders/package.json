@@ -1,0 +1,19 @@
+{
+  "name": "encoders",
+  "collaborators": [
+    "ashduino101 <ashduino101@gmail.com>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "encoders_bg.wasm",
+    "encoders.js",
+    "encoders_bg.js",
+    "encoders.d.ts"
+  ],
+  "module": "encoders.js",
+  "types": "encoders.d.ts",
+  "sideEffects": [
+    "./encoders.js",
+    "./snippets/*"
+  ]
+}
