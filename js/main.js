@@ -12,6 +12,7 @@ import {Resource} from "./godot/resource";
 import {BinaryReader} from "./binaryReader";
 import {PakFile} from "./unreal/pakfile";
 import {CSharpDecompiler} from "./cs-decomp/decompiler";
+import {PPtr} from "./unityfs/classes/pptr";
 
 class AssetTree {
   constructor(selector) {
@@ -197,6 +198,10 @@ class AssetTree {
         }
       } else if (obj instanceof ObjectCollection) {
         await this.createTreeForObjectCollection(obj, rootNode);
+      } else if (obj instanceof PPtr) {
+        await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened, {type: 'pptr', data: obj});
+        await this.createTreeForObject(obj.fileID, rootNode + '-' + name, 'fileID');
+        await this.createTreeForObject(obj.pathID, rootNode + '-' + name, 'pathID');
       } else if (obj instanceof TypeTreeReference) {
         await this.createTreeForTypeTree(obj, rootNode);
       } else {
@@ -432,6 +437,9 @@ data like pixels, vertices, and UV maps used by the asset.`
         document.getElementById('download-object').onclick = async () => {
           this.saveBlob(name + object.exportExtension, [await object.getAnyExport()]);
         };
+      } else if (data.node.data.type === 'pptr') {
+        let pptr = data.node.data.data;
+        pptr.resolve();
       }
     })
 

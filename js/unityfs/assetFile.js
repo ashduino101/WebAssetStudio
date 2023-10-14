@@ -271,7 +271,7 @@ export class ObjectCollection {
   }
 
   get(pathID) {
-    return this.objects.filter(obj => obj.pathID = pathID)[0];
+    return this.objects.filter(obj => obj.pathID === pathID)[0];
   }
 }
 
@@ -293,8 +293,9 @@ export class AssetFile {
     'userInformation'
   ]
 
-  constructor(reader) {
+  constructor(reader, fileID = 0) {
     this.reader = reader;
+    this.fileID = fileID;
   }
 
   parse() {
@@ -347,7 +348,7 @@ export class AssetFile {
       if (this.hasLongIDs) {
         info.pathID = this.reader.readInt64();
       } else if (this.version < 14) {
-        info.pathID = this.reader.readInt32();
+        info.pathID = BigInt(this.reader.readInt32());
       } else {
         this.reader.align(4);
         info.pathID = this.reader.readInt64();
@@ -426,6 +427,17 @@ export class AssetFile {
     if (this.version >= 5) {
       this.userInformation = this.reader.readCString();
     }
+
+    document.body.addEventListener('pptr-resolve-request', data => {
+      let {fileID, pathID} = data.detail;
+      if (this.fileID !== fileID) return;
+      let obj = this.objects.get(pathID);
+      if (obj) {
+        document.body.dispatchEvent(new CustomEvent('pptr-resolve-response', {detail: {status: true, fileID: fileID, pathID: pathID, object: obj}}));
+        return;
+      }
+      document.body.dispatchEvent(new CustomEvent('pptr-resolve-response', {detail: {status: false, fileID: fileID, pathID: pathID, object: null}}));
+    });
   }
 
   readSerializedTypeInfoOnly(isRef) {

@@ -103,4 +103,24 @@ export class Material extends NamedObject {
     }
     this.savedProperties = new UnityPropertySheet(reader);
   }
+
+  getTex(texName) {
+    let mainTex = this.savedProperties.texEnvs.filter(t => t.key === texName)[0];
+    if (mainTex) {
+      let texPtr = mainTex.value.texture;
+      texPtr.resolve();
+      if (texPtr.object) {
+        return texPtr.object;
+      }
+    }
+    return null
+  }
+
+  async createPreview() {
+    let mainTex = this.getTex('_MainTex');
+    if (mainTex) {
+      return await mainTex.createPreview();
+    }
+    return document.createElement('div');
+  }
 }

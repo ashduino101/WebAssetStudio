@@ -77,7 +77,7 @@ export class UnityFS {
         this.parser = new BundleFile(this.reader);
         break;
       case FileType.Assets:
-        this.parser = new AssetFile(this.reader);
+        this.parser = new AssetFile(this.reader, 0);
         break;
       default:
         return;
