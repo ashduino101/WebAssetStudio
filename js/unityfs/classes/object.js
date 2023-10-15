@@ -94,4 +94,9 @@ export class UnityObject {
       zip.file(baseName + this.exportExtension, data);
     }
   }
+
+  serialize() {
+    // Default -- return raw data
+    return this._raw;
+  }
 }

@@ -6,13 +6,16 @@ export class BinaryWriter {
   /**
    * Creates a new BinaryWriter.
    *
-   * @param length {number} Length of data.
+   * @param length {number} Initial length of data.
    * @param endian
+   * @param extendSize {number} How much to extend data by if this runs out of space.
    */
-  constructor(length, endian = 'big') {
+  constructor(length, endian = 'big', extendSize=32768) {
     this.data = new Uint8Array(length);
     this.offset = 0;
     this.endian = endian;
+    this.extendSize = extendSize;
+    this.size = 0;
   }
 
   /**
@@ -62,12 +65,22 @@ export class BinaryWriter {
   }
 
   write(data) {
+    if (this.offset + data.length > this.data.length) {
+      let newData = new Uint8Array(this.data.length + ((Math.ceil(data.length / this.extendSize) * this.extendSize) | 0));
+      newData.set(this.data);
+      this.data = newData;
+    }
     this.data.set(data, this.offset);
     this.offset += data.length;
+    this.size += data.length;
   }
 
   writeRaw(data, offset) {
     this.data.set(data, offset);
+  }
+
+  getData() {
+    return this.data.slice(0, this.size);
   }
 
   writeCString(str) {

@@ -1,7 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
-export function encode_png(a: number, b: number, c: number, d: number, e: number): void;
 export function swap_bytes_xbox(a: number, b: number, c: number): void;
 export function bgr2rgb(a: number, b: number, c: number): void;
 export function decode_a8(a: number, b: number, c: number, d: number): void;
@@ -44,6 +43,9 @@ export function decode_atc_rgb4(a: number, b: number, c: number, d: number, e: n
 export function decode_atc_rgba8(a: number, b: number, c: number, d: number, e: number, f: number): void;
 export function decode_astc(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number): void;
 export function decode(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): void;
+export function lz4_compress(a: number, b: number, c: number, d: number): void;
+export function lz4_decompress(a: number, b: number, c: number, d: number, e: number): void;
+export function encode_png(a: number, b: number, c: number, d: number, e: number): void;
 export function __wbg_wasmbindgentestcontext_free(a: number): void;
 export function wasmbindgentestcontext_new(): number;
 export function wasmbindgentestcontext_args(a: number, b: number, c: number): void;

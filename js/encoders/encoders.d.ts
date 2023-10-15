@@ -1,13 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
-* @param {number} width
-* @param {number} height
-* @param {Uint8Array} data
-* @returns {Uint8Array}
-*/
-export function encode_png(width: number, height: number, data: Uint8Array): Uint8Array;
-/**
 * @param {Uint8Array} data
 */
 export function swap_bytes_xbox(data: Uint8Array): void;
@@ -312,6 +305,24 @@ export function decode_astc(data: Uint8Array, width: number, height: number, blo
 * @returns {Uint8Array}
 */
 export function decode(format: string, data: Uint8Array, width: number, height: number, is_xbox: boolean): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @returns {Uint8Array}
+*/
+export function lz4_compress(data: Uint8Array): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} out_size
+* @returns {Uint8Array}
+*/
+export function lz4_decompress(data: Uint8Array, out_size: number): Uint8Array;
+/**
+* @param {number} width
+* @param {number} height
+* @param {Uint8Array} data
+* @returns {Uint8Array}
+*/
+export function encode_png(width: number, height: number, data: Uint8Array): Uint8Array;
 /**
 * Handler for `console.log` invocations.
 *

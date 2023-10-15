@@ -660,4 +660,8 @@ export class AssetFile {
     }
     return JSON.stringify(types);
   }
+
+  serialize() {
+    return new Uint8Array(0);
+  }
 }

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import $ from "jquery";
 import {OrbitControls} from "three/addons/controls/OrbitControls";
 import {
+  AmbientLight,
   Box3,
   Color, DirectionalLight,
   DirectionalLightHelper,
@@ -69,11 +70,19 @@ export class SkinnedMeshRenderer extends Renderer {
     if (this.mesh.object) {
       this.materials[0].resolve();
       if (this.materials[0].object) {
-        const tex = this.materials[0].object.getTex('_MainTex');
-        const emission = this.materials[0].object.getTex('_EmissionMap');
-        const bump = this.materials[0].object.getTex('_BumpMap');
-        const occlusion = this.materials[0].object.getTex('_OcclusionMap');
-        const metallic = this.materials[0].object.getTex('_MetallicGlossMap');
+        const mat = this.materials[0].object;
+        const tex = mat.getTexEnv('_MainTex');
+        const emission = mat.getTexEnv('_EmissionMap');
+        const bump = mat.getTexEnv('_BumpMap');
+        const occlusion = mat.getTexEnv('_OcclusionMap');
+        const metallicGloss = mat.getTexEnv('_MetallicGlossMap');
+
+        const bumpScale = mat.getFloat('_BumpScale') ?? 1;
+        const glossiness = mat.getFloat('_Glossiness') ?? 0;
+        const metallic = mat.getFloat('_Metallic') ?? 0.7;
+        const occlusionStrength = mat.getFloat('_OcclusionStrength') ?? 0.75;
+        const enableEmission = mat.getFloat('_EnableEmission') ?? true;
+
         if (!tex) return document.createElement('div');
 
         const scene = new Scene();
@@ -82,23 +91,28 @@ export class SkinnedMeshRenderer extends Renderer {
         const loader = new THREE.TextureLoader();
 
         const matOptions = {
-          flatShading: true,
+          roughness: 0.75,
+          clearcoat: glossiness,
+          clearcoatRoughness: 0.5,
           map: loader.load(await tex.createDataUrl(0)),
         };
 
-        if (emission) {
+        if (emission && enableEmission) {
+          matOptions.emissive = 0xffffff;
           matOptions.emissiveIntensity = 1;
           matOptions.emissiveMap = loader.load(await emission.createDataUrl(0));
         }
         if (bump) {
           matOptions.bumpMap = loader.load(await bump.createDataUrl(0));
-          matOptions.bumpScale = 1;
+          matOptions.bumpScale = bumpScale;
         }
         if (occlusion) {
+          matOptions.aoMapIntensity = occlusionStrength;
           matOptions.aoMap = loader.load(await occlusion.createDataUrl(0));
         }
         if (metallic) {
-          matOptions.metalnessMap = loader.load(await metallic.createDataUrl(0));
+          matOptions.metalness = metallic;
+          matOptions.metalnessMap = loader.load(await metallicGloss.createDataUrl(0));
         }
 
         const material = new MeshPhysicalMaterial(matOptions);
@@ -118,34 +132,7 @@ export class SkinnedMeshRenderer extends Renderer {
         const prev = $('#preview');
         renderer.setSize(prev.width(), prev.height());
 
-        const intensity = 3;
-
-        const dirLight1 = new DirectionalLight(0xffffff, intensity);
-        dirLight1.position.set(50, 50, 75);
-
-        scene.add(dirLight1);
-
-        const dirLight2 = new DirectionalLight(0xffffff, intensity);
-        dirLight2.position.set(-50, 50, 75);
-
-        scene.add(dirLight2);
-
-        const dirLight3 = new DirectionalLight(0xffffff, intensity);
-        dirLight3.position.set(0, 50, -75);
-
-        scene.add(dirLight3);
-
-        const dirLight4 = new DirectionalLight(0xffffff, intensity);
-        dirLight4.position.set(0, -75, 0);
-
-        scene.add(dirLight4);
-
-        scene.add(
-          new DirectionalLightHelper(dirLight1),
-          new DirectionalLightHelper(dirLight2),
-          new DirectionalLightHelper(dirLight3),
-          new DirectionalLightHelper(dirLight4)
-        );
+        scene.add(new AmbientLight(0xffffff, 2));
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target.set(0, 0, 0);

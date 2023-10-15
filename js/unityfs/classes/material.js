@@ -104,16 +104,28 @@ export class Material extends NamedObject {
     this.savedProperties = new UnityPropertySheet(reader);
   }
 
-  getTex(texName) {
-    let mainTex = this.savedProperties.texEnvs.filter(t => t.key === texName)[0];
-    if (mainTex) {
-      let texPtr = mainTex.value.texture;
+  getTexEnv(key) {
+    let texEnv = this.savedProperties.texEnvs.filter(t => t.key === key)[0];
+    if (texEnv) {
+      let texPtr = texEnv.value.texture;
       texPtr.resolve();
       if (texPtr.object) {
         return texPtr.object;
       }
     }
     return null
+  }
+
+  getInt(key) {
+    return this.savedProperties.ints.filter(t => t.key === key)[0]?.value ?? null;
+  }
+
+  getFloat(key) {
+    return this.savedProperties.floats.filter(t => t.key === key)[0]?.value ?? null;
+  }
+
+  getColor(key) {
+    return this.savedProperties.colors.filter(t => t.key === key)[0]?.value ?? null;
   }
 
   async createPreview() {

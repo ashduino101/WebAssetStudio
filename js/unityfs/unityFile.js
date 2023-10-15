@@ -31,13 +31,7 @@ export class UnityFS {
         this.fileType = FileType.Web;
         break;
       default:
-        this.reader.seek(0);
-        magic = this.reader.read(2);
-        if (magic[0] === 0x1F && magic[1] === 0x8B) {
-          this.fileType = FileType.GZip;
-        } else if (magic[0] === 0x50 && magic[1] === 0x4B) {
-          this.fileType = FileType.Zip;
-        } else if (this.isAsset()) {
+        if (this.isAsset()) {
           this.fileType = FileType.Assets;
         } else {
           this.fileType = FileType.Resource;

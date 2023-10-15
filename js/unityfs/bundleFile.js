@@ -1,7 +1,9 @@
 import {BinaryReader} from "../binaryReader";
 import {lzmaDecompress} from "./utils";
-import {UnityFS} from "./unityFile";
-import {decompressBlock} from "lz4js";
+import {FileType, UnityFS} from "./unityFile";
+import {compressBlock, decompressBlock} from "lz4js";
+import {BinaryWriter} from "../binaryWriter";
+import {lz4_decompress} from "../encoders";
 
 export class BundleFlags {
   static exposedAttributes = [
@@ -19,6 +21,15 @@ export class BundleFlags {
     this.oldWebPluginCompat = (value & 0x100) === 0x100;
     this.blockInfoHasPadding = (value & 0x200) === 0x200;
   }
+
+  encode() {
+    let value = this.compressionType & 0x03;
+    if (this.hasDirInfo) value |= 0x40;
+    if (this.blockInfoAtEnd) value |= 0x80;
+    if (this.oldWebPluginCompat) value |= 0x100;
+    if (this.blockInfoHasPadding) value |= 0x200;
+    return value
+  }
 }
 
 export class BlockFlags {
@@ -30,6 +41,12 @@ export class BlockFlags {
   constructor(value) {
     this.compressionType = value & 0x3F;
     this.isStreamed = (value & 0x40) === 0x40;
+  }
+
+  encode() {
+    let value = this.compressionType & 0x03;
+    if (this.isStreamed) value |= 0x40;
+    return value;
   }
 }
 
@@ -110,6 +127,24 @@ export class BundleFile {
     }
   }
 
+  serialize() {
+    if (typeof this.size == 'undefined') {
+      console.error('Size required to serialize bundle');
+    }
+    let writer = new BinaryWriter(Number(this.size));
+    writer.writeCString(this.magic);
+    writer.writeUInt32(this.version);
+    writer.writeCString(this.unityVersion);
+    writer.writeCString(this.unityRevision);
+
+    switch (this.magic) {
+      case 'UnityFS':
+        writer.write(this.serializeUnityFS());
+    }
+
+    return writer.getData();
+  }
+
   parseUnityFS() {
     this.size = this.reader.readUInt64();
     this.compressedBlockInfoSize = this.reader.readUInt32();
@@ -170,9 +205,7 @@ export class BundleFile {
             break;
           case CompressionType.LZ4:
           case CompressionType.LZ4HC:
-            let dst = new Uint8Array(block.uncompressedSize);
-            decompressBlock(blockData, dst, 0, block.uncompressedSize, 0);
-            decompressedBlock = dst;
+            decompressedBlock = lz4_decompress(blockData, block.uncompressedSize);
             break;
           default:
             throw new Error('Unsupported compression type');
@@ -214,13 +247,83 @@ export class BundleFile {
         break;
       case CompressionType.LZ4:
       case CompressionType.LZ4HC:
-        let dst = new Uint8Array(this.uncompressedBlockInfoSize);
-        decompressBlock(blockInfoData, dst, 0, this.uncompressedBlockInfoSize, 0);
-        onDecompress(dst);
+        onDecompress(lz4_decompress(blockInfoData, this.uncompressedBlockInfoSize));
         break;
       default:
         throw new Error('Unsupported compression type');
     }
+
+    // console.log(this.serialize());
+  }
+
+  serializeUnityFS() {
+    // TODO: finish this
+    const writer = new BinaryWriter(Number(this.size));
+    writer.writeUInt64(this.size);
+    writer.writeUInt32(this.compressedBlockInfoSize);
+    writer.writeUInt32(this.uncompressedBlockInfoSize);
+    let copyFlags = new BundleFlags(this.flags.encode());
+    copyFlags.compressionType = CompressionType.None;  // TODO: implement other compression types
+    writer.writeUInt32(copyFlags.encode());
+
+    if (this.version >= 7) {
+      writer.align(16);
+    }
+
+    // Serialize files
+    const newNodes = [];
+    const blockData = new BinaryWriter(0);
+    for (let file of this.files) {
+      let data = new Uint8Array(0);
+      switch (file.type) {
+        case FileType.Resource:
+          data = file.data;
+          break;
+        case FileType.Bundle:
+          data = new BundleFile(new BinaryReader(file)).serialize();
+          break;
+        case FileType.Assets:
+          data = file.serialize();
+          break;
+      }
+      newNodes.push({
+        offset: blockData.offset,
+        size: data.length,
+        flags: file.node.flags,
+        path: file.node.path
+      });
+      blockData.write(data);
+    }
+
+    // Compress blocks
+    // compressBlock()
+
+    if (!this.flags.blockInfoAtEnd) {
+      // Hash - 16 bytes, isn't checked so we don't bother regenerating it (instead, we just zero it)
+      writer.writeUInt64(0n);
+      writer.writeUInt64(0n);
+
+
+
+      writer.writeUInt32(this.blockInfo.length);
+      for (let info of this.blockInfo) {
+        writer.writeUInt32(info.uncompressedSize);
+        writer.writeUInt32(info.compressedSize);
+        let copyBlkFlags = new BundleFlags(this.flags.encode());
+        copyBlkFlags.compressionType = CompressionType.LZ4;  // TODO: ^^
+        writer.writeUInt16(copyBlkFlags.encode());
+      }
+
+      writer.writeUInt32(this.nodes.length);
+      for (let node of this.nodes) {
+        writer.writeUInt64(node.offset);
+        writer.writeUInt64(node.size);
+        writer.writeUInt32(node.flags);
+        writer.writeCString(node.path);
+      }
+    }
+
+    return writer.getData();
   }
 
   parseUnityWeb() {

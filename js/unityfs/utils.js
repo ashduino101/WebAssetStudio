@@ -20,11 +20,6 @@ export const lzmaDecompress = function (data, rawSize) {
   dec.setLcLpPb(lc, lp, pb);
   dec.setDictionarySize(dictSize);
 
-// let outSize = 0;
-// for (let i = 0; i < 8; i++) {
-//   outSize |= stream.readByte() << (i * 8);
-// }
-
   let outStream = new BasicStream(null, rawSize + 1);  // the decoder prepends a byte for some reason
 
   dec.decode(stream, outStream, rawSize);

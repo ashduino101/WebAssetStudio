@@ -13,22 +13,11 @@ import {BinaryReader} from "./binaryReader";
 import {PakFile} from "./unreal/pakfile";
 import {CSharpDecompiler} from "./cs-decomp/decompiler";
 import {PPtr} from "./unityfs/classes/pptr";
+import {BinaryWriter} from "./binaryWriter";
 
 class AssetTree {
   constructor(selector) {
     this.tree = $(selector);
-
-    // this.loadFile(testData);
-
-    this.treeFiles = [];
-    this.treeObjects = {};
-
-    this.objectBranches = {};
-    this.typeTrees = {};
-
-    this.providedExternals = {};
-
-    this.isExporting = false;
   }
 
   htmlEscape(text) {
@@ -391,10 +380,25 @@ data like pixels, vertices, and UV maps used by the asset.`
   }
 
   async loadFile(data) {
+    this.treeFiles = [];
+    this.treeObjects = {};
+
+    this.objectBranches = {};
+    this.typeTrees = {};
+
+    this.providedExternals = {};
+
+    this.isExporting = false;
+
     this.parser = new UnityFS(data);
     this.parser.parse();
 
-    this.tree.empty();
+    const preview = document.getElementById('preview');
+
+    document.body.dispatchEvent(new CustomEvent('destroy-preview'));
+    preview.innerHTML = '<h2 class="no-preview">Preview will show up here</h2>';
+
+    this.tree.jstree("destroy").empty();
     this.tree.jstree({
       "core" : {
         "themes" : {
@@ -414,7 +418,6 @@ data like pixels, vertices, and UV maps used by the asset.`
       "plugins": ["types"]
     });
 
-    const preview = document.getElementById('preview');
     this.tree.on("select_node.jstree", async (evt, data) => {
       if (data.node.data.type === 'object') {
         document.body.dispatchEvent(new CustomEvent('destroy-preview'));
@@ -617,4 +620,3 @@ function testClass() {
 }
 
 main();
-// testClass();

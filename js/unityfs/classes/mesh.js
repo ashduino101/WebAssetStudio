@@ -963,15 +963,22 @@ export class Mesh extends NamedObject {
 
   toGeometry() {
     const geometry = new THREE.BufferGeometry();
+
     let vertices = [];
     for (const vert of this.vertices) {
       vertices.push(vert[0], vert[1], vert[2]);
     }
     vertices = new Float32Array(vertices);
 
+    let normals = [];
+    for (const norm of this.vertices) {
+      normals.push(norm[0], norm[1], norm[2]);
+    }
+    normals = new Float32Array(vertices);
+
     let colors = [];
     for (const col of this.colors) {
-      colors.push(col[0], col[1], col[2], col[3]);
+      colors.push(col[0], col[1], col[2]);
     }
     colors = new Float32Array(colors);
 
@@ -983,7 +990,8 @@ export class Mesh extends NamedObject {
 
     geometry.setIndex(this.indices);
     geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
+    geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
     return geometry;
