@@ -34,7 +34,7 @@ import {AnimatorController} from "./classes/animatorController";
 import {ParticleSystemRenderer} from "./classes/particleSystemRenderer";
 import {VideoClip} from "./classes/videoClip";
 
-export default {
+const ClassIDType = {
     0: ['UnityObject', UnityObject],
     1: ['GameObject', GameObject],
     2: ['Component', Component],
@@ -398,4 +398,10 @@ export default {
     2083052967: 'VisualEffect',
     2083778819: 'LocalizationAsset',
     208985848: 'ScriptedImporter'
+}
+export default ClassIDType;
+
+export const classNames = [];
+for (let cls of Object.values(ClassIDType)) {
+    classNames.push(typeof cls == 'string' ? cls : cls[0]);
 }

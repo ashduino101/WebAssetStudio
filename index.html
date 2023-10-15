@@ -26,6 +26,9 @@
     <div id="left-upper">
       <input type="file" id="file-input">
       <label for="file-input" id="file-input-label" class="button">Open...</label>
+      <div id="options">
+        <label><input type="checkbox" id="hide-filtered"> Hide filtered out items</label>
+      </div>
       <button id="export-zip" class="button"><i class="bi bi-download"></i>Export .ZIP</button>
     </div>
     <div id="left-lower">
@@ -63,14 +66,18 @@
   </div>
 
   <div id="center">
+    <div id="filter">
+      <input type="text" id="filter-input" placeholder="Filter">
+      <div id="filter-suggest"></div>
+    </div>
     <div id="tree">
-      <h2 class="no-preview" id="no-tree">Tree will show up here</h2>
+      <h2 class="no-preview" id="no-tree">Open a file using the sidebar</h2>
     </div>
   </div>
 
   <div id="right">
     <div id="preview">
-      <h2 class="no-preview">Preview will show up here</h2>
+      <h2 class="no-preview">Select an object to preview</h2>
     </div>
     <div id="under-preview">
       <button id="download-info" class="button preview-button">Download info</button>

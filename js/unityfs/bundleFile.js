@@ -258,6 +258,7 @@ export class BundleFile {
 
   serializeUnityFS() {
     // TODO: finish this
+    // bundles shall not exceed 9 petabytes (but, knowing game developers, will)
     const writer = new BinaryWriter(Number(this.size));
     writer.writeUInt64(this.size);
     writer.writeUInt32(this.compressedBlockInfoSize);

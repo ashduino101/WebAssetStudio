@@ -129,7 +129,7 @@ export class Material extends NamedObject {
   }
 
   async createPreview() {
-    let mainTex = this.getTex('_MainTex');
+    let mainTex = this.getTexEnv('_MainTex');
     if (mainTex) {
       return await mainTex.createPreview();
     }

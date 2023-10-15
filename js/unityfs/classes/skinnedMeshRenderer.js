@@ -110,7 +110,7 @@ export class SkinnedMeshRenderer extends Renderer {
           matOptions.aoMapIntensity = occlusionStrength;
           matOptions.aoMap = loader.load(await occlusion.createDataUrl(0));
         }
-        if (metallic) {
+        if (metallicGloss) {
           matOptions.metalness = metallic;
           matOptions.metalnessMap = loader.load(await metallicGloss.createDataUrl(0));
         }

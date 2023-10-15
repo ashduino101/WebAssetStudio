@@ -6,7 +6,7 @@ import $ from 'jquery';
 import 'jstree';
 import '../css/vendor/jstree/style.min.css';
 import {NodeFile} from "./unityfs/bundleFile";
-import {getClassName} from "./unityfs/utils";
+import {compareFilter, getClassName} from "./unityfs/utils";
 import JSZip from 'jszip';
 import {Resource} from "./godot/resource";
 import {BinaryReader} from "./binaryReader";
@@ -14,6 +14,8 @@ import {PakFile} from "./unreal/pakfile";
 import {CSharpDecompiler} from "./cs-decomp/decompiler";
 import {PPtr} from "./unityfs/classes/pptr";
 import {BinaryWriter} from "./binaryWriter";
+import Filter from "./filter";
+import {classNames} from "./unityfs/classIDType";
 
 class AssetTree {
   constructor(selector) {
@@ -53,11 +55,11 @@ class AssetTree {
             <span class="tree-value value-${valueClass}">${this.htmlEscape(value)}</span>`;
   }
 
-  styleObject(object) {
-    return `<span class="tree-label label-objectname">${this.htmlEscape(object.name)}</span>
-            <span class="tree-label label-generic"> : </span>
-            <span class="tree-label label-objecttype">${this.htmlEscape(object.getClassName())}</span>
-            <span class="tree-label label-objectid"> @ ${this.htmlEscape(object.pathID)}</span>`;
+  styleObject(object, isHidden = false) {
+    return `<span class="tree-label label-objectname ${isHidden ? "hidden" : ""}">${this.htmlEscape(object.name)}</span>
+            <span class="tree-label label-generic ${isHidden ? "hidden" : ""}"> : </span>
+            <span class="tree-label label-objecttype ${isHidden ? "hidden" : ""}">${this.htmlEscape(object.getClassName())}</span>
+            <span class="tree-label label-objectid ${isHidden ? "hidden" : ""}"> @ ${this.htmlEscape(object.pathID)}</span>`;
   }
 
   async createNode(parent, nodeID, nodeText, nodeIcon, isOpen = false, data = {}) {
@@ -84,6 +86,12 @@ class AssetTree {
   async createTreeForObjectCollection(collection, rootNode) {
     await this.createNode(rootNode, rootNode + '-objects', this.styleTextAs('objects', 'generic'), 'icon-generic', true);
     for (let obj of collection.objects) {
+      if (
+        this.hasFilter('objectclass') &&
+        !this.filterAllOfKey('objectclass', obj.getClassName())
+      ) {
+        continue;
+      }
       obj.setCaching(false);
       await this.createNode(
         rootNode + '-objects',
@@ -369,6 +377,56 @@ data like pixels, vertices, and UV maps used by the asset.`
     return this.saveBlob('bundle.zip', [await this.exportZip()], 'application/zip');
   }
 
+  forEachObject(fn) {
+    Object.values($(this.tree.jstree().get_json('#', {
+      flat: true
+    }))).filter(v => v.data?.type === 'object').forEach(fn);
+  }
+
+  applyObjectClassFilter() {
+    this.forEachObject(obj => {
+      const isHidden = !this.filterAllOfKey('objectclass', obj.data.data.getClassName());
+      this.tree.jstree('show_node', obj);
+      if (this.hideFiltered) {
+        if (isHidden) {
+          this.tree.jstree('hide_node', obj);
+        }
+      } else {
+        this.tree.jstree(
+          'rename_node',
+          obj,
+          this.styleObject(
+            obj.data.data,
+            isHidden
+          )
+        );
+      }
+    });
+    this.tree.jstree(true).redraw(true);
+  }
+
+  applyFilter() {
+    this.applyObjectClassFilter();
+  }
+
+  setFilter(filter) {
+    this.activeFilter = filter;
+    this.applyFilter();
+  }
+
+  hasFilter(key) {
+    return this.activeFilter.filter(f => f.key === key).length > 0;
+  }
+
+  filterAllOfKey(key, value) {
+    let filters = this.activeFilter.filter(f => f.key === key);
+    let res = [];
+    for (let f of filters) {
+      res.push(compareFilter(f.op, f.val, value));
+    }
+    return !res.includes(false);
+  }
+
   async loadBundle() {
     await this.createTreeForObject(this.parser, '#', 'Bundle', 'bundle', 'icon-bundle');
     await this.setupResolver();
@@ -393,10 +451,12 @@ data like pixels, vertices, and UV maps used by the asset.`
     this.parser = new UnityFS(data);
     this.parser.parse();
 
+    this.activeFilter = [];
+
     const preview = document.getElementById('preview');
 
     document.body.dispatchEvent(new CustomEvent('destroy-preview'));
-    preview.innerHTML = '<h2 class="no-preview">Preview will show up here</h2>';
+    preview.innerHTML = '<h2 class="no-preview">Select an object to preview</h2>';
 
     this.tree.jstree("destroy").empty();
     this.tree.jstree({
@@ -471,14 +531,40 @@ data like pixels, vertices, and UV maps used by the asset.`
 
         await this.removeNode(parent + '-placeholder');
       }
-    })
+    });
+
+    this.filter = new Filter();
+    this.filter.validKeys = [
+      // 'type',
+      // 'name',
+      'objectclass',
+    ];
+    this.filter.valueSuggestions = {
+      // type: [
+      //   'bundle',
+      //   'asset',
+      //   'typetree',
+      //   'object',
+      //   'external',
+      //   'reftype',
+      //   'value'
+      // ],
+      objectclass: classNames
+    }
+    this.filter.onFilter = this.setFilter.bind(this);
+
+    document.getElementById('hide-filtered').addEventListener('input', e => {
+      this.hideFiltered = e.target.checked;
+      this.applyFilter();
+    });
+    this.hideFiltered = document.getElementById('hide-filtered').checked;
+
 
     const fileType = this.parser.fileType;
 
     if (typeof this.parser.parser != 'undefined') {
       this.parser = this.parser.parser;
     }
-    console.log(this.parser)
 
     switch (fileType) {
       case FileType.Bundle:
@@ -488,6 +574,8 @@ data like pixels, vertices, and UV maps used by the asset.`
         await this.loadAssets();
         break;
     }
+
+    this.filter.onSubmit(this.filter.input.value);
   }
 }
 
