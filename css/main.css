@@ -173,6 +173,12 @@ html, body {
   background-color: #dedede;
 }
 
+.ad {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 #darken {
   z-index: 10000;
   position: absolute;
