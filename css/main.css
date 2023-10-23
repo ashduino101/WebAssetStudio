@@ -102,18 +102,6 @@ html, body {
   bottom: 0;
 }
 
-#author {
-  margin: 0;
-  right: 0;
-  position: absolute;
-  bottom: 0;
-  user-select: none;
-}
-
-.bottom-inline {
-  display: inline-block;
-}
-
 #center {
   position: relative;
   height: 100%;
@@ -163,7 +151,7 @@ html, body {
 
 #right {
   position: absolute;
-  height: 100%;
+  height: 100% !important;
   width: 34%;  /* needs to be even to render correctly */
   top: 0;
   right: 0;
@@ -176,6 +164,8 @@ html, body {
   width: 100%;
   height: auto;
   display: block;
+  border: none;
+  outline: none;
 }
 
 #darken {
