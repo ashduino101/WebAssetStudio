@@ -1,7 +1,6 @@
 import {BinaryReader} from "../binaryReader";
 import {lzmaDecompress} from "./utils";
 import {FileType, UnityFS} from "./unityFile";
-import {compressBlock, decompressBlock} from "lz4js";
 import {BinaryWriter} from "../binaryWriter";
 import {lz4_decompress} from "../encoders";
 

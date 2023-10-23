@@ -8,7 +8,7 @@ import {
   Box3,
   Color, DirectionalLight,
   DirectionalLightHelper,
-  Mesh,
+  Mesh, MeshMatcapMaterial,
   MeshPhongMaterial, MeshPhysicalMaterial, MeshStandardMaterial,
   PerspectiveCamera,
   Scene,
@@ -76,6 +76,7 @@ export class SkinnedMeshRenderer extends Renderer {
         const bump = mat.getTexEnv('_BumpMap');
         const occlusion = mat.getTexEnv('_OcclusionMap');
         const metallicGloss = mat.getTexEnv('_MetallicGlossMap');
+        const matCap = mat.getTexEnv('_MatCapTex');
 
         const bumpScale = mat.getFloat('_BumpScale') ?? 1;
         const glossiness = mat.getFloat('_Glossiness') ?? 0;

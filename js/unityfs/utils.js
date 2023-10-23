@@ -2,24 +2,6 @@ import {BasicStream} from "./stream";
 import LZMA from "../vendor/lzma";
 import ClassIDType from "./classIDType";
 
-export function compareFilter(op, a, b) {
-  switch (op) {
-    case '==':
-      return a === b;
-    case '!=':
-      return a !== b;
-    case '<':
-      return a < b;
-    case '<=':
-      return a <= b;
-    case '>':
-      return a > b;
-    case '>=':
-      return a >= b;
-  }
-  return false;
-}
-
 export const lzmaDecompress = function (data, rawSize) {
   let dec = new LZMA.Decoder();
   let stream = new BasicStream(data);

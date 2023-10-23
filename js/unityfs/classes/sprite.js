@@ -71,6 +71,8 @@ export class SpriteRenderData {
     'alphaTexture',
     'secondaryTextures',
     'subMeshes',
+    // 'indexBuffer',
+    'vertexData',
     'bindPose',
     'sourceSkins',
     'textureRect',

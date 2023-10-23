@@ -1,4 +1,60 @@
+import {BinaryWriter} from "../binaryWriter";
+import {decompress} from "./utils";
+
 const PAK_MAGIC = 1517228769;
+
+const PakFile_Version_Initial = 1,
+  PakFile_Version_NoTimestamps = 2,
+  PakFile_Version_CompressionEncryption = 3,
+  PakFile_Version_IndexEncryption = 4,
+  PakFile_Version_RelativeChunkOffsets = 5,
+  PakFile_Version_DeleteRecords = 6,
+  PakFile_Version_EncryptionKeyGuid = 7,
+  PakFile_Version_FNameBasedCompressionMethod = 8,
+  PakFile_Version_FrozenIndex = 9,
+  PakFile_Version_PathHashIndex = 10,
+  PakFile_Version_Fnv64BugFix = 11;
+
+export class Entry {
+  constructor(reader, version, compressionMethods) {
+    this.name = reader.readString();
+    this.offset = Number(reader.readUInt64());
+    this.compressedSize = Number(reader.readUInt64());
+    this.uncompressedSize = Number(reader.readUInt64());
+    if (version < PakFile_Version_FNameBasedCompressionMethod) {
+      this.compressionMethod = [
+        'None',
+        'Zlib',
+        'GZip',
+        'Custom'
+      ][reader.readUInt32()];
+      this.compressionMethodIndex = -1;
+    } else {
+      this.compressionMethodIndex = reader.readUInt32();
+      this.compressionMethod = compressionMethods[this.compressionMethodIndex - 1];
+    }
+    if (version <= PakFile_Version_Initial) {
+      this.timeStamp = reader.readUInt64();  // TODO: this is an FDateTime, not a u64
+    }
+    this.hash = reader.read(20);
+    if (version >= PakFile_Version_CompressionEncryption) {
+      this.compressionBlocks = [];
+      if (this.compressionMethodIndex !== 0) {
+        let numCompressionBlocks = reader.readUInt32();
+        for (let i = 0; i < numCompressionBlocks; i++) {
+          this.compressionBlocks.push({
+            start: Number(reader.readUInt64()),
+            end: Number(reader.readUInt64())
+          });
+        }
+      }
+      let flags = reader.readUInt8();
+      this.isEncrypted = flags & 0x01;
+      this.isDeleted = flags & 0x02;
+      this.compressionBlockSize = reader.readUInt32();
+    }
+  }
+}
 
 export class IndexEntry {
   constructor(reader) {
@@ -75,30 +131,68 @@ export class PakFile {
     this.indexOffset = Number(this.reader.readUInt64());
     this.indexSize = Number(this.reader.readUInt64());
     this.indexHash = this.reader.read(20);
+    if (this.version >= PakFile_Version_FrozenIndex && this.version < PakFile_Version_PathHashIndex) {
+      this.indexFrozen = this.reader.readBool();
+    }
+    if (this.version >= PakFile_Version_FNameBasedCompressionMethod) {
+      this.compressionMethods = [];
+      for (let i = 0; i < 5; i++) {  // up to 5 compression methods
+        let method = this.reader.readCString();
+        if (method === '') break;
+        this.compressionMethods.push(method);
+      }
+    }
+    console.log(this.compressionMethods);
   }
 
   loadIndex() {
     this.reader.seek(this.indexOffset);
     this.mountPoint = this.reader.readString();
     this.numFiles = this.reader.readUInt32();
-    this.fileHashSeed = Number(this.reader.readUInt64());
-    this.hasFileHashIndex = !!this.reader.readInt32();
-    if (this.hasFileHashIndex) {
-      this.fileHashIndexOffset = Number(this.reader.readUInt64());
-      this.fileHashIndexSize = Number(this.reader.readUInt64());
-      this.fileHashIndexHash = this.reader.read(20);
-    }
-    this.hasFullDirectoryIndex = !!this.reader.readInt32();
-    if (this.hasFullDirectoryIndex) {
-      this.fullDirectoryIndexOffset = Number(this.reader.readUInt64());
-      this.fullDirectoryIndexSize = Number(this.reader.readUInt64());
-      this.fullDirectoryIndexHash = this.reader.read(20);
-    }
-    let indexSize = this.reader.readUInt32();
+    // this.fileHashSeed = this.reader.readUInt64();
+    // this.hasFileHashIndex = !!this.reader.readInt32();
+    // if (this.hasFileHashIndex) {
+    //   this.fileHashIndexOffset = Number(this.reader.readUInt64());
+    //   this.fileHashIndexSize = Number(this.reader.readUInt64());
+    //   this.fileHashIndexHash = this.reader.read(20);
+    // }
+    // this.hasFullDirectoryIndex = !!this.reader.readInt32();
+    // if (this.hasFullDirectoryIndex) {
+    //   this.fullDirectoryIndexOffset = Number(this.reader.readUInt64());
+    //   this.fullDirectoryIndexSize = Number(this.reader.readUInt64());
+    //   this.fullDirectoryIndexHash = this.reader.read(20);
+    // }
+    // let indexSize = this.reader.readUInt32();
     this.index = [];
+    this.indexMap = new Map();
     for (let i = 0; i < this.numFiles; i++) {
-      this.index.push(new IndexEntry(this.reader));
+      const e = new Entry(this.reader, this.version, this.compressionMethods);
+      this.index.push(e);
+      this.indexMap.set(e.name, e);
     }
+    console.log(this.getEntry('MusePackage/Content/Native/Levels/City_BuiltData.ubulk'));
+    // let ix = this.index;
+    // ix.sort((a, b) => a.uncompressedSize - b.uncompressedSize);
+    // ix.forEach(i => console.log(i.name, i.uncompressedSize))
+
+  }
+
+  readEntry(entry) {
+    if (typeof entry.compressionBlocks == 'undefined') {
+      this.reader.seek(entry.offset);
+      new Entry(this.reader, this.version, this.compressionMethods);  // get past the entry before the data
+      return this.reader.read(entry.uncompressedSize);
+    }
+    let res = new BinaryWriter(entry.uncompressedSize);
+    for (let block of entry.compressionBlocks) {
+      this.reader.seek(entry.offset + block.start);
+      res.write(decompress(this.reader.read(block.end - block.start), entry.compressionMethod));
+    }
+    return res.getData();
+  }
+
+  getEntry(name) {
+    return this.readEntry(this.indexMap.get(name));
   }
 
   parse() {

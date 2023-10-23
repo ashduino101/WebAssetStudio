@@ -154,6 +154,10 @@ export class ObjectInfo {
     this._targetPlatform = targetPlatform;
 
     this.enableCaching = true;
+
+    this.internalID = 'xxxxxxxxxxxxxxxx'.replaceAll(/x/g, () => Math.random().toString(16)[2]);
+
+    this.hasRenderedOn = [];
   }
 
   getClassName() {

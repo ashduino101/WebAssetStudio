@@ -1,21 +1,18 @@
 import {AssetFile, ObjectCollection, TypeTreeReference} from "./unityfs/assetFile";
 import {FileType, UnityFS} from "./unityfs/unityFile";
 import {FSB5} from "./fsb5/fsb5";
-import {HexView} from "./hexview";
 import $ from 'jquery';
 import 'jstree';
 import '../css/vendor/jstree/style.min.css';
 import {NodeFile} from "./unityfs/bundleFile";
-import {compareFilter, getClassName} from "./unityfs/utils";
+import {getClassName} from "./unityfs/utils";
 import JSZip from 'jszip';
-import {Resource} from "./godot/resource";
-import {BinaryReader} from "./binaryReader";
-import {PakFile} from "./unreal/pakfile";
-import {CSharpDecompiler} from "./cs-decomp/decompiler";
 import {PPtr} from "./unityfs/classes/pptr";
-import {BinaryWriter} from "./binaryWriter";
 import Filter from "./filter";
 import {classNames} from "./unityfs/classIDType";
+import {PakFile} from "./unreal/pakfile";
+import {BinaryReader} from "./binaryReader";
+import pako from 'pako';
 
 class AssetTree {
   constructor(selector) {
@@ -70,9 +67,7 @@ class AssetTree {
         "icon": nodeIcon,
         "opened": isOpen,
         "data": data
-      }, "last", function() {
-        resolve();
-      });
+      }, "last", resolve);
     });
   }
 
@@ -81,6 +76,27 @@ class AssetTree {
       this.tree.jstree().delete_node(nodeID);
       resolve();
     });
+  }
+
+  async createTreeForUnityObject(obj, rootNode, isFromPPtr = false, isNone = false) {
+    if (!isNone) obj.setCaching(false);
+    await this.createNode(
+      rootNode,
+      rootNode + '-' + obj.pathID,
+      isNone ? '<span class="tree-label label-objectname">&lt;none&gt;</span>' : ((isFromPPtr ? '<i>' : '') + this.styleObject(obj) + (isFromPPtr ? '</i>' : '')),
+      'icon-object',
+      true,
+      // {pathID: obj.pathID, fileID: collection.fileID}
+      {type: 'object', data: obj, root: rootNode, isNone: isNone}
+    );
+    if (!isNone) {
+      await this.createNode(
+        rootNode + '-' + obj.pathID,
+        rootNode + '-' + obj.pathID + '-placeholder',
+        '&lt;not loaded&gt;',
+        'icon-generic'
+      );
+    }
   }
 
   async createTreeForObjectCollection(collection, rootNode) {
@@ -92,22 +108,7 @@ class AssetTree {
       ) {
         continue;
       }
-      obj.setCaching(false);
-      await this.createNode(
-        rootNode + '-objects',
-        rootNode + '-objects-' + obj.pathID,
-        this.styleObject(obj),
-        'icon-object',
-        true,
-        // {pathID: obj.pathID, fileID: collection.fileID}
-        {type: 'object', data: obj, root: rootNode}
-      );
-      await this.createNode(
-        rootNode + '-objects-' + obj.pathID,
-        rootNode + '-objects-' + obj.pathID + '-placeholder',
-        '&lt;not loaded&gt;',
-        'icon-generic'
-      );
+      await this.createTreeForUnityObject(obj, rootNode + '-objects');
     }
   }
 
@@ -197,8 +198,14 @@ class AssetTree {
         await this.createTreeForObjectCollection(obj, rootNode);
       } else if (obj instanceof PPtr) {
         await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened, {type: 'pptr', data: obj});
-        await this.createTreeForObject(obj.fileID, rootNode + '-' + name, 'fileID');
-        await this.createTreeForObject(obj.pathID, rootNode + '-' + name, 'pathID');
+        obj.resolve();
+        if (obj.pathID === 0n) {
+          await this.createTreeForUnityObject(obj, rootNode + '-' + name, true, true);
+        } else {
+          await this.createTreeForUnityObject(obj.info, rootNode + '-' + name, true);
+        }
+        // await this.createTreeForObject(obj.fileID, rootNode + '-' + name, 'fileID');
+        // await this.createTreeForObject(obj.pathID, rootNode + '-' + name, 'pathID');
       } else if (obj instanceof TypeTreeReference) {
         await this.createTreeForTypeTree(obj, rootNode);
       } else {
@@ -480,6 +487,7 @@ data like pixels, vertices, and UV maps used by the asset.`
 
     this.tree.on("select_node.jstree", async (evt, data) => {
       if (data.node.data.type === 'object') {
+        if (data.node.data.isNone) return;
         document.body.dispatchEvent(new CustomEvent('destroy-preview'));
         let object = data.node.data.data.object;
         if (typeof object.createPreview === 'function') {
@@ -509,7 +517,7 @@ data like pixels, vertices, and UV maps used by the asset.`
     this.tree.on("open_node.jstree", async (evt, data) => {
       let parent = data.node.id;
       let dataDesc = data.node.data;
-      if (dataDesc.type === 'object' && !(dataDesc.data.pathID in this.objectBranches)) {
+      if (dataDesc.type === 'object' && !dataDesc.data.hasRenderedOn.includes(parent)) {
         await this.createNode(parent, parent + 'classID', this.styleKeyValue('classID', dataDesc.data.classID), 'icon-generic');
         await this.createNode(parent, parent + 'isDestroyed', this.styleKeyValue('isDestroyed', dataDesc.data.isDestroyed), 'icon-generic');
         await this.createNode(parent, parent + 'offset', this.styleKeyValue('offset', dataDesc.data.offset), 'icon-generic');
@@ -518,7 +526,7 @@ data like pixels, vertices, and UV maps used by the asset.`
         await this.createNode(parent, parent + 'size', this.styleKeyValue('size', dataDesc.data.size), 'icon-generic');
         await this.createNode(parent, parent + 'stripped', this.styleKeyValue('stripped', dataDesc.data.stripped), 'icon-generic');
         await this.createTreeForObject(dataDesc.data.object, parent, 'object');
-        this.objectBranches[dataDesc.data.pathID] = parent + '-object';
+        dataDesc.data.hasRenderedOn.push(parent);
 
         await this.removeNode(parent + '-placeholder');
       } else if (dataDesc.type === 'typetree' && !(dataDesc.data.classID + '_' + dataDesc.data.scriptTypeIndex in this.typeTrees)) {
@@ -578,18 +586,6 @@ data like pixels, vertices, and UV maps used by the asset.`
     this.filter.onSubmit(this.filter.input.value);
   }
 }
-
-function hexTest() {
-  let hexContainer = document.createElement('div');
-  hexContainer.style.position = 'absolute';
-  hexContainer.style.right = '0';
-  hexContainer.style.top = '0';
-  const hexView = new HexView(testData, hexContainer);
-  document.body.appendChild(hexContainer);
-}
-
-// inputTest();
-// hexTest();
 
 async function exportZip(tree) {
   tree.isExporting = true;
@@ -700,11 +696,12 @@ function testClass() {
     let reader = new FileReader();
     reader.onloadend = async b => {
       let arr = new Uint8Array(reader.result);
-      const obj = new FSB5(arr);
-      await obj.playAudio();
+      const obj = new PakFile(new BinaryReader(arr));
+      console.log(obj);
     }
     reader.readAsArrayBuffer(f);
   });
 }
 
 main();
+// testClass();

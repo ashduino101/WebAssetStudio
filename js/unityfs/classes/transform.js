@@ -3,6 +3,7 @@ import {PPtr} from "./pptr";
 
 export class Transform extends Component {
   static exposedAttributes = [
+    'gameObject',
     'localPosition',
     'localRotation',
     'localScale',
@@ -22,5 +23,30 @@ export class Transform extends Component {
       this.children.push(new PPtr(reader));
     }
     this.father = new PPtr(reader);
+  }
+
+  mapChildren() {
+    this.realChildren = [];
+    for (let child of this.children) {
+      child.resolve();
+      if (child.object) {
+        if (child.object instanceof Transform) {
+          child.object.mapChildren();
+          this.realChildren.push(child.object);
+        }
+      }
+    }
+  }
+
+  getFather() {
+    this.father.resolve();
+    return this.father.object;
+  }
+
+  async createPreview() {
+    this.mapChildren();
+    console.log(this);
+    console.log(this.getFather());
+    return document.createElement('div');
   }
 }
