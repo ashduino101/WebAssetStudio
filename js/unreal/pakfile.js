@@ -1,5 +1,7 @@
+import './version'
 import {BinaryWriter} from "../binaryWriter";
 import {decompress} from "./utils";
+import JSZip from "jszip";
 
 const PAK_MAGIC = 1517228769;
 
@@ -31,7 +33,7 @@ export class Entry {
       this.compressionMethodIndex = -1;
     } else {
       this.compressionMethodIndex = reader.readUInt32();
-      this.compressionMethod = compressionMethods[this.compressionMethodIndex - 1];
+      this.compressionMethod = compressionMethods[this.compressionMethodIndex - 1] ?? 'None';
     }
     if (version <= PakFile_Version_Initial) {
       this.timeStamp = reader.readUInt64();  // TODO: this is an FDateTime, not a u64
@@ -57,7 +59,7 @@ export class Entry {
 }
 
 export class IndexEntry {
-  constructor(reader) {
+  constructor(reader, version, compressionMethods) {
     let props = reader.readUInt32();
     this.compressionBlockSize = 0;
     if ((props & 0x3f) === 0x3f) {
@@ -66,6 +68,7 @@ export class IndexEntry {
       this.compressionBlockSize = ((props & 0x3f) << 11);
     }
     this.compressionMethodIndex = (props >> 23) & 0x3f;
+    this.compressionMethod = compressionMethods[this.compressionMethodIndex - 1] ?? 'None';
     let offsetIs32Bit = (props & (1 << 31)) !== 0;
     if (offsetIs32Bit) {
       this.offset = reader.readUInt32();
@@ -94,9 +97,6 @@ export class IndexEntry {
     if (this.compressionBlockCount === 1) {
       // If we have a single block, make sure to read all of our data from it
       this.compressionBlockSize = this.uncompressedSize;
-    }
-    if (this.compressionBlockCount > 0) {
-      this.compressionBlockSizePtr = reader.readUInt32();
     }
   }
 }
@@ -137,7 +137,7 @@ export class PakFile {
     if (this.version >= PakFile_Version_FNameBasedCompressionMethod) {
       this.compressionMethods = [];
       for (let i = 0; i < 5; i++) {  // up to 5 compression methods
-        let method = this.reader.readCString();
+        let method = this.reader.readChars(32).split('\0')[0];
         if (method === '') break;
         this.compressionMethods.push(method);
       }
@@ -149,28 +149,41 @@ export class PakFile {
     this.reader.seek(this.indexOffset);
     this.mountPoint = this.reader.readString();
     this.numFiles = this.reader.readUInt32();
-    // this.fileHashSeed = this.reader.readUInt64();
-    // this.hasFileHashIndex = !!this.reader.readInt32();
-    // if (this.hasFileHashIndex) {
-    //   this.fileHashIndexOffset = Number(this.reader.readUInt64());
-    //   this.fileHashIndexSize = Number(this.reader.readUInt64());
-    //   this.fileHashIndexHash = this.reader.read(20);
-    // }
-    // this.hasFullDirectoryIndex = !!this.reader.readInt32();
-    // if (this.hasFullDirectoryIndex) {
-    //   this.fullDirectoryIndexOffset = Number(this.reader.readUInt64());
-    //   this.fullDirectoryIndexSize = Number(this.reader.readUInt64());
-    //   this.fullDirectoryIndexHash = this.reader.read(20);
-    // }
-    // let indexSize = this.reader.readUInt32();
-    this.index = [];
-    this.indexMap = new Map();
-    for (let i = 0; i < this.numFiles; i++) {
-      const e = new Entry(this.reader, this.version, this.compressionMethods);
-      this.index.push(e);
-      this.indexMap.set(e.name, e);
+    if (this.version >= 10) {
+      this.fileHashSeed = this.reader.readUInt64();
+      this.hasFileHashIndex = !!this.reader.readInt32();
+      if (this.hasFileHashIndex) {
+        this.fileHashIndexOffset = Number(this.reader.readUInt64());
+        this.fileHashIndexSize = Number(this.reader.readUInt64());
+        this.fileHashIndexHash = this.reader.read(20);
+      }
+      this.hasFullDirectoryIndex = !!this.reader.readInt32();
+      if (this.hasFullDirectoryIndex) {
+        this.fullDirectoryIndexOffset = Number(this.reader.readUInt64());
+        this.fullDirectoryIndexSize = Number(this.reader.readUInt64());
+        this.fullDirectoryIndexHash = this.reader.read(20);
+      }
+      let indexSize = this.reader.readUInt32();
+
+      this.index = [];
+      this.indexMap = new Map();
+      for (let i = 0; i < this.numFiles; i++) {
+        const e = new IndexEntry(this.reader, this.version, this.compressionMethods);
+        this.index.push(e);
+        this.indexMap.set(i, e);
+      }
+    } else {
+      this.index = [];
+      this.indexMap = new Map();
+      for (let i = 0; i < this.numFiles; i++) {
+        const e = new Entry(this.reader, this.version, this.compressionMethods);
+        this.index.push(e);
+        this.indexMap.set(e.name, e);
+      }
     }
-    console.log(this.getEntry('MusePackage/Content/Native/Levels/City_BuiltData.ubulk'));
+    console.log(this.index)
+    console.log(this.readEntry(this.index[203]));
+    // console.log(this.getEntry('MusePackage/Content/Native/Levels/City_BuiltData.ubulk'));
     // let ix = this.index;
     // ix.sort((a, b) => a.uncompressedSize - b.uncompressedSize);
     // ix.forEach(i => console.log(i.name, i.uncompressedSize))
@@ -180,7 +193,9 @@ export class PakFile {
   readEntry(entry) {
     if (typeof entry.compressionBlocks == 'undefined') {
       this.reader.seek(entry.offset);
-      new Entry(this.reader, this.version, this.compressionMethods);  // get past the entry before the data
+      (this.version >= 10) ?
+        new IndexEntry(this.reader, this.version, this.compressionMethods) :
+        new Entry(this.reader, this.version, this.compressionMethods);  // get past the entry before the data
       return this.reader.read(entry.uncompressedSize);
     }
     let res = new BinaryWriter(entry.uncompressedSize);
@@ -193,6 +208,15 @@ export class PakFile {
 
   getEntry(name) {
     return this.readEntry(this.indexMap.get(name));
+  }
+
+  // For exporting without parsing .uassets etc.
+  async exportRawZip() {
+    let zip = new JSZip();
+    for (let e of this.index) {
+      zip.file(e.name, this.readEntry(e));
+    }
+    return await zip.generateAsync({type: 'uint8array'});
   }
 
   parse() {

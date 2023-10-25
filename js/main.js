@@ -13,6 +13,8 @@ import {classNames} from "./unityfs/classIDType";
 import {PakFile} from "./unreal/pakfile";
 import {BinaryReader} from "./binaryReader";
 import pako from 'pako';
+import {saveBlob} from "./utils";
+import {PackageFile} from "./unreal/package";
 
 class AssetTree {
   constructor(selector) {
@@ -366,22 +368,8 @@ data like pixels, vertices, and UV maps used by the asset.`
     return await zip.generateAsync({type: 'uint8array'});
   }
 
-  saveBlob(filename, data, type) {
-    const file = new Blob(data, {type: type});
-    const a = document.createElement('a');
-    const url = URL.createObjectURL(file);
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function() {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }, 0);
-  }
-
   async downloadZip() {
-    return this.saveBlob('bundle.zip', [await this.exportZip()], 'application/zip');
+    return saveBlob('bundle.zip', [await this.exportZip()], 'application/zip');
   }
 
   forEachObject(fn) {
@@ -696,7 +684,7 @@ function testClass() {
     let reader = new FileReader();
     reader.onloadend = async b => {
       let arr = new Uint8Array(reader.result);
-      const obj = new PakFile(new BinaryReader(arr));
+      const obj = new PackageFile(new BinaryReader(arr));
       console.log(obj);
     }
     reader.readAsArrayBuffer(f);

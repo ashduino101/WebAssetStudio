@@ -212,4 +212,7 @@ export class BinaryReader {
   readMatrix() {
     return new Matrix4x4(this.readArrayT(this.readFloat32.bind(this), 16));
   }
+  readGUID() {
+    return [...this.read(16)].map(i => i.toString(16).padStart(2, '0')).join('');
+  }
 }
