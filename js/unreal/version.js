@@ -664,4 +664,3 @@ export const UE4ObjectVersion = {
   // Fixed corrupt licensee flag in 4.26 assets
   VER_UE4_CORRECT_LICENSEE_FLAG: v4++
 };
-console.log(UE4ObjectVersion)
