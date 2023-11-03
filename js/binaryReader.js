@@ -93,6 +93,11 @@ export class BinaryReader {
     return this.readChars(this.readUInt32()).split('\0')[0];
   }
 
+  readVarString() {
+    /* string prefixed with varint */
+    return this.readChars(this.readVarInt()).split('\0')[0];
+  }
+
   readAlignedString() {
     let s = this.readChars(this.readUInt32());
     this.align(4);
@@ -144,6 +149,18 @@ export class BinaryReader {
   }
   readInt64() {
     return this.readT('BigInt64', 8);
+  }
+
+  readVarInt() {
+    let result = 0;
+    let bitsRead = 0;
+    let value;
+    do {
+      value = this.readUInt8();
+      result |= (value & 0x7f) << bitsRead;
+      bitsRead += 7;
+    } while (value & 0x80);
+    return result;
   }
 
   readFloat16() {  // extremely jank fp16 implementation

@@ -15,6 +15,7 @@ import {BinaryReader} from "./binaryReader";
 import pako from 'pako';
 import {saveBlob} from "./utils";
 import {PackageFile} from "./unreal/package";
+import XNBFile from "./xna/xnbFile";
 
 class AssetTree {
   constructor(selector) {
@@ -684,7 +685,7 @@ function testClass() {
     let reader = new FileReader();
     reader.onloadend = async b => {
       let arr = new Uint8Array(reader.result);
-      const obj = new PackageFile(new BinaryReader(arr));
+      const obj = new XNBFile(new BinaryReader(arr));
       console.log(obj);
     }
     reader.readAsArrayBuffer(f);
