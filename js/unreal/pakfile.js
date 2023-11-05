@@ -3,7 +3,7 @@ import {BinaryWriter} from "../binaryWriter";
 import {decompress} from "./utils";
 import JSZip from "jszip";
 
-const PAK_MAGIC = 1517228769;
+export const PAK_MAGIC = 1517228769;
 
 const PakFile_Version_Initial = 1,
   PakFile_Version_NoTimestamps = 2,

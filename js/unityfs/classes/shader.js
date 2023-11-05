@@ -3,6 +3,8 @@ import {PPtr} from "./pptr";
 import {KVPair} from "../basicTypes";
 import {decompressBlock} from "lz4js";
 import {BinaryReader, SEEK_CUR} from "../../binaryReader";
+import {lz4_decompress} from "../../encoders";
+import {BinaryWriter} from "../../binaryWriter";
 
 export class VectorParameter {
   static exposedAttributes = [
@@ -870,7 +872,7 @@ export class SerializedShaderProgram {
 
 export class Shader extends NamedObject {
   static exposedAttributes = [
-    'parsedForm',
+    // 'parsedForm',
     'platforms',
     'offsets',
     'compressedLengths',
@@ -932,8 +934,19 @@ export class Shader extends NamedObject {
         uncompressedSize += s;
       }
     }
-    let dst = new Uint8Array(uncompressedSize);
-    decompressBlock(this.compressedBlob, dst, 0, uncompressedSize, 0);
-    return dst;
+    let outBuf = new BinaryWriter(uncompressedSize);
+    let di = 0;
+    let d = 0;
+    for (let s of this.compressedLengths) {
+      d = 0;
+      for (let v of s) {
+        const offset = this.offsets[di][d];
+        const decLength = this.decompressedLengths[di][d];
+        outBuf.write(lz4_decompress(this.compressedBlob.slice(offset, offset + v), decLength));
+        d++;
+      }
+      di++;
+    }
+    return outBuf.getData();
   }
 }

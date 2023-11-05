@@ -134,6 +134,13 @@ pub fn decode_rgb565(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
 }
 
 #[wasm_bindgen]
+pub fn decode_bgr565(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut outdata = decode_rgb565(data, width, height);
+    bgr2rgb(&mut outdata);
+    outdata
+}
+
+#[wasm_bindgen]
 pub fn decode_r16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) as usize {
@@ -160,6 +167,58 @@ pub fn decode_rgba4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
     }
     out.into()
 }
+
+#[wasm_bindgen]
+pub fn decode_bgra4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut outdata = decode_rgba4444(data, width, height);
+    bgr2rgb(&mut outdata);
+    outdata
+}
+
+#[wasm_bindgen]
+pub fn decode_normalizedbyte2(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut out = Vec::new();
+    out.resize(width * height * 4, 0);
+    for i in 0..(width * height) {
+        out[i * 4] = data[i * 2];
+        out[i * 4 + 1] = data[i * 2];
+        out[i * 4 + 2] = data[i * 2];
+        out[i * 4 + 3] = data[i * 2 + 1];
+    }
+    out.into()
+}
+
+#[wasm_bindgen]
+pub fn decode_bgra5551(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut out = Vec::new();
+    for i in 0..(width * height) {
+        let color = u16::from_le_bytes([data[i * 2], data[i * 2 + 1]]);
+        out.write_all(&[
+            ((color & 0x7C00) >> 7) as u8,
+            ((color & 0x03E0) >> 2) as u8,
+            ((color & 0x001F) << 3) as u8,
+            (if (color & 0x8000) == 0x8000 {0xff} else {0x00}) as u8
+        ]).expect("bgra5551");
+    }
+    out.into()
+}
+
+#[wasm_bindgen]
+pub fn decode_rgba1010102(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut out = Vec::new();
+    for i in 0..(width * height) {
+        let color = u32::from_le_bytes([data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]]);
+        out.write_all(&[
+            ((color & 0x3FF00000) >> 20) as u8,
+            ((color & 0x000FFC00) >> 10) as u8,
+            (color & 0x000003FF) as u8,
+            (color & 0xC0000000) as u8
+        ]).expect("rgba1010102");
+    }
+    out.into()
+}
+
+
 
 #[wasm_bindgen]
 pub fn decode_bgra32(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
@@ -411,6 +470,33 @@ pub fn decode_dxt1(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc1_block, 8)
 }
 
+fn decode_bc2_block(data: &[u8], outbuf: &mut [u32]) {
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
+    let mut alpha = [0xffu32; 16];
+    for row in 0..4 {
+        let a0 = (data[row * 2] >> 4) * 16;
+        let a1 = (data[row * 2] & 0b1111) * 16;
+        let a2 = (data[row * 2 + 1] >> 4) * 16;
+        let a3 = (data[row * 2 + 1] & 0b1111) * 16;
+
+        alpha[row * 4] = a0 as u32;
+        alpha[row * 4 + 1] = a1 as u32;
+        alpha[row * 4 + 2] = a2 as u32;
+        alpha[row * 4 + 3] = a3 as u32;
+    }
+
+    let mut colors = [0u32; 16];
+    decode_bc1_block(&data[8..], &mut colors);
+    for (i, c) in colors.iter().enumerate() {
+        outbuf[i] = c & 0x00ffffff | (alpha[i] << 24);
+    }
+}
+
+#[wasm_bindgen]
+pub fn decode_dxt3(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    decode_generic_blocky(data, width, height, decode_bc2_block, 16)
+}
+
 #[wasm_bindgen]
 pub fn decode_dxt5(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc3_block, 16)
@@ -537,8 +623,7 @@ pub fn decode(format: &str, data: &mut [u8], width: usize, height: usize, is_xbo
             decode_dxt1(data, width, height)
         },
         "DXT3" => {
-            console_log!("DXT3 -- unsupported");
-            [].into()
+            decode_dxt3(data, width, height)
         },
         "DXT5" => {
             if is_xbox { swap_bytes_xbox(data) };

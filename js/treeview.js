@@ -1,10 +1,11 @@
 import $ from "jquery";
-import {compareFilter} from "./utils";
+import {compareFilter, saveBlob} from "./utils";
 import Filter from "./filter";
 
 export class AssetTree {
   constructor(selector) {
     this.tree = $(selector);
+    this.isExporting = false;
   }
 
   htmlEscape(text) {
@@ -67,6 +68,57 @@ export class AssetTree {
     Object.values($(this.tree.jstree().get_json('#', {
       flat: true
     }))).filter(v => v.data?.type === 'object').forEach(fn);
+  }
+
+  async createZip() {
+    console.error('This needs to be overridden by the child class!');
+  }
+
+  onExportStart() {
+    this.isExporting = true;
+    const darken = document.getElementById('darken');
+    const modal = document.getElementById('modal');
+    darken.style.display = 'block';
+    modal.innerHTML = '';
+
+    let bar = document.createElement('div');
+    bar.classList.add('progress-bar');
+    let innerBar = document.createElement('div');
+    innerBar.classList.add('progress-bar-inner');
+    let title = document.createElement('h2');
+    title.classList.add('modal-title');
+    title.textContent = 'Export progress';
+    let subtitle = document.createElement('p');
+    subtitle.classList.add('modal-subtitle');
+    bar.appendChild(innerBar);
+    modal.appendChild(title);
+    modal.appendChild(bar);
+    modal.appendChild(subtitle);
+    document.body.addEventListener('export-progress-update', e => {
+      let percent = e.detail.percent;
+      innerBar.style.width = `${percent}%`;
+      subtitle.textContent = `${e.detail.index + 1} / ${e.detail.total} : ${e.detail.name}`;
+    });
+    return {
+      bar,
+      innerBar,
+      subtitle
+    }
+  }
+
+  onExportEnd() {
+    const darken = document.getElementById('darken');
+    this.isExporting = false;
+    darken.style.display = 'none';
+  }
+
+  async exportZip() {
+    console.error('This should be overridden by the child class! ' +
+      'Remember to call `onExportStart` and `onExportEnd`, and `downloadZip` to create the zip.');
+  }
+
+  async downloadZip() {
+    return saveBlob('bundle.zip', [await this.createZip()], 'application/zip');
   }
 
   applyFilter() {
@@ -147,11 +199,11 @@ export class AssetTree {
       'Remember to call initTree, initListeners, and initFilter, as well as postInit at the end.');
   }
 
-  async onNodeOpen() {
+  async onNodeOpen(evt, data) {
     console.error('This method should be overridden by the child class!');
   }
 
-  async onNodeSelect() {
+  async onNodeSelect(evt, data) {
     console.error('This method should be overridden by the child class!');
   }
 

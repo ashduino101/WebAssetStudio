@@ -1,3 +1,5 @@
+import {typeReaders} from "./readers";
+
 const XNB_MAGIC = 'XNB'
 const XNB_PLATFORMS = {
   'w': 'Microsoft Windows',
@@ -6,15 +8,20 @@ const XNB_PLATFORMS = {
 }
 
 class TypeReader {
-  constructor(reader) {
+  static exposedAttributes = [
+    'name',
+    'version'
+  ];
+  constructor(reader, typeReaders) {
     this.name = reader.readVarString();
     this.version = reader.readInt32();
 
     this.class = this.name.split(',')[0];
+    this.typeReaders = typeReaders;
   }
 
-  read(reader) {
-    switch (this.class) {
+  read(reader, cls = this.class) {
+    switch (cls) {
       case 'Microsoft.Xna.Framework.Content.ByteReader':
         return reader.readUInt8();
       case 'Microsoft.Xna.Framework.Content.SByteReader':
@@ -41,13 +48,51 @@ class TypeReader {
         return reader.readChars(1);
       case 'Microsoft.Xna.Framework.Content.StringReader':
         return reader.readVarString();
+      case 'Microsoft.Xna.Framework.Content.ObjectReader':
+        const typeId = reader.readVarInt();
+        if (typeId === 0) return null;
+        return this.typeReaders[typeId].read(reader);
       default:
-        return // sometuibn jerhejrheswkajhfgHJKDG
+        // todo: idk if these are actually how the reader names are represented in the file
+        let type;
+        if ((type = /Microsoft\.Xna\.Framework\.Content\.EnumReader`1\[\[([\w\d.])+]]/.exec(this.class))?.length > 0) {
+          return this.read(reader, type[0]);
+        } else if ((type = /Microsoft\.Xna\.Framework\.Content\.NullableReader`1\[\[([\w\d.])+]]/.exec(this.class))?.length > 0) {
+          if (reader.readBool()) {
+            return this.read(reader, type[0]);
+          } else {
+            return null;
+          }
+        } else if ((type = /Microsoft\.Xna\.Framework\.Content\.(?:Array|List)Reader`1\[\[([\w\d.])+]]/.exec(this.class))?.length > 0) {
+          return reader.readArrayT(this.read.bind(this, reader, type[0]), reader.readUInt32());
+        } else if ((type = /Microsoft\.Xna\.Framework\.Content\.DictionaryReader`2\[\[([\w\d.])+],\[([\w\d.])+]]/.exec(this.class))?.length > 1) {
+          const dict = {};
+          for (let i = 0; i < reader.readUInt32(); i++) {
+            dict[this.read(reader, type[0])] = this.read(reader, type[1]);
+          }
+          return dict;
+        } else {
+          const typeReader = typeReaders[this.class];
+          if (typeReader) {
+            return new typeReader[0](reader, this.typeReaders);  // Some readers take typeReaders as an argument for polymorphic types
+          }
+        }
     }
   }
 }
 
 export default class XNBFile {
+  static exposedAttributes = [
+    'platform',
+    'formatVersion',
+    'isHiDef',
+    'isCompressed',
+    'size',
+    'typeReaders',
+    'primaryAsset',
+    'sharedResources'
+  ]
+
   constructor(reader) {
     reader.endian = 'little';
     if (reader.readChars(3) !== XNB_MAGIC) {
@@ -63,11 +108,15 @@ export default class XNBFile {
       this.uncompressedSize = reader.readUInt32();
     }
     let numTypeReaders = reader.readVarInt();
-    console.log(numTypeReaders)
     this.typeReaders = [];
     for (let i = 0; i < numTypeReaders; i++) {
-      this.typeReaders.push(new TypeReader(reader));
+      this.typeReaders.push(new TypeReader(reader, this.typeReaders));
     }
-    this.sharedResourceCount = reader.readVarInt();
+    const sharedResourceCount = reader.readVarInt();
+    this.primaryAsset = this.typeReaders[reader.readVarInt() - 1]?.read(reader);
+    this.sharedResources = [];
+    for (let i = 0; i < sharedResourceCount; i++) {
+      this.sharedResources.push(this.typeReaders[reader.readVarInt() - 1]?.read(reader));
+    }
   }
 }

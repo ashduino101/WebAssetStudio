@@ -1,6 +1,7 @@
 import {NamedObject} from "./namedObject";
 import {FSB5} from "../../fsb5/fsb5";
 import {requestExternalData} from "../utils";
+import {AudioPreview} from "../../preview/audio";
 
 export const FMODSoundType = {
   0: 'Unknown',
@@ -120,15 +121,7 @@ export class AudioClip extends NamedObject {
 
   async createPreview() {
     await this.loadFSB();
-    const elem = document.createElement('audio');
-    elem.style.display = 'block';
-    elem.style.position = 'relative';
-    elem.style.top = '50%';
-    elem.style.left = '50%';
-    elem.style.transform = 'translate(-50%, -50%)';
-    elem.src = await this.createDataUrl();
-    elem.controls = true;
-    return elem;
+    return new AudioPreview().create(await this.fsb.getAudio());
   }
 
   async getExport() {

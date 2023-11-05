@@ -47,6 +47,13 @@ export function decode_rgb565(data: Uint8Array, width: number, height: number): 
 * @param {number} height
 * @returns {Uint8Array}
 */
+export function decode_bgr565(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
 export function decode_r16(data: Uint8Array, width: number, height: number): Uint8Array;
 /**
 * @param {Uint8Array} data
@@ -55,6 +62,34 @@ export function decode_r16(data: Uint8Array, width: number, height: number): Uin
 * @returns {Uint8Array}
 */
 export function decode_rgba4444(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_bgra4444(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_normalizedbyte2(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_bgra5551(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_rgba1010102(data: Uint8Array, width: number, height: number): Uint8Array;
 /**
 * @param {Uint8Array} data
 * @param {number} width
@@ -160,6 +195,13 @@ export function decode_rgba64(data: Uint8Array, width: number, height: number): 
 * @returns {Uint8Array}
 */
 export function decode_dxt1(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_dxt3(data: Uint8Array, width: number, height: number): Uint8Array;
 /**
 * @param {Uint8Array} data
 * @param {number} width
@@ -320,9 +362,10 @@ export function lz4_decompress(data: Uint8Array, out_size: number): Uint8Array;
 * @param {number} width
 * @param {number} height
 * @param {Uint8Array} data
+* @param {boolean} flip
 * @returns {Uint8Array}
 */
-export function encode_png(width: number, height: number, data: Uint8Array): Uint8Array;
+export function encode_png(width: number, height: number, data: Uint8Array, flip: boolean): Uint8Array;
 /**
 * Handler for `console.log` invocations.
 *

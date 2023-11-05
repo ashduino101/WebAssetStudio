@@ -53,11 +53,7 @@ export class UnityObject {
           j.push(getAttrs(item));
         }
       } else {
-        if (typeof p == 'bigint') {
-          j = Number(p);
-        } else {
-          j = p;
-        }
+        j = p;
       }
       return j;
     }
@@ -70,7 +66,11 @@ export class UnityObject {
       return;
     }
 
-    zip.file(baseName + '.json', JSON.stringify(await this.getInfo(), undefined, 2));
+    zip.file(baseName + '.json', JSON.stringify(
+      await this.getInfo(),
+      (_, v) => typeof v === 'bigint' ? v.toString() : v,
+      2)
+    );
   }
 
   async getExport() {
