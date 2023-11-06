@@ -300,8 +300,8 @@ export class BundleFile {
 
     if (!this.flags.blockInfoAtEnd) {
       // Hash - 16 bytes, isn't checked so we don't bother regenerating it (instead, we just zero it)
-      writer.writeUInt64(0n);
-      writer.writeUInt64(0n);
+      writer.writeUInt64(BigInt(0));
+      writer.writeUInt64(BigInt(0));
 
 
 

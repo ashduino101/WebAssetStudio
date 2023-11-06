@@ -136,7 +136,7 @@ export default class UnityTree extends AssetTree {
       } else if (obj instanceof PPtr) {
         await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened, {type: 'pptr', data: obj});
         obj.resolve();
-        if (obj.pathID === 0n) {
+        if (obj.pathID === BigInt(0)) {
           await this.createTreeForUnityObject(obj, rootNode + '-' + name, true, true);
         } else {
           await this.createTreeForUnityObject(obj.info, rootNode + '-' + name, true);
