@@ -3,7 +3,7 @@
   "name": "WebAssetStudio",
   "description": "View and extract game asset bundles directly in your browser.",
   "icons": [{
-    "src": "/icon.png",
+    "src": "https://webassetstudio.xyz/icon.png",
     "type": "image/png",
     "sizes": "512x512"
   }],
