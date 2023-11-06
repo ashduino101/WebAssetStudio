@@ -3,11 +3,11 @@
   "name": "WebAssetStudio",
   "description": "View and extract game asset bundles directly in your browser.",
   "icons": [{
-    "src": "icon.png",
+    "src": "/icon.png",
     "type": "image/png",
     "sizes": "512x512"
   }],
-  "start_url": "/?utm_source=homescreen",
+  "start_url": "https://webassetstudio.xyz/?utm_source=homescreen",
   "display": "standalone",
   "background_color": "#dedede",
   "theme_color": "#3344ff"
