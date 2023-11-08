@@ -8,7 +8,6 @@ export class PPtr {
   }
 
   handleEvent(data) {
-    console.log(`from path ID resolve handler ${this.pathID}`);
     let {status, fileID, object} = data.detail;
     if (status && this.pathID === object.pathID && this.fileID === fileID) {
       this.info = object;
