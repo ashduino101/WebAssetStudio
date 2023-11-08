@@ -4,13 +4,17 @@ export class PPtr {
     this.pathID = reader.fileVersion < 14 ? BigInt(reader.readInt32()) : reader.readInt64();
     this.object = null;
     this.info = null;
-    document.body.addEventListener('pptr-resolve-response', data => {
-      let {status, fileID, object} = data.detail;
-      if (status && this.pathID === object.pathID && this.fileID === fileID) {
-        this.info = object;
-        this.object = this.info.object;
-      }
-    });
+    document.body.addEventListener(`pptr-resolve-response_${this.fileID}_${this.pathID}`, this.handleEvent.bind(this));
+  }
+
+  handleEvent(data) {
+    console.log(`from path ID resolve handler ${this.pathID}`);
+    let {status, fileID, object} = data.detail;
+    if (status && this.pathID === object.pathID && this.fileID === fileID) {
+      this.info = object;
+      this.object = this.info.object;
+      document.body.removeEventListener(`pptr-resolve-response_${this.fileID}_${this.pathID}`, this.handleEvent.bind(this));
+    }
   }
 
   resolve() {

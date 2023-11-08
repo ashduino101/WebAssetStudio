@@ -437,10 +437,12 @@ export class AssetFile {
       if (this.fileID !== fileID) return;
       let obj = this.objects.get(pathID);
       if (obj) {
-        document.body.dispatchEvent(new CustomEvent('pptr-resolve-response', {detail: {status: true, fileID: fileID, pathID: pathID, object: obj}}));
+        document.body.dispatchEvent(new CustomEvent(`pptr-resolve-response_${fileID}_${pathID}`,
+          {detail: {status: true, fileID: fileID, pathID: pathID, object: obj}}));
         return;
       }
-      document.body.dispatchEvent(new CustomEvent('pptr-resolve-response', {detail: {status: false, fileID: fileID, pathID: pathID, object: null}}));
+      document.body.dispatchEvent(new CustomEvent(`pptr-resolve-response_${fileID}_${pathID}`,
+        {detail: {status: false, fileID: fileID, pathID: pathID, object: null}}));
     });
   }
 

@@ -17,6 +17,7 @@ export default class UnityTree extends AssetTree {
   }
 
   async createTreeForUnityObject(obj, rootNode, isFromPPtr = false, isNone = false) {
+    if (obj == null) return;  // can't load the object
     if (!isNone) obj.setCaching(false);
     await this.createNode(
       rootNode,
