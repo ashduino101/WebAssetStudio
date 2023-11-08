@@ -6,6 +6,7 @@ import {PPtr} from "./classes/pptr";
 import JSZip from "jszip";
 import {classNames} from "./classIDType";
 import {AssetTree} from "../treeview";
+import {saveBlob} from "../utils";
 
 export default class UnityTree extends AssetTree {
   styleObject(object, isHidden = false) {
@@ -423,10 +424,10 @@ data like pixels, vertices, and UV maps used by the asset.`
       }
 
       document.getElementById('download-info').onclick = async () => {
-        this.saveBlob(name + '.json', [JSON.stringify(await object.getInfo(), undefined, 2)]);
+        saveBlob(name + '.json', [JSON.stringify(await object.getInfo(), undefined, 2)]);
       };
       document.getElementById('download-object').onclick = async () => {
-        this.saveBlob(name + object.exportExtension, [await object.getAnyExport()]);
+        saveBlob(name + object.exportExtension, [await object.getAnyExport()]);
       };
     } else if (data.node.data.type === 'pptr') {
       let pptr = data.node.data.data;
