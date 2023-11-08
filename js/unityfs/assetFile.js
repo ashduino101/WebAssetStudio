@@ -4,7 +4,7 @@ import {BinaryReader, SEEK_CUR} from "../binaryReader";
 import {BuildTarget} from "./buildTarget";
 import {ObjectReader} from "./objectReader";
 import {UnityObject} from "./classes/object";
-import {getClassName} from "./utils";
+import {firstPreviewable, getClassName, globalDestroy} from "./utils";
 
 export class TypeTree {
   static exposedAttributes = [
@@ -432,18 +432,46 @@ export class AssetFile {
       this.userInformation = this.reader.readCString();
     }
 
-    document.body.addEventListener('pptr-resolve-request', data => {
-      let {fileID, pathID} = data.detail;
-      if (this.fileID !== fileID) return;
-      let obj = this.objects.get(pathID);
-      if (obj) {
-        document.body.dispatchEvent(new CustomEvent(`pptr-resolve-response_${fileID}_${pathID}`,
-          {detail: {status: true, fileID: fileID, pathID: pathID, object: obj}}));
-        return;
+    this._boundPPtrResolveRequestHandler = this._pptrResolveHandler.bind(this);
+    document.body.addEventListener('pptr-resolve-request', this._boundPPtrResolveRequestHandler);
+
+    const container = this.objects.get(BigInt(1))?.object?.container;
+    if (container) {
+      const entryPoint = container[0]?.value?.asset?.object;
+      if (entryPoint) {
+        const firstPreview = firstPreviewable(entryPoint);
+        console.log(firstPreview)
+        if (firstPreview != null) {
+          setTimeout(() => {
+            const preview = document.getElementById('preview');
+            document.body.dispatchEvent(new CustomEvent('destroy-preview'));
+            preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
+            firstPreview.createPreview().then(prev => {
+              preview.innerHTML = '';
+              preview.appendChild(prev);
+            });
+          }, 0);  // wait for bundle to load
+        }
       }
+    }
+  }
+
+  _pptrResolveHandler(data) {
+    let {fileID, pathID} = data.detail;
+    if (this.fileID !== fileID) return;
+    let obj = this.objects.get(pathID);
+    if (obj) {
       document.body.dispatchEvent(new CustomEvent(`pptr-resolve-response_${fileID}_${pathID}`,
-        {detail: {status: false, fileID: fileID, pathID: pathID, object: null}}));
-    });
+        {detail: {status: true, fileID: fileID, pathID: pathID, object: obj}}));
+      return;
+    }
+    document.body.dispatchEvent(new CustomEvent(`pptr-resolve-response_${fileID}_${pathID}`,
+      {detail: {status: false, fileID: fileID, pathID: pathID, object: null}}));
+  }
+
+  destroy() {
+    document.body.removeEventListener('pptr-resolve-request', this._boundPPtrResolveRequestHandler);
+    globalDestroy();
   }
 
   readSerializedTypeInfoOnly(isRef) {

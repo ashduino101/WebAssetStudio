@@ -1,5 +1,6 @@
 import {EditorExtension} from "./editorExtension";
 import {PPtr} from "./pptr";
+import {Transform} from "./transform";
 
 export class GameObject extends EditorExtension {
   static exposedAttributes = [

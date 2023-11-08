@@ -1,4 +1,4 @@
-import {getClassName} from "./utils";
+import {getClassName, globalDestroy} from "./utils";
 import {NodeFile} from "./bundleFile";
 import {FileType, UnityFS} from "./unityFile";
 import {AssetFile, ObjectCollection, TypeTreeReference} from "./assetFile";
@@ -473,6 +473,8 @@ data like pixels, vertices, and UV maps used by the asset.`
     this.providedExternals = {};
 
     this.isExporting = false;
+
+    if (this.parser) this.parser.destroy();
 
     this.parser = new UnityFS(data);
     this.parser.parse();

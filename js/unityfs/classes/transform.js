@@ -1,5 +1,6 @@
 import {Component} from "./component";
 import {PPtr} from "./pptr";
+import {GameObject} from "./gameObject";
 
 export class Transform extends Component {
   static exposedAttributes = [
@@ -33,6 +34,12 @@ export class Transform extends Component {
         if (child.object instanceof Transform) {
           child.object.mapChildren();
           this.realChildren.push(child.object);
+        } else if (child.object instanceof GameObject) {
+          let c = [];
+          for (const ch of child.object.components) {
+            c.push(ch.object);
+          }
+          this.realChildren.push(c);
         }
       }
     }
