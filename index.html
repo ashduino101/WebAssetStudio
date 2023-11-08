@@ -24,8 +24,10 @@
 <body>
   <div id="left">
     <div id="left-upper">
-      <input type="file" id="file-input">
-      <label for="file-input" id="file-input-label" class="button">Open...</label>
+      <div id="left-upper-top">
+        <label for="file-input" id="file-input-label" class="button">Open...<input type="file" id="file-input"></label>
+        <button id="dir-input-button" class="button" style="display: none">Open folder</button>
+      </div>
       <div id="options">
         <label><input type="checkbox" id="hide-filtered"> Hide filtered out items</label>
       </div>
@@ -102,6 +104,12 @@
 
   <div id="darken">
     <div id="modal"></div>
+  </div>
+
+  <div id="file-overlay" style="display: none">
+    <div id="file-overlay-inner">
+      <h1 id="file-overlay-text">Drop a file here to load it</h1>
+    </div>
   </div>
 
   <script src="js/main.js" type="module"></script>

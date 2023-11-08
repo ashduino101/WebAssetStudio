@@ -38,13 +38,21 @@ html, body {
   position: relative;
 }
 
+#left-upper-top > * {
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+  margin-bottom: 5px;
+}
+
 #file-input {
   position: absolute;
   top: 0;
   left: 0;
   opacity: 0;
   width: 100%;
-  height: 30%;
+  height: 100%;
+  cursor: pointer;
 }
 
 .button {
@@ -63,12 +71,47 @@ html, body {
 
 #file-input-label {
   width: 100px;
+  position: relative;
 }
 
 #options {
   position: relative;
   margin-top: 20px;
   z-index: 50;
+}
+
+#file-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  background-color: #000000cc;
+}
+
+#file-overlay-inner {
+  border-radius: 20px;
+  border: 6px dashed #ffffff77;
+  width: 95%;
+  height: 95%;
+  position: relative;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#file-overlay-text {
+  width: 100%;
+  height: auto;
+  position: absolute;
+  text-align: center;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, calc(-50% - 40px));
+  font-family: Helvetica, sans-serif;
+  color: #ffffff77;
+  user-select: none;
 }
 
 #export-zip {
