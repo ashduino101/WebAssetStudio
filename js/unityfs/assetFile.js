@@ -5,6 +5,7 @@ import {BuildTarget} from "./buildTarget";
 import {ObjectReader} from "./objectReader";
 import {UnityObject} from "./classes/object";
 import {firstPreviewable, getClassName, globalDestroy} from "./utils";
+import {saveBlob} from "../utils";
 
 export class TypeTree {
   static exposedAttributes = [
@@ -450,6 +451,12 @@ export class AssetFile {
               preview.innerHTML = '';
               preview.appendChild(prev);
             });
+            document.getElementById('download-info').onclick = async () => {
+              saveBlob(name + '.json', [JSON.stringify(await firstPreview.getInfo(), undefined, 2)]);
+            };
+            document.getElementById('download-object').onclick = async () => {
+              saveBlob(name + firstPreview.exportExtension, [await firstPreview.getAnyExport()]);
+            };
           }, 0);  // wait for bundle to load
         }
       }

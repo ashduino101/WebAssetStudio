@@ -296,8 +296,8 @@ export class BoneWeights4 {
       this.weight = reader.readArrayT(reader.readFloat32.bind(reader), 4);
       this.boneIndex = reader.readArrayT(reader.readInt32.bind(reader), 4);
     } else {
-      this.weight = new Array(4);
-      this.boneIndex = new Array(4);
+      this.weight = new Array(4).fill(0);
+      this.boneIndex = new Array(4).fill(0);
     }
   }
 }
@@ -968,31 +968,52 @@ export class Mesh extends NamedObject {
     for (const vert of this.vertices) {
       vertices.push(vert[0], vert[1], vert[2]);
     }
-    vertices = new Float32Array(vertices);
 
-    let normals = [];
-    for (const norm of this.vertices) {
-      normals.push(norm[0], norm[1], norm[2]);
+    if (this.normals) {
+      let normals = [];
+      for (const norm of this.normals) {
+        normals.push(norm[0], norm[1], norm[2]);
+      }
+      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
     }
-    normals = new Float32Array(vertices);
 
-    let colors = [];
-    for (const col of this.colors) {
-      colors.push(col[0], col[1], col[2]);
+    if (this.colors) {
+      let colors = [];
+      for (const col of this.colors) {
+        colors.push(col[0], col[1], col[2]);
+      }
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     }
-    colors = new Float32Array(colors);
 
-    let uvs = [];
-    for (const uv of this.uv0) {
-      uvs.push(uv[0], uv[1]);
+    if (this.uv0) {
+      let uvs = [];
+      for (const uv of this.uv0) {
+        uvs.push(uv[0], uv[1]);
+      }
+      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     }
-    uvs = new Float32Array(uvs);
+
+    // if (this.tangents) {
+    //   let tangents = [];
+    //   for (const tangent of this.tangents) {
+    //     tangents.push(tangent[0], tangent[1], tangent[2], tangent[3]);
+    //   }
+    //   geometry.setAttribute('tangent', new THREE.Float32BufferAttribute(tangents, 4));
+    // }
+
+    if (this.skin) {
+      let skinIndices = [];
+      let skinWeights = [];
+      for (const boneWeights of this.skin) {
+        skinIndices.push(...boneWeights.boneIndex);
+        skinWeights.push(...boneWeights.weight);
+      }
+      geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+      geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
+    }
 
     geometry.setIndex(this.indices);
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-    geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
     return geometry;
   }
