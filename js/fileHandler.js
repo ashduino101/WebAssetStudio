@@ -31,9 +31,13 @@ export default class FileHandler {
     return new Promise(resolve => {
       let reader = new FileReader();
       reader.onloadend = async b => {
+        if (reader.result == null) {
+          resolve(false);
+          return;
+        }
         this.data = new Uint8Array(reader.result);
         this.name = file.name;
-        resolve();
+        resolve(true);
       }
       reader.readAsArrayBuffer(file);
     });

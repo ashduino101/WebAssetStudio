@@ -4,7 +4,8 @@ import FileHandler from "./fileHandler";
 
 async function onFile(f) {
   const h = new FileHandler('#tree');
-  await h.loadFile(f);
+  const res = await h.loadFile(f);
+  if (!res) return;
   const tree = await h.getTree();
   document.getElementById('export-zip').onclick = () => tree.exportZip();
 }
@@ -18,6 +19,7 @@ function main() {
   // document.body.addEventListener('dragleave', () => fileOverlay.style.display = 'none');
   document.body.addEventListener('drop', e => {
     e.preventDefault();
+    console.log(e.dataTransfer);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       onFile(files[0]);
