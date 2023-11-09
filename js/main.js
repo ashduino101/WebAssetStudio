@@ -14,8 +14,8 @@ function main() {
   const input = document.getElementById('file-input');
   input.addEventListener('change', async e => onFile(e.target.files[0]));
   const fileOverlay = document.getElementById('file-overlay');
-  document.body.addEventListener('dragover', () => fileOverlay.style.display = 'block');
-  document.body.addEventListener('dragleave', () => fileOverlay.style.display = 'none');
+  // document.body.addEventListener('dragover', () => fileOverlay.style.display = 'block');
+  // document.body.addEventListener('dragleave', () => fileOverlay.style.display = 'none');
   document.body.addEventListener('drop', e => {
     e.preventDefault();
     const files = e.dataTransfer.files;
