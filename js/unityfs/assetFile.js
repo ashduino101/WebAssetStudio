@@ -207,7 +207,13 @@ export class ObjectInfo {
     if (typeof this.cachedObject == 'undefined') {
       let cls = this._tryGetClass();
       if (cls) {
-        this.cachedObject = new cls(this._createReader());
+        try {
+          this.cachedObject = new cls(this._createReader());
+        } catch (e) {
+          console.error(`While parsing type ${this.getClassName()}:`);
+          console.error(e);
+          this.cachedObject = {};
+        }
       } else {
         this.cachedObject = {};
       }
@@ -346,7 +352,7 @@ export class AssetFile {
     }
 
     // Objects
-    let objectCount = this.reader.readInt32()
+    let objectCount = this.reader.readInt32();
     this.objects = new ObjectCollection();
     for (let i = 0; i < objectCount; i++) {
       let info = new ObjectInfo(this.reader, this.version, this.unityVersion, this.targetPlatform);
@@ -441,7 +447,6 @@ export class AssetFile {
       const entryPoint = container[0]?.value?.asset?.object;
       if (entryPoint) {
         const firstPreview = firstPreviewable(entryPoint);
-        console.log(firstPreview)
         if (firstPreview != null) {
           setTimeout(() => {
             const preview = document.getElementById('preview');

@@ -60,7 +60,7 @@ export function getClassName(classID) {
 }
 
 // TODO: this is absolutely terrible
-export function _firstPreviewable(object, traversed = new Set()) {
+function _firstPreviewable(object, traversed = new Set()) {
   if (object instanceof Transform) {
     object.mapChildren();
     for (const c of object.realChildren) {
@@ -97,6 +97,7 @@ export function _firstPreviewable(object, traversed = new Set()) {
       let [has, is] = _firstPreviewable(c, traversed);
       if (has) return [has, is];
     }
+    return [false, null];
   } else {
     if (object instanceof PPtr) {
       object = object.object;
