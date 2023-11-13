@@ -1,6 +1,13 @@
 import 'jstree';
 import '../css/vendor/jstree/style.min.css';
 import FileHandler from "./fileHandler";
+import {isDebug} from "./config";
+
+function configureDebug() {
+  if (isDebug) {
+    document.getElementById('download-raw').style.display = 'inline-block';
+  }
+}
 
 async function onFile(f) {
   const h = new FileHandler('#tree');
@@ -26,6 +33,8 @@ function main() {
     }
     fileOverlay.style.display = 'none'
   }, true);
+
+  configureDebug();
 }
 
 // function test() {

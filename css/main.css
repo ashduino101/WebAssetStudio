@@ -308,6 +308,11 @@ html, body {
   cursor: pointer;
 }
 
+.debug-button {
+  background-color: #6b3d91;
+  opacity: 70%;
+}
+
 /* Tree text styling */
 .tree-label {
   /* generic styles */

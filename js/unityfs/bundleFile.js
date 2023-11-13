@@ -3,6 +3,7 @@ import {lzmaDecompress} from "./utils";
 import {FileType, UnityFS} from "./unityFile";
 import {BinaryWriter} from "../binaryWriter";
 import {lz4_decompress} from "../encoders";
+import {decompressBlock} from "lz4js";
 
 export class BundleFlags {
   static exposedAttributes = [
@@ -204,7 +205,19 @@ export class BundleFile {
             break;
           case CompressionType.LZ4:
           case CompressionType.LZ4HC:
-            decompressedBlock = lz4_decompress(blockData, block.uncompressedSize);
+            try {
+              decompressedBlock = lz4_decompress(blockData, block.uncompressedSize);
+            } catch (e) {
+              console.error('error in Wasm LZ4 decompress:');
+              console.error(e);
+              console.error('Falling back to slower pure-JS decompressor');
+
+              const dst = new Uint8Array(block.uncompressedSize);
+              decompressBlock(blockData, dst, 0, blockData.length, 0);
+              decompressedBlock = dst;
+            }
+            console.log(decompressedBlock);
+            return;
             break;
           default:
             throw new Error('Unsupported compression type');

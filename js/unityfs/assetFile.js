@@ -457,10 +457,13 @@ export class AssetFile {
               preview.appendChild(prev);
             });
             document.getElementById('download-info').onclick = async () => {
-              saveBlob(name + '.json', [JSON.stringify(await firstPreview.getInfo(), undefined, 2)]);
+              saveBlob(firstPreview.getName() + '.json', [JSON.stringify(await firstPreview.getInfo(), undefined, 2)]);
             };
             document.getElementById('download-object').onclick = async () => {
-              saveBlob(name + firstPreview.exportExtension, [await firstPreview.getAnyExport()]);
+              saveBlob(firstPreview.getName() + firstPreview.exportExtension, [await firstPreview.getAnyExport()]);
+            };
+            document.getElementById('download-raw').onclick = async () => {
+              saveBlob(firstPreview.getName() + firstPreview.exportExtension, [firstPreview._raw]);
             };
           }, 0);  // wait for bundle to load
         }

@@ -1,6 +1,7 @@
 import {BundleFile} from "./bundleFile";
 import {BinaryReader} from "../binaryReader";
 import {AssetFile} from "./assetFile";
+import {WebFile} from "./webFile";
 
 export const FileType = {
   Assets: 0,
@@ -18,7 +19,7 @@ export class UnityFS {
   }
 
   parseHeader() {
-    let magic = this.reader.readCString();
+    let magic = this.reader.readCString(16);
     this.reader.seek(0);
     switch (magic) {
       case 'UnityWeb':
@@ -72,6 +73,9 @@ export class UnityFS {
         break;
       case FileType.Assets:
         this.parser = new AssetFile(this.reader, 0);
+        break;
+      case FileType.Web:
+        this.parser = new WebFile(this.reader);
         break;
       default:
         return;

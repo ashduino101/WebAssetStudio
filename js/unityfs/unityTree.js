@@ -1,5 +1,5 @@
 import {getClassName, globalDestroy} from "./utils";
-import {NodeFile} from "./bundleFile";
+import {BundleFile, NodeFile} from "./bundleFile";
 import {FileType, UnityFS} from "./unityFile";
 import {AssetFile, ObjectCollection, TypeTreeReference} from "./assetFile";
 import {PPtr} from "./classes/pptr";
@@ -7,6 +7,8 @@ import JSZip from "jszip";
 import {classNames} from "./classIDType";
 import {AssetTree} from "../treeview";
 import {saveBlob} from "../utils";
+import {BinaryReader} from "../binaryReader";
+import {WebFile} from "./webFile";
 
 export default class UnityTree extends AssetTree {
   styleObject(object, isHidden = false) {
@@ -406,6 +408,33 @@ data like pixels, vertices, and UV maps used by the asset.`
     await this.setupResolver();
   }
 
+  async loadWeb() {
+    await this.createNode('#', 'base', this.styleTextAs('Asset', 'asset'), 'icon-asset');
+    for (const file of this.parser.files) {
+      const data = this.parser.get(file.path);
+      const f = new UnityFS(data);
+      f.parseHeader();
+      let fileParser;
+      switch (f.fileType) {
+        case FileType.Bundle:
+          fileParser = new BundleFile(new BinaryReader(data));
+          fileParser.parse();
+          await this.createTreeForObject(fileParser, 'base', 'Bundle', 'bundle', 'icon-bundle');
+          break;
+        case FileType.Assets:
+          fileParser = new AssetFile(new BinaryReader(data));
+          fileParser.parse();
+          await this.createTreeForObject(fileParser, 'base', 'Asset', 'bundle', 'icon-asset');
+          break;
+        case FileType.Web:
+          fileParser = new WebFile(new BinaryReader(data));
+          fileParser.parse();
+          await this.createTreeForObject(fileParser, 'base', 'Asset', 'bundle', 'icon-asset');
+          break;
+      }
+    }
+  }
+
   async onNodeSelect(evt, data) {
     const preview = document.getElementById('preview');
     if (data.node.data.type === 'object') {
@@ -429,6 +458,9 @@ data like pixels, vertices, and UV maps used by the asset.`
       };
       document.getElementById('download-object').onclick = async () => {
         saveBlob(name + object.exportExtension, [await object.getAnyExport()]);
+      };
+      document.getElementById('download-raw').onclick = async () => {
+        saveBlob(name + '.dat', [object._raw]);
       };
     } else if (data.node.data.type === 'pptr') {
       let pptr = data.node.data.data;
@@ -515,6 +547,9 @@ data like pixels, vertices, and UV maps used by the asset.`
         break;
       case FileType.Assets:
         await this.loadAssets();
+        break;
+      case FileType.Web:
+        await this.loadWeb();
         break;
     }
 

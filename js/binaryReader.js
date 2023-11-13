@@ -75,11 +75,14 @@ export class BinaryReader {
     return this.data.slice(offset, offset + size);
   }
 
-  readCString() {
+  readCString(limit=32768) {  // set a reasonable limit;
     let s = '';
     let c;
+    let i = 0;
     while ((c = this.read(1)[0]) !== 0) {
       s += String.fromCharCode(c);
+      i++;
+      if (i > limit) break;
     }
     return s;
   }
