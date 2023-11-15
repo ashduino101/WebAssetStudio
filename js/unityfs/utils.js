@@ -1,10 +1,8 @@
 import {BasicStream} from "./stream";
 import LZMA from "../vendor/lzma";
 import ClassIDType from "./classIDType";
-import {Transform} from "./classes/transform";
-import {PPtr} from "./classes/pptr";
-import {GameObject} from "./classes/gameObject";
-import {UnityObject} from "./classes/object";
+import {PPtr} from "./pptr";
+import {UnityObject} from "./object";
 
 export const lzmaDecompress = function (data, rawSize) {
   let dec = new LZMA.Decoder();

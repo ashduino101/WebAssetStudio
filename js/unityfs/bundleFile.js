@@ -115,7 +115,7 @@ export class BundleFile {
     this.reader = reader;
   }
 
-  parse() {
+  async parse() {
     this.magic = this.reader.readCString();
     this.version = this.reader.readUInt32();
     this.unityVersion = this.reader.readCString();
@@ -216,8 +216,6 @@ export class BundleFile {
               decompressBlock(blockData, dst, 0, blockData.length, 0);
               decompressedBlock = dst;
             }
-            console.log(decompressedBlock);
-            return;
             break;
           default:
             throw new Error('Unsupported compression type');

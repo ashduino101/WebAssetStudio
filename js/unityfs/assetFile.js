@@ -1,11 +1,10 @@
-import ClassIDType from "./classIDType";
 import {SharedStrings} from "./sharedStrings";
 import {BinaryReader, SEEK_CUR} from "../binaryReader";
 import {BuildTarget} from "./buildTarget";
 import {ObjectReader} from "./objectReader";
-import {UnityObject} from "./classes/object";
 import {firstPreviewable, getClassName, globalDestroy} from "./utils";
 import {saveBlob} from "../utils";
+import {RemoteClassLoader} from "./remoteClassLoader";
 
 export class TypeTree {
   static exposedAttributes = [
@@ -73,8 +72,8 @@ export class TypeTree {
   readBlob() {
     const numNodes = this.reader.readInt32();
     const stringTableSize = this.reader.readInt32();
-    let nodeReader = new BinaryReader(this.reader.read(((this.version >= 19) ? 32 : 24) * numNodes));
-    nodeReader.endian = this.reader.endian;
+    console.log(this.reader.tell());
+    let nodeReader = new BinaryReader(this.reader.read(((this.version >= 19) ? 32 : 24) * numNodes), this.reader.endian);
     let stringTable = this.reader.read(stringTableSize);
 
     let parents = [this];
@@ -106,6 +105,7 @@ export class TypeTree {
       if (this.version >= 19) {
         curr.refHash = nodeReader.readUInt64();
       }
+      console.log(curr);
     }
     this.reader = undefined;
     this.textDecoder = undefined;
@@ -148,11 +148,12 @@ export class TypeTreeReference {
 }
 
 export class ObjectInfo {
-  constructor(reader, version, unityVersion, targetPlatform) {
+  constructor(reader, version, unityVersion, targetPlatform, classes) {
     this._reader = reader;
     this._version = version;
     this._unityVersion = unityVersion;
     this._targetPlatform = targetPlatform;
+    this._classes = classes;
 
     this.enableCaching = true;
 
@@ -183,12 +184,7 @@ export class ObjectInfo {
   }
 
   _tryGetClass() {
-    let cls = ClassIDType[this.classID];
-    if (typeof cls == 'string') {
-      console.error('unsupported class:', cls);
-      return UnityObject;  // safe fallback
-    }
-    return cls[1];
+    return this._classes[this.classID];
   }
 
   setCaching(enabled) {
@@ -309,7 +305,7 @@ export class AssetFile {
     this.fileID = fileID;
   }
 
-  parse() {
+  async parse() {
     this.metadataSize = this.reader.readUInt32();
     this.fileSize = this.reader.readUInt32();
     this.version = this.reader.readUInt32();
@@ -351,11 +347,22 @@ export class AssetFile {
       this.hasLongIDs = this.reader.readInt32();
     }
 
+    this.classLoader = new RemoteClassLoader(this.unityVersion);
+    await this.classLoader.load();
+    console.log('Compiling classes');
+    const start = performance.now();
+    this.classes = {};
+    for (const cls of Object.keys(this.classLoader._trees)) {
+      this.classes[cls] = await this.classLoader.compile(cls);
+    }
+    const end = performance.now();
+    console.log(`Classes compiled in ${end - start}ms`);
+
     // Objects
     let objectCount = this.reader.readInt32();
     this.objects = new ObjectCollection();
     for (let i = 0; i < objectCount; i++) {
-      let info = new ObjectInfo(this.reader, this.version, this.unityVersion, this.targetPlatform);
+      let info = new ObjectInfo(this.reader, this.version, this.unityVersion, this.targetPlatform, this.classes);
       if (this.hasLongIDs) {
         info.pathID = this.reader.readInt64();
       } else if (this.version < 14) {
@@ -442,33 +449,35 @@ export class AssetFile {
     this._boundPPtrResolveRequestHandler = this._pptrResolveHandler.bind(this);
     document.body.addEventListener('pptr-resolve-request', this._boundPPtrResolveRequestHandler);
 
-    const container = this.objects.get(BigInt(1))?.object?.container;
-    if (container) {
-      const entryPoint = container[0]?.value?.asset?.object;
-      if (entryPoint) {
-        const firstPreview = firstPreviewable(entryPoint);
-        if (firstPreview != null) {
-          setTimeout(() => {
-            const preview = document.getElementById('preview');
-            document.body.dispatchEvent(new CustomEvent('destroy-preview'));
-            preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
-            firstPreview.createPreview().then(prev => {
-              preview.innerHTML = '';
-              preview.appendChild(prev);
-            });
-            document.getElementById('download-info').onclick = async () => {
-              saveBlob(firstPreview.getName() + '.json', [JSON.stringify(await firstPreview.getInfo(), undefined, 2)]);
-            };
-            document.getElementById('download-object').onclick = async () => {
-              saveBlob(firstPreview.getName() + firstPreview.exportExtension, [await firstPreview.getAnyExport()]);
-            };
-            document.getElementById('download-raw').onclick = async () => {
-              saveBlob(firstPreview.getName() + firstPreview.exportExtension, [firstPreview._raw]);
-            };
-          }, 0);  // wait for bundle to load
-        }
-      }
-    }
+    /// Disable default assets for now until we get type trees sorted out
+
+    // const container = this.objects.get(BigInt(1))?.object?.container;
+    // if (container) {
+    //   const entryPoint = container[0]?.value?.asset?.object;
+    //   if (entryPoint) {
+    //     const firstPreview = firstPreviewable(entryPoint);
+    //     if (firstPreview != null) {
+    //       setTimeout(() => {
+    //         const preview = document.getElementById('preview');
+    //         document.body.dispatchEvent(new CustomEvent('destroy-preview'));
+    //         preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
+    //         firstPreview.createPreview().then(prev => {
+    //           preview.innerHTML = '';
+    //           preview.appendChild(prev);
+    //         });
+    //         document.getElementById('download-info').onclick = async () => {
+    //           saveBlob(firstPreview.getName() + '.json', [JSON.stringify(await firstPreview.getInfo(), undefined, 2)]);
+    //         };
+    //         document.getElementById('download-object').onclick = async () => {
+    //           saveBlob(firstPreview.getName() + firstPreview.exportExtension, [await firstPreview.getAnyExport()]);
+    //         };
+    //         document.getElementById('download-raw').onclick = async () => {
+    //           saveBlob(firstPreview.getName() + firstPreview.exportExtension, [firstPreview._raw]);
+    //         };
+    //       }, 0);  // wait for bundle to load
+    //     }
+    //   }
+    // }
   }
 
   _pptrResolveHandler(data) {

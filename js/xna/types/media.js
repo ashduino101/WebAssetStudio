@@ -1,7 +1,7 @@
 import {BaseType} from "./baseType";
 import {XNBObject} from "./object";
 import {BinaryWriter} from "../../binaryWriter";
-import {AudioPreview} from "../../preview/audio";
+import {AudioPreview} from "../../preview/audioPreview";
 
 export class SoundEffect extends BaseType {
   exportExtension = '.wav';

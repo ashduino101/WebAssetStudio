@@ -1,5 +1,5 @@
 import {Renderer} from "./renderer";
-import {PPtr} from "./pptr";
+import {PPtr} from "../pptr";
 import * as THREE from "three";
 import $ from "jquery";
 import {OrbitControls} from "three/addons/controls/OrbitControls";

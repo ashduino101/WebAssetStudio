@@ -64,7 +64,7 @@ export class UnityFS {
 
   }
 
-  parse() {
+  async parse() {
     this.parseHeader();
 
     switch (this.fileType) {
@@ -80,6 +80,6 @@ export class UnityFS {
       default:
         return;
     }
-    this.parser.parse();
+    await this.parser.parse();
   }
 }

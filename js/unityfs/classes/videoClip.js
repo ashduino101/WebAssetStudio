@@ -1,5 +1,5 @@
 import {NamedObject} from "./namedObject";
-import {PPtr} from "./pptr";
+import {PPtr} from "../pptr";
 import {requestExternalData} from "../utils";
 import JSZip from "jszip";
 

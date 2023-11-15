@@ -10,7 +10,7 @@ import {
   encode_png
 } from "../../encoders";
 import {BaseType} from "./baseType";
-import {ImagePreview} from "../../preview/image";
+import {ImagePreview} from "../../preview/imagePreview";
 import {ExternalReference} from "./system";
 import {XNBObject} from "./object";
 import {BoundingSphere, Matrix, Vector3} from "./math";

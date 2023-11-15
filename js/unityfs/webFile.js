@@ -35,6 +35,6 @@ export class WebFile {
     return this.reader.read(file.size);
   }
 
-  parse() {  // nothing to do here
+  async parse() {  // nothing to do here
   }
 }

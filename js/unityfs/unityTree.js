@@ -2,7 +2,7 @@ import {getClassName, globalDestroy} from "./utils";
 import {BundleFile, NodeFile} from "./bundleFile";
 import {FileType, UnityFS} from "./unityFile";
 import {AssetFile, ObjectCollection, TypeTreeReference} from "./assetFile";
-import {PPtr} from "./classes/pptr";
+import {PPtr} from "./pptr";
 import JSZip from "jszip";
 import {classNames} from "./classIDType";
 import {AssetTree} from "../treeview";
@@ -42,6 +42,7 @@ export default class UnityTree extends AssetTree {
 
   async createTreeForObjectCollection(collection, rootNode) {
     await this.createNode(rootNode, rootNode + '-objects', this.styleTextAs('objects', 'generic'), 'icon-generic', true);
+    let i = 1;
     for (let obj of collection.objects) {
       if (
         this.hasFilter('objectclass') &&
@@ -49,7 +50,9 @@ export default class UnityTree extends AssetTree {
       ) {
         continue;
       }
+      console.log(`${i}/${collection.objects.length}`);
       await this.createTreeForUnityObject(obj, rootNode + '-objects');
+      i++;
     }
   }
 
@@ -75,10 +78,66 @@ export default class UnityTree extends AssetTree {
       await this.createNode(rootNode, rootNode + '-' + name, this.styleKeyValue(name, obj), icon, true);
       return;
     }
-    if (typeof obj.constructor.exposedAttributes != 'undefined') {
+    if (obj instanceof NodeFile) {
+      let file = new UnityFS(obj.data);
+      file.parseHeader();
+      let newStyle;
+      let newIcon;
+      switch (file.fileType) {
+        case FileType.Assets:
+          newStyle = 'asset';
+          newIcon = 'icon-asset';
+          break;
+        case FileType.Bundle:
+          newStyle = 'bundle';
+          newIcon = 'icon-bundle';
+          break;
+        case FileType.Resource:
+          newStyle = 'resource';
+          newIcon = 'icon-resource';
+          break;
+        default:
+          newStyle = 'generic';
+          newIcon = 'icon-generic';
+          break;
+      }
+      this.treeFiles.push({  // only asset/resource files
+        treeNode: rootNode + '-' + name,
+        fileName: obj.node.path,
+        type: file.fileType,
+        parser: file,
+      });
+      if (file.fileType === FileType.Bundle) {
+        await file.parse();
+        await this.createTreeForObject(file.parser, rootNode + '-' + name, 'Bundle', 'bundle', 'icon-bundle');
+      } else if (file.fileType === FileType.Assets) {
+        await file.parse();
+        await this.createTreeForObject(file.parser, rootNode, obj.node.path, 'asset', 'icon-asset');
+      } else {
+        await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(obj.node.path, newStyle), newIcon, isOpened);
+      }
+    } else if (obj instanceof ObjectCollection) {
+      await this.createTreeForObjectCollection(obj, rootNode);
+    } else if (obj instanceof PPtr) {
+      await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened, {type: 'pptr', data: obj});
+      obj.resolve();
+      if (obj.pathID === BigInt(0)) {
+        await this.createTreeForUnityObject(obj, rootNode + '-' + name, true, true);
+      } else {
+        await this.createTreeForUnityObject(obj.info, rootNode + '-' + name, true);
+      }
+      // await this.createTreeForObject(obj.fileID, rootNode + '-' + name, 'fileID');
+      // await this.createTreeForObject(obj.pathID, rootNode + '-' + name, 'pathID');
+    } else if (obj instanceof TypeTreeReference) {
+      await this.createTreeForTypeTree(obj, rootNode);
+    } else if (typeof obj.constructor.exposedAttributes != 'undefined' || typeof obj.exposedAttributes != 'undefined') {
+      const exposedAttributes = obj.constructor.exposedAttributes ?? obj.exposedAttributes;
       await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened);
-      for (let attr of obj.constructor.exposedAttributes) {
+      for (let attr of exposedAttributes) {
         let val = obj[attr];
+        if (val instanceof Uint8Array) {
+          val = `<Uint8Array: ${val.length}>`;  // we probably shouldn't render this
+        }
         if (typeof val == 'undefined') {
           // Try calling a function to get the value - maybe it's dynamic
           if (typeof obj.get == 'function') {
@@ -96,62 +155,7 @@ export default class UnityTree extends AssetTree {
         await this.createTreeForObject(obj[i], rootNode + '-' + name, i);
       }
     } else {
-      // Special types
-      if (obj instanceof NodeFile) {
-        let file = new UnityFS(obj.data);
-        file.parseHeader();
-        let newStyle;
-        let newIcon;
-        switch (file.fileType) {
-          case FileType.Assets:
-            newStyle = 'asset';
-            newIcon = 'icon-asset';
-            break;
-          case FileType.Bundle:
-            newStyle = 'bundle';
-            newIcon = 'icon-bundle';
-            break;
-          case FileType.Resource:
-            newStyle = 'resource';
-            newIcon = 'icon-resource';
-            break;
-          default:
-            newStyle = 'generic';
-            newIcon = 'icon-generic';
-            break;
-        }
-        this.treeFiles.push({  // only asset/resource files
-          treeNode: rootNode + '-' + name,
-          fileName: obj.node.path,
-          type: file.fileType,
-          parser: file,
-        });
-        if (file.fileType === FileType.Bundle) {
-          file.parse();
-          await this.createTreeForObject(file.parser, rootNode + '-' + name, 'Bundle', 'bundle', 'icon-bundle');
-        } else if (file.fileType === FileType.Assets) {
-          file.parse();
-          await this.createTreeForObject(file.parser, rootNode, obj.node.path, 'asset', 'icon-asset');
-        } else {
-          await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(obj.node.path, newStyle), newIcon, isOpened);
-        }
-      } else if (obj instanceof ObjectCollection) {
-        await this.createTreeForObjectCollection(obj, rootNode);
-      } else if (obj instanceof PPtr) {
-        await this.createNode(rootNode, rootNode + '-' + name, this.styleTextAs(name, style), icon, isOpened, {type: 'pptr', data: obj});
-        obj.resolve();
-        if (obj.pathID === BigInt(0)) {
-          await this.createTreeForUnityObject(obj, rootNode + '-' + name, true, true);
-        } else {
-          await this.createTreeForUnityObject(obj.info, rootNode + '-' + name, true);
-        }
-        // await this.createTreeForObject(obj.fileID, rootNode + '-' + name, 'fileID');
-        // await this.createTreeForObject(obj.pathID, rootNode + '-' + name, 'pathID');
-      } else if (obj instanceof TypeTreeReference) {
-        await this.createTreeForTypeTree(obj, rootNode);
-      } else {
-        await this.createNode(rootNode, rootNode + '-' + name, this.styleKeyValue(name, obj), icon, true);
-      }
+      await this.createNode(rootNode, rootNode + '-' + name, this.styleKeyValue(name, obj), icon, true);
     }
   }
 
@@ -418,17 +422,17 @@ data like pixels, vertices, and UV maps used by the asset.`
       switch (f.fileType) {
         case FileType.Bundle:
           fileParser = new BundleFile(new BinaryReader(data));
-          fileParser.parse();
+          await fileParser.parse();
           await this.createTreeForObject(fileParser, 'base', 'Bundle', 'bundle', 'icon-bundle');
           break;
         case FileType.Assets:
           fileParser = new AssetFile(new BinaryReader(data));
-          fileParser.parse();
+          await fileParser.parse();
           await this.createTreeForObject(fileParser, 'base', 'Asset', 'bundle', 'icon-asset');
           break;
         case FileType.Web:
           fileParser = new WebFile(new BinaryReader(data));
-          fileParser.parse();
+          await fileParser.parse();
           await this.createTreeForObject(fileParser, 'base', 'Asset', 'bundle', 'icon-asset');
           break;
       }
@@ -454,7 +458,10 @@ data like pixels, vertices, and UV maps used by the asset.`
       }
 
       document.getElementById('download-info').onclick = async () => {
-        saveBlob(name + '.json', [JSON.stringify(await object.getInfo(), undefined, 2)]);
+        saveBlob(name + '.json', [JSON.stringify(
+          await object.getInfo(),
+          (_, v) => typeof v === 'bigint' ? v.toString() : v,
+          2)]);
       };
       document.getElementById('download-object').onclick = async () => {
         saveBlob(name + object.exportExtension, [await object.getAnyExport()]);
@@ -509,7 +516,7 @@ data like pixels, vertices, and UV maps used by the asset.`
     if (this.parser) this.parser.destroy();
 
     this.parser = new UnityFS(data);
-    this.parser.parse();
+    await this.parser.parse();
 
     this.activeFilter = [];
 

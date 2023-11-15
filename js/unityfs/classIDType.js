@@ -1,72 +1,36 @@
-import {Shader} from "./classes/shader";
-import {UnityObject} from "./classes/object";
-import {GameObject} from "./classes/gameObject";
-import {Component} from "./classes/component";
-import {Transform} from "./classes/transform";
-import {Behaviour} from "./classes/behaviour";
-import {EditorExtension} from "./classes/editorExtension";
-import {MeshRenderer} from "./classes/meshRenderer";
-import {Renderer} from "./classes/renderer";
-import {Texture} from "./classes/texture";
-import {Texture2D} from "./classes/texture2d";
-import {MeshFilter} from "./classes/meshFilter";
-import {Mesh} from "./classes/mesh";
-import {TextAsset} from "./classes/textAsset";
-import {Avatar} from "./classes/avatar";
-import {MonoBehaviour} from "./classes/monoBehaviour";
-import {MonoScript} from "./classes/monoScript";
-import {FlareLayer} from "./classes/flareLayer";
-import {PhysicMaterial} from "./classes/physicMaterial";
-import {AudioListener} from "./classes/audioListener";
-import {SkinnedMeshRenderer} from "./classes/skinnedMeshRenderer";
-import {AssetBundle, PreloadData} from "./classes/assetBundle";
-import {Material} from "./classes/material";
-import {Sprite} from "./classes/sprite";
-import {AnimatorOverrideController} from "./classes/animatorOverrideController";
-import {CanvasRenderer} from "./classes/canvasRenderer";
-import {Font} from "./classes/font";
-import {Animator} from "./classes/animator";
-import {AudioClip} from "./classes/audioClip";
-import {Cubemap} from "./classes/cubemap";
-import {AnimationClip} from "./classes/animationClip";
-import {RuntimeAnimatorController} from "./classes/runtimeAnimatorController";
-import {AnimatorController} from "./classes/animatorController";
-import {ParticleSystemRenderer} from "./classes/particleSystemRenderer";
-import {VideoClip} from "./classes/videoClip";
-
 const ClassIDType = {
-    0: ['UnityObject', UnityObject],
-    1: ['GameObject', GameObject],
-    2: ['Component', Component],
+    0: 'UnityObject',
+    1: 'GameObject',
+    2: 'Component',
     3: 'LevelGameManager',
-    4: ['Transform', Transform],
+    4: 'Transform',
     5: 'TimeManager',
     6: 'GlobalGameManager',
-    8: ['Behaviour', Behaviour],
+    8: 'Behaviour',
     9: 'GameManager',
     11: 'AudioManager',
     12: 'ParticleAnimator',
     13: 'InputManager',
     15: 'EllipsoidParticleEmitter',
     17: 'Pipeline',
-    18: ['EditorExtension', EditorExtension],
+    18: 'EditorExtension',
     19: 'Physics2DSettings',
     20: 'Camera',
-    21: ['Material', Material],
-    23: ['MeshRenderer', MeshRenderer],
-    25: ['Renderer', Renderer],
+    21: 'Material',
+    23: 'MeshRenderer',
+    25: 'Renderer',
     26: 'ParticleRenderer',
-    27: ['Texture', Texture],
-    28: ['Texture2D', Texture2D],
+    27: 'Texture',
+    28: 'Texture2D',
     29: 'OcclusionCullingSettings',
     30: 'GraphicsSettings',
-    33: ['MeshFilter', MeshFilter],
+    33: 'MeshFilter',
     41: 'OcclusionPortal',
-    43: ['Mesh', Mesh],
+    43: 'Mesh',
     45: 'Skybox',
     47: 'QualitySettings',
-    48: ['Shader', Shader],
-    49: ['TextAsset', TextAsset],
+    48: 'Shader',
+    49: 'TextAsset',
     50: 'Rigidbody2D',
     51: 'Physics2DManager',
     53: 'Collider2D',
@@ -85,24 +49,24 @@ const ClassIDType = {
     68: 'EdgeCollider2D',
     70: 'CapsuleCollider2D',
     72: 'ComputeShader',
-    74: ['AnimationClip', AnimationClip],
+    74: 'AnimationClip',
     75: 'ConstantForce',
     76: 'WorldParticleCollider',
     78: 'TagManager',
-    81: ['AudioListener', AudioListener],
+    81: 'AudioListener',
     82: 'AudioSource',
-    83: ['AudioClip', AudioClip],
+    83: 'AudioClip',
     84: 'RenderTexture',
     86: 'CustomRenderTexture',
     87: 'MeshParticleEmitter',
     88: 'ParticleEmitter',
-    89: ['Cubemap', Cubemap],
-    90: ['Avatar', Avatar],
-    91: ['AnimatorController', AnimatorController],
+    89: 'Cubemap',
+    90: 'Avatar',
+    91: 'AnimatorController',
     92: 'GUILayer',
-    93: ['RuntimeAnimatorController', RuntimeAnimatorController],
+    93: 'RuntimeAnimatorController',
     94: 'ScriptMapper',
-    95: ['Animator', Animator],
+    95: 'Animator',
     96: 'TrailRenderer',
     98: 'DelayedCallManager',
     102: 'TextMesh',
@@ -111,8 +75,8 @@ const ClassIDType = {
     109: 'CGProgram',
     110: 'BaseAnimationTrack',
     111: 'Animation',
-    114: ['MonoBehaviour', MonoBehaviour],
-    115: ['MonoScript', MonoScript],
+    114: 'MonoBehaviour',
+    115: 'MonoScript',
     116: 'MonoManager',
     117: 'Texture3D',
     118: 'NewAnimationTrack',
@@ -121,24 +85,24 @@ const ClassIDType = {
     121: 'Flare',
     122: 'Halo',
     123: 'LensFlare',
-    124: ['FlareLayer', FlareLayer],
+    124: 'FlareLayer',
     125: 'HaloLayer',
     126: 'NavMeshAreas',
     127: 'HaloManager',
-    128: ['Font', Font],
+    128: 'Font',
     129: 'PlayerSettings',
     130: 'NamedObject',
     131: 'GUITexture',
     132: 'GUIText',
     133: 'GUIElement',
-    134: ['PhysicMaterial', PhysicMaterial],
+    134: 'PhysicMaterial',
     135: 'SphereCollider',
     136: 'CapsuleCollider',
-    137: ['SkinnedMeshRenderer', SkinnedMeshRenderer],
+    137: 'SkinnedMeshRenderer',
     138: 'FixedJoint',
     140: 'RaycastCollider',
     141: 'BuildSettings',
-    142: ['AssetBundle', AssetBundle],
+    142: 'AssetBundle',
     143: 'CharacterController',
     144: 'CharacterJoint',
     145: 'SpringJoint',
@@ -146,7 +110,7 @@ const ClassIDType = {
     147: 'ResourceManager',
     148: 'NetworkView',
     149: 'NetworkManager',
-    150: ['PreloadData', PreloadData],
+    150: 'PreloadData',
     152: 'MovieTexture',
     153: 'ConfigurableJoint',
     154: 'TerrainCollider',
@@ -184,7 +148,7 @@ const ClassIDType = {
     196: 'NavMeshSettings',
     197: 'LightProbesLegacy',
     198: 'ParticleSystem',
-    199: ['ParticleSystemRenderer', ParticleSystemRenderer],
+    199: 'ParticleSystemRenderer',
     200: 'ShaderVariantCollection',
     205: 'LODGroup',
     206: 'BlendTree',
@@ -192,14 +156,14 @@ const ClassIDType = {
     208: 'NavMeshObstacle',
     210: 'SortingGroup',
     212: 'SpriteRenderer',
-    213: ['Sprite', Sprite],
+    213: 'Sprite',
     214: 'CachedSpriteAtlas',
     215: 'ReflectionProbe',
     216: 'ReflectionProbes',
     218: 'Terrain',
     220: 'LightProbeGroup',
-    221: ['AnimatorOverrideController', AnimatorOverrideController],
-    222: ['CanvasRenderer', CanvasRenderer],
+    221: 'AnimatorOverrideController',
+    222: 'CanvasRenderer',
     223: 'Canvas',
     224: 'RectTransform',
     225: 'CanvasGroup',
@@ -250,7 +214,7 @@ const ClassIDType = {
     319: 'AvatarMask',
     320: 'PlayableDirector',
     328: 'VideoPlayer',
-    329: ['VideoClip', VideoClip],
+    329: 'VideoClip',
     330: 'ParticleSystemForceField',
     331: 'SpriteMask',
     362: 'WorldAnchor',
@@ -403,5 +367,5 @@ export default ClassIDType;
 
 export const classNames = [];
 for (let cls of Object.values(ClassIDType)) {
-    classNames.push(typeof cls == 'string' ? cls : cls[0]);
+    classNames.push(cls);
 }
