@@ -216,8 +216,6 @@ export class BundleFile {
               decompressBlock(blockData, dst, 0, blockData.length, 0);
               decompressedBlock = dst;
             }
-            console.log(decompressedBlock);
-            return;
             break;
           default:
             throw new Error('Unsupported compression type');
