@@ -2,6 +2,7 @@ import {BinaryReader, SEEK_CUR} from "../binaryReader";
 import {SharedStrings} from "./sharedStrings";
 import {GeneratedObject} from "./generatedObject";
 import {PPtr} from "./pptr";
+import {TypeTree} from "./assetFile";
 
 const SUPPORTED_TYPES = {
   'bool': 'reader.readBool()',

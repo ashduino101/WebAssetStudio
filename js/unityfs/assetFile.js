@@ -72,7 +72,6 @@ export class TypeTree {
   readBlob() {
     const numNodes = this.reader.readInt32();
     const stringTableSize = this.reader.readInt32();
-    console.log(this.reader.tell());
     let nodeReader = new BinaryReader(this.reader.read(((this.version >= 19) ? 32 : 24) * numNodes), this.reader.endian);
     let stringTable = this.reader.read(stringTableSize);
 
@@ -105,7 +104,6 @@ export class TypeTree {
       if (this.version >= 19) {
         curr.refHash = nodeReader.readUInt64();
       }
-      console.log(curr);
     }
     this.reader = undefined;
     this.textDecoder = undefined;
