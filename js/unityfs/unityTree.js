@@ -50,7 +50,7 @@ export default class UnityTree extends AssetTree {
       ) {
         continue;
       }
-      console.log(`${i}/${collection.objects.length}`);
+      // console.log(`${i}/${collection.objects.length}`);
       await this.createTreeForUnityObject(obj, rootNode + '-objects');
       i++;
     }

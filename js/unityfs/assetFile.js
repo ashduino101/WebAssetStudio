@@ -5,8 +5,9 @@ import {ObjectReader} from "./objectReader";
 import {firstPreviewable, getClassName, globalDestroy} from "./utils";
 import {saveBlob} from "../utils";
 import {RemoteClassLoader} from "./remoteClassLoader";
+import {BaseTypeTree} from "../typeTree";
 
-export class TypeTree {
+export class TypeTree extends BaseTypeTree {
   static exposedAttributes = [
     'level',
     'type',
@@ -19,6 +20,7 @@ export class TypeTree {
   ];
 
   constructor(version, reader) {
+    super();
     this.version = version;
     this.reader = reader;
     this.children = [];
@@ -130,6 +132,7 @@ export class TypeTreeReference {
   }
 
   get tree() {
+    const lastOffset = this.reader.tell();
     this.reader.seek(this.offset);
 
     if (this.enableTypeTrees) {
@@ -139,8 +142,10 @@ export class TypeTreeReference {
       } else {
         tree.readLegacy();
       }
+      this.reader.seek(lastOffset);
       return tree;
     }
+    this.reader.seek(lastOffset);
     return '(not present)';
   }
 }
@@ -350,8 +355,8 @@ export class AssetFile {
     console.log('Compiling classes');
     const start = performance.now();
     this.classes = {};
-    for (const cls of Object.keys(this.classLoader._trees)) {
-      this.classes[cls] = await this.classLoader.compile(cls);
+    for (const cls of Object.keys(this.classLoader.trees)) {
+      this.classes[cls] = await this.classLoader.trees[cls].compile();
     }
     const end = performance.now();
     console.log(`Classes compiled in ${end - start}ms`);
@@ -562,159 +567,8 @@ export class AssetFile {
     return this.types.find(x => x.classID === classID);
   }
 
-  /**
-   * @param type {string}
-   * @param reader {BinaryReader}
-   * @param size {number}
-   * @returns {*}
-   */
-  readType(type, reader, size) {  // For primitive types - `type` is a string
-    switch (type) {
-      case 'bool':
-        return reader.readBool();
-      case 'SInt8':
-        return reader.readInt8();
-      case 'UInt8':
-        return reader.readUInt8();
-      case 'char':
-        return new TextDecoder('utf16le').decode(reader.read(2));
-      case 'short':
-      case 'SInt16':
-        return reader.readInt16();
-      case 'unsigned short':
-      case 'UInt16':
-        return reader.readUInt16();
-      case 'SInt32':
-      case 'int':
-        return reader.readInt32();
-      case 'UInt32':
-      case 'unsigned int':
-      case 'Type*':
-        return reader.readUInt32();
-      case 'long long':
-      case 'SInt64':
-        return reader.readInt64();
-      case 'unsigned long long':
-      case 'UInt64':
-      case 'FileSize':
-        return reader.readUInt64();
-      case 'float':
-        return reader.readFloat32();
-      case 'double':
-        return reader.readFloat64();
-      case 'string':
-        if (size < 0) {
-          size = reader.readUInt32();
-        }
-        let text = new TextDecoder('utf-8').decode(reader.read(size));
-        reader.align(4);
-        return text;
-      case 'TypelessData':
-        let dataSize = reader.readUInt32();
-        return reader.read(dataSize);
-      default:
-        throw new Error('Unknown/unsupported type: ' + type);
-    }
-  }
-
-  isNonPrimitiveParsingSupported(type) {
-    return ['string', 'TypelessData'].includes(type);
-  }
-
-  shouldCheckTypeAlignment(type) {
-    return [
-      'SInt8', 'UInt8', 'char',
-      'short', 'SInt16', 'unsigned short', 'UInt16',
-      'int', 'SInt32', 'unsigned int', 'UInt32',
-      'Type*',
-      'long long', 'SInt64', 'unsigned long long', 'UInt64', 'FileSize',
-      'float', 'double',
-      'bool',
-      'string',
-      'map',
-      'TypelessData',
-      'Array'
-    ].includes(type);
-  }
-
-  parseTypeTree(tree, reader, endOffset, level=0) {
-    let node = new ParsedNode();
-    if (reader.tell() > endOffset) {
-      console.warn('Interrupting to prevent overread (tree error?)');
-      return {interruptParsing: true};
-    }
-    node.name = tree.name;
-    node.type = tree.type;
-    // this.currentBranch[level] = node.name;
-    // if (level < 14) {
-    //     console.log(node.name, reader.tell(), level, this.currentBranch);
-    // }
-    if (tree.children.length === 0 || this.isNonPrimitiveParsingSupported(tree.type)) {
-      node.value = this.readType(tree.type, reader, tree.size);
-    } else if ((tree.typeFlags & 1) === 1) {  // is array
-      let arraySizeField = tree.children[0];
-      let arrayTypeField = tree.children[1];
-      let arrayLen = this.readType(arraySizeField.type, reader, arraySizeField.size);
-      if (arrayLen >= 10_000_000) {
-        console.warn('Unusually large array:', arrayLen, reader.tell())
-      }
-      let arrayNode = new ParsedArrayNode();
-      if (arrayTypeField.type === 'UInt8' || arrayTypeField.type === 'SInt8') {
-        arrayNode.items = new Uint8Array(arrayLen);
-      } else {
-        for (let i = 0; i < arrayLen; i++) {
-          let obj = this.parseTypeTree(arrayTypeField, reader, endOffset, level + 1);
-          arrayNode.items.push(obj);
-          if (obj.interruptParsing) {
-            if (level === 0) {
-              return node;
-            }
-            return obj;
-          }
-        }
-      }
-      node.children.push(arrayNode);
-    } else {
-      for (let child of tree.children) {
-        let obj = this.parseTypeTree(child, reader, endOffset, level + 1);
-        node.children.push(obj);
-        if (obj.interruptParsing) {
-          if (level === 0) {
-            return node;
-          }
-          return obj;
-        }
-      }
-    }
-    if ((/*this.shouldCheckTypeAlignment(tree.type) && */((tree.metaFlag & 0x4000) === 0x4000))) {
-      this.reader.align(4);
-    }
-    return node;
-  }
-
   getTypeFromReference(typeRef) {
     return typeRef.tree;
-  }
-
-  getObjectUsingTree(obj) {  // TODO: fallback to explicit class system
-    const typeRef = this.getClass(obj.classID);
-    this.currentBranch = {};
-    if (this.enableTypeTrees) {
-      const type = this.getTypeFromReference(typeRef);
-      this.reader.seek(obj.offset);
-      return this.parseTypeTree(type, this.reader, obj.offset + obj.size);
-    } else {
-      this.reader.seek(obj.offset);
-      return this.reader.read(obj.size);
-    }
-  }
-
-  getLocalTypeRegistryAsJSON() {
-    let types = {};
-    for (let type of this.types) {
-      types[type.classID] = this.getTypeFromReference(type);
-    }
-    return JSON.stringify(types);
   }
 
   serialize() {
