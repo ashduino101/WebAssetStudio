@@ -1,5 +1,5 @@
-import {GeneratedObject} from "./unityfs/generatedObject";
-import {PPtr} from "./unityfs/pptr";
+import {GeneratedObject} from "./generatedObject";
+import {PPtr} from "./pptr";
 
 
 const SUPPORTED_TYPES = {
@@ -20,11 +20,11 @@ const SUPPORTED_TYPES = {
   'unsigned int': 'reader.readUInt32()',
   'Type*': 'reader.readUInt32()',
 
-  'long long': 'reader.readInt64()',
-  'SInt64': 'reader.readInt64()',
-  'unsigned long long': 'reader.readUInt64()',
-  'UInt64': 'reader.readUInt64()',
-  'FileSize': 'reader.readUInt64()',
+  'long long': 'Number(reader.readInt64())',
+  'SInt64': 'Number(reader.readInt64())',
+  'unsigned long long': 'Number(reader.readUInt64())',
+  'UInt64': 'Number(reader.readUInt64())',
+  'FileSize': 'Number(reader.readUInt64())',
 
   'float': 'reader.readFloat32()',
   'double': 'reader.readFloat64()',

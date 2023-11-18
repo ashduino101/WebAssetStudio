@@ -1,7 +1,7 @@
 import {requestExternalData} from "../utils";
 import {FSB5} from "../../fsb5/fsb5";
 import {Extension} from "../extension";
-import {AudioPreview} from "../../preview/audio";
+import {AudioPreview} from "../../preview/audioPreview";
 
 export class AudioClipExtension extends Extension {
   exportExtension = '.wav';

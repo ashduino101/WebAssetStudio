@@ -2,7 +2,7 @@ import {BinaryReader, SEEK_CUR} from "../binaryReader";
 import {SharedStrings} from "./sharedStrings";
 import {GeneratedObject} from "./generatedObject";
 import {PPtr} from "./pptr";
-import {BaseTypeTree} from "../typeTree";
+import {BaseTypeTree} from "./typeTree";
 
 class RemoteTypeTree extends BaseTypeTree {
   constructor(reader) {
@@ -71,7 +71,8 @@ class RemoteTypeTree extends BaseTypeTree {
 
 export class RemoteClassLoader {
   constructor(unityVersion) {
-    this.structURL = `https://raw.githubusercontent.com/AssetRipper/TypeTreeDumps/main/StructsData/release/${unityVersion}.dat`;
+    // this.structURL = `https://raw.githubusercontent.com/AssetRipper/TypeTreeDumps/main/StructsData/release/${unityVersion}.dat`;
+    this.structURL = `/typetrees/${unityVersion}.dat`;
     this._data = null;
     this.trees = {};
   }

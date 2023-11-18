@@ -5,7 +5,8 @@ import {ObjectReader} from "./objectReader";
 import {firstPreviewable, getClassName, globalDestroy} from "./utils";
 import {saveBlob} from "../utils";
 import {RemoteClassLoader} from "./remoteClassLoader";
-import {BaseTypeTree} from "../typeTree";
+import {BaseTypeTree} from "./typeTree";
+import {ExtensionManager} from "./extensionManager";
 
 export class TypeTree extends BaseTypeTree {
   static exposedAttributes = [
@@ -157,6 +158,7 @@ export class ObjectInfo {
     this._unityVersion = unityVersion;
     this._targetPlatform = targetPlatform;
     this._classes = classes;
+    this._extensionManager = new ExtensionManager();
 
     this.enableCaching = true;
 
@@ -233,6 +235,10 @@ export class ObjectInfo {
       }
     }
     return this.cachedName;
+  }
+
+  async getPreview() {
+    return this._extensionManager.getPreview(this);
   }
 }
 

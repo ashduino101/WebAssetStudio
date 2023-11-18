@@ -441,18 +441,17 @@ data like pixels, vertices, and UV maps used by the asset.`
 
   async onNodeSelect(evt, data) {
     const preview = document.getElementById('preview');
+    console.log(data.node.data.data);
     if (data.node.data.type === 'object') {
       if (data.node.data.isNone) return;
       document.body.dispatchEvent(new CustomEvent('destroy-preview'));
-      let object = data.node.data.data.object;
-      if (typeof object.createPreview === 'function') {
-        preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
-        object.createPreview().then(prev => {
-          preview.innerHTML = '';
-          preview.appendChild(prev);
-        });
-      }
-      let name = object.name;
+      let object = data.node.data.data;
+      preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
+      object.getPreview().then(prev => {
+        preview.innerHTML = '';
+        preview.appendChild(prev);
+      });
+      let name = object.object.m_Name;
       if (name === '<unnamed>' || name === '<empty>' || (typeof name == 'undefined') || name === '') {
         name = getClassName(data.node.data.data.classID);
       }

@@ -1,9 +1,12 @@
 import {Extension} from "../extension";
+import {ExtensionManager} from "../extensionManager";
 
 export class MaterialExtension extends Extension {
-  constructor(material) {
+  constructor(material, unityVersion, targetPlatform) {
     super();
     this.material = material;
+    this.unityVersion = unityVersion;
+    this.targetPlatform = targetPlatform;
   }
 
   getTexEnv(key) {
@@ -32,8 +35,15 @@ export class MaterialExtension extends Extension {
 
   async createPreview() {
     let mainTex = this.getTexEnv('_MainTex');
+    console.log(mainTex);
+    console.log(this.material);
     if (mainTex) {
-      return await mainTex.createPreview();
+      return await new ExtensionManager().getPreview({
+        object: mainTex,
+        classID: 28,
+        _unityVersion: this.unityVersion,
+        _targetPlatform: this.targetPlatform
+      });
     }
     return document.createElement('div');
   }
