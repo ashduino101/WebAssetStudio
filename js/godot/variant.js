@@ -1,4 +1,4 @@
-import {KVPair} from "../unityfs/basicTypes";
+import {KVPair} from "../unity/basicTypes";
 
 const
   VARIANT_NIL = 1,

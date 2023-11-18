@@ -1,4 +1,4 @@
-import {Vector2, Vector3, Vector4, Quaternion, Color, Matrix4x4} from "./unityfs/basicTypes";
+import {Vector2, Vector3, Vector4, Quaternion, Color, Matrix4x4} from "./unity/basicTypes";
 
 export const SEEK_SET = 0;
 export const SEEK_CUR = 1;

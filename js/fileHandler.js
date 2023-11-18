@@ -3,7 +3,7 @@ import {BinaryReader} from "./binaryReader";
 import {PAK_MAGIC} from "./unreal/pakfile";
 import {inflate} from "pako";
 import DefaultTree from "./defaultTree";
-import UnityTree from "./unityfs/unityTree";
+import UnityTree from "./unity/unityTree";
 import XNBTree from "./xna/xnbTree";
 
 const fileTypes = {
