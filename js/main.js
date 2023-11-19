@@ -5,7 +5,7 @@ import {isDebug} from "./config";
 
 function configureDebug() {
   if (isDebug) {
-    document.getElementById('download-raw').style.display = 'inline-block';
+    // document.getElementById('download-raw').style.display = 'inline-block';
   }
 }
 

@@ -110,6 +110,10 @@ export class BaseTypeTree {
       if (ret) {
         rs = 'return this;';
       }
+    } else if (tree.type === 'vector') {
+      const arrChild = tree.children[0];
+      arrChild.name = tree.name;
+      return await this._generateParser(arrChild, obj);
     } else {
       for (const child of tree.children) {
         s += `${obj}["${tree.name}"]=${obj}["${tree.name}"]??{};`;

@@ -10,7 +10,7 @@ export class MaterialExtension extends Extension {
   }
 
   getTexEnv(key) {
-    let texEnv = this.material.m_SavedProperties.m_TexEnvs.Array.filter(t => t.data.first === key)[0];
+    let texEnv = this.material.m_SavedProperties.m_TexEnvs.filter(t => t.data.first === key)[0];
     if (texEnv) {
       let texPtr = texEnv.data.second.m_Texture;
       texPtr.resolve();

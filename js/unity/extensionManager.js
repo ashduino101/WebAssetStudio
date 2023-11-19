@@ -7,11 +7,13 @@ import {TransformExtension} from "./classExtensions/transform";
 import {VideoClipExtension} from "./classExtensions/videoClip";
 import {Extension} from "./extension";
 import {Texture2DExtension} from "./classExtensions/texture2d";
+import {MeshExtension} from "./classExtensions/mesh";
 
 const EXTENSIONS = {
   83: AudioClipExtension,
   128: FontExtension,
   21: MaterialExtension,
+  43: MeshExtension,
   115: MonoScriptExtension,
   49: TextAssetExtension,
   28: Texture2DExtension,
@@ -23,8 +25,20 @@ export class ExtensionManager {
   constructor() {
   }
 
-  async getPreview(object) {
+  getExtension(object) {
     const extClass = EXTENSIONS[object.classID] ?? Extension;
-    return await (new extClass(object.object, object._unityVersion, object._targetPlatform)).createPreview();
+    return new extClass(
+      object.object,
+      object._unityVersion.replaceAll(/\D/g, '.').split('.').map(Number),
+      object._targetPlatform
+    );
+  }
+
+  async getPreview(object) {
+    return await this.getExtension(object).createPreview();
+  }
+
+  async getExport(object) {
+    return await this.getExtension(object).getExport();
   }
 }

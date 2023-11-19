@@ -441,7 +441,6 @@ data like pixels, vertices, and UV maps used by the asset.`
 
   async onNodeSelect(evt, data) {
     const preview = document.getElementById('preview');
-    console.log(data.node.data.data);
     if (data.node.data.type === 'object') {
       if (data.node.data.isNone) return;
       document.body.dispatchEvent(new CustomEvent('destroy-preview'));
@@ -463,11 +462,11 @@ data like pixels, vertices, and UV maps used by the asset.`
           2)]);
       };
       document.getElementById('download-object').onclick = async () => {
-        saveBlob(name + object.exportExtension, [await object.getAnyExport()]);
+        saveBlob(name + object.exportExtension, [await object.getExport()]);
       };
-      document.getElementById('download-raw').onclick = async () => {
-        saveBlob(name + '.dat', [object._raw]);
-      };
+      // document.getElementById('download-raw').onclick = async () => {
+      //   saveBlob(name + '.dat', [object._raw]);
+      // };
     } else if (data.node.data.type === 'pptr') {
       let pptr = data.node.data.data;
       pptr.resolve();

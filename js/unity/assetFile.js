@@ -240,6 +240,10 @@ export class ObjectInfo {
   async getPreview() {
     return this._extensionManager.getPreview(this);
   }
+
+  async getExport() {
+    return this._extensionManager.getExport(this);
+  }
 }
 
 export class LocalObjectIdentifier {

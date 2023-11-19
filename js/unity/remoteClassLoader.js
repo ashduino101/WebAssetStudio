@@ -1,7 +1,5 @@
 import {BinaryReader, SEEK_CUR} from "../binaryReader";
 import {SharedStrings} from "./sharedStrings";
-import {GeneratedObject} from "./generatedObject";
-import {PPtr} from "./pptr";
 import {BaseTypeTree} from "./typeTree";
 
 class RemoteTypeTree extends BaseTypeTree {
@@ -101,5 +99,6 @@ export class RemoteClassLoader {
       tree.read();
       this.trees[typeID] = tree;
     }
+    console.log(this.trees[43]);
   }
 }

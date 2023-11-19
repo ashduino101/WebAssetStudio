@@ -8,7 +8,7 @@ export class TransformExtension extends Extension {
 
   mapChildren() {
     this.realChildren = [];
-    for (let child of this.transform.m_Children.Array) {
+    for (let child of this.transform.m_Children) {
       child.data.resolve();
       if (child.data.object) {
         if (child.data.object.constructor.name === 'Transform') {

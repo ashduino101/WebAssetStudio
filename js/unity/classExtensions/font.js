@@ -11,7 +11,7 @@ export class FontExtension extends Extension {
   }
 
   async loadFont() {
-    let font = new Blob([this.font.m_FontData.Array], {type: 'application/octet-stream'});  // type shouldn't matter
+    let font = new Blob([this.font.m_FontData], {type: 'application/octet-stream'});  // type shouldn't matter
     let fontID = this.createID();
     let fontURL = URL.createObjectURL(font);
     let face = new FontFace(fontID, `url(${fontURL})`);
@@ -31,6 +31,6 @@ export class FontExtension extends Extension {
   }
 
   async getExport() {
-    return this.font.m_FontData.Array;
+    return this.font.m_FontData;
   }
 }
