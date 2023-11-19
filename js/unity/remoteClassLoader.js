@@ -69,8 +69,8 @@ class RemoteTypeTree extends BaseTypeTree {
 
 export class RemoteClassLoader {
   constructor(unityVersion) {
-    // this.structURL = `https://raw.githubusercontent.com/AssetRipper/TypeTreeDumps/main/StructsData/release/${unityVersion}.dat`;
-    this.structURL = `/typetrees/${unityVersion}.dat`;
+    this.structURL = `https://raw.githubusercontent.com/AssetRipper/TypeTreeDumps/main/StructsData/release/${unityVersion}.dat`;
+    // this.structURL = `/typetrees/${unityVersion}.dat`;
     this._data = null;
     this.trees = {};
   }
