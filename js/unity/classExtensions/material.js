@@ -10,7 +10,7 @@ export class MaterialExtension extends Extension {
   }
 
   getTexEnv(key) {
-    let texEnv = this.material.m_SavedProperties.m_TexEnvs.filter(t => t.data.first === key)[0];
+    let texEnv = this.material.m_SavedProperties.m_TexEnvs.Array.filter(t => t.data.first === key)[0];
     if (texEnv) {
       let texPtr = texEnv.data.second.m_Texture;
       texPtr.resolve();
@@ -22,15 +22,15 @@ export class MaterialExtension extends Extension {
   }
 
   getInt(key) {
-    return this.material.m_SavedProperties.m_Ints.filter(t => t.data.first === key)[0]?.data?.second ?? null;
+    return this.material.m_SavedProperties.m_Ints.Array.filter(t => t.data.first === key)[0]?.data?.second ?? null;
   }
 
   getFloat(key) {
-    return this.material.m_SavedProperties.m_Floats.filter(t => t.data.first === key)[0]?.data?.second ?? null;
+    return this.material.m_SavedProperties.m_Floats.Array.filter(t => t.data.first === key)[0]?.data?.second ?? null;
   }
 
   getColor(key) {
-    return this.material.m_SavedProperties.m_Colors.filter(t => t.data.first === key)[0]?.data?.second ?? null;
+    return this.material.m_SavedProperties.m_Colors.Array.filter(t => t.data.first === key)[0]?.data?.second ?? null;
   }
 
   async createPreview() {

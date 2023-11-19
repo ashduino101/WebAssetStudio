@@ -8,6 +8,7 @@ import {VideoClipExtension} from "./classExtensions/videoClip";
 import {Extension} from "./extension";
 import {Texture2DExtension} from "./classExtensions/texture2d";
 import {MeshExtension} from "./classExtensions/mesh";
+import {SkinnedMeshRendererExtension} from "./classExtensions/skinnedMeshRenderer";
 
 const EXTENSIONS = {
   83: AudioClipExtension,
@@ -15,6 +16,7 @@ const EXTENSIONS = {
   21: MaterialExtension,
   43: MeshExtension,
   115: MonoScriptExtension,
+  137: SkinnedMeshRendererExtension,
   49: TextAssetExtension,
   28: Texture2DExtension,
   4: TransformExtension,

@@ -1,70 +1,29 @@
-import {Renderer} from "./renderer";
-import {PPtr} from "../pptr";
+import {Extension} from "../extension";
+import {
+  AmbientLight,
+  Bone,
+  Box3,
+  Color,
+  Matrix4,
+  Mesh,
+  MeshPhysicalMaterial,
+  PerspectiveCamera,
+  Scene,
+  Skeleton,
+  TextureLoader, WebGLRenderer
+} from "three";
 import * as THREE from "three";
 import $ from "jquery";
+import {MaterialExtension} from "./material";
+import {Texture2DExtension} from "./texture2d";
+import {MeshExtension} from "./mesh";
 import {OrbitControls} from "three/addons/controls/OrbitControls";
-import {
-  AmbientLight, Bone,
-  Box3,
-  Color, DirectionalLight,
-  DirectionalLightHelper, Matrix4,
-  Mesh, MeshMatcapMaterial,
-  MeshPhongMaterial, MeshPhysicalMaterial, MeshStandardMaterial,
-  PerspectiveCamera,
-  Scene, Skeleton, SkinnedMesh, TextureLoader,
-  WebGLRenderer
-} from "three";
-import {Matrix4x4} from "../basicTypes";
-import {GLTFExporter} from "three/addons/exporters/GLTFExporter";
 
-export class SkinnedMeshRenderer extends Renderer {
-  static exposedAttributes = [
-    'gameObject',
-    'enabled',
-    'castShadows',
-    'receiveShadows',
-    'motionVectors',
-    'lightProbeUsage',
-    'reflectionProbeUsage',
-    'lightmapIndex',
-    'lightmapIndexDynamic',
-    'lightmapTilingOffset',
-    'lightmapTilingOffsetDynamic',
-    'materials',
-    'staticBatchInfo',
-    'staticBatchRoot',
-    'probeAnchor',
-    'lightProbeVolumeOverride',
-    'sortingLayerID',
-    'sortingOrder',
-    'quality',
-    'updateWhenOffscreen',
-    'skinNormals',
-    'mesh',
-    'bones',
-    'blendShapeWeights'
-  ];
-  
-  constructor(reader) {
-    super(reader);
-    this.quality = reader.readInt32();
-    this.updateWhenOffscreen = reader.readBool();
-    this.skinNormals = reader.readBool();
-    reader.align(4);
-
-    if (reader.version[0] === 2 && reader.version[1] < 6) {
-      this.disableAnimationWhenOffscreen = new PPtr(reader);
-    }
-    this.mesh = new PPtr(reader);
-
-    let numBones = reader.readInt32();
-    this.bones = [];
-    for (let i = 0; i < numBones; i++) {
-      this.bones.push(new PPtr(reader));
-    }
-    if (reader.versionGTE(4, 3)) {
-      this.blendShapeWeights = reader.readArrayT(() => reader.readFloat32(), reader.readUInt32());
-    }
+export class SkinnedMeshRendererExtension extends Extension {
+  constructor(object, version, platform) {
+    super(object);
+    this.version = version;
+    this.platform = platform;
   }
 
   transformToBone(boneT) {
@@ -87,8 +46,8 @@ export class SkinnedMeshRenderer extends Renderer {
 
   async mapBones() {
     const bones = [];
-    for (const bone of this.bones) {
-      bones.push(this._mapTransformBone(bone.object));
+    for (const bone of this.object.m_Bones) {
+      bones.push(this._mapTransformBone(bone.data.object));
     }
     return bones;
   }
@@ -104,7 +63,7 @@ export class SkinnedMeshRenderer extends Renderer {
     }
     return str;
   }
-  
+
   debugSkeleton(skeleton) {
     console.log(this._debugBone(skeleton.bones[0]));
   }
@@ -119,9 +78,10 @@ export class SkinnedMeshRenderer extends Renderer {
 
   async createMesh() {
     let material;
-    if (this.materials.length > 0) {
-      this.materials[0].resolve();
-      const mat = this.materials[0].object;
+    console.log(this.object);
+    if (this.object.m_Materials.length > 0) {
+      this.object.m_Materials[0].resolve();
+      const mat = new MaterialExtension(this.object.m_Materials[0].object);
       const tex = mat.getTexEnv('_MainTex');
       const emission = mat.getTexEnv('_EmissionMap');
       const bump = mat.getTexEnv('_BumpMap');
@@ -135,31 +95,33 @@ export class SkinnedMeshRenderer extends Renderer {
       const occlusionStrength = mat.getFloat('_OcclusionStrength') ?? 0.75;
       const enableEmission = mat.getFloat('_EnableEmission') ?? true;
 
+      console.log(mat, tex);
+
       const loader = new TextureLoader();
 
       const matOptions = {
         roughness: 0.75,
         clearcoat: glossiness,
         clearcoatRoughness: 0.5,
-        map: tex ? loader.load(await tex.createDataUrl(0)) : null,
+        map: tex ? loader.load(await new Texture2DExtension(tex, this.version, this.platform).createDataUrl(0)) : null,
       };
 
       if (emission && enableEmission) {
         matOptions.emissive = 0xffffff;
         matOptions.emissiveIntensity = 1;
-        matOptions.emissiveMap = loader.load(await emission.createDataUrl(0));
+        matOptions.emissiveMap = loader.load(await new Texture2DExtension(emission, this.version, this.platform).createDataUrl(0));
       }
       if (bump) {
-        matOptions.bumpMap = loader.load(await bump.createDataUrl(0));
+        matOptions.bumpMap = loader.load(await new Texture2DExtension(bump, this.version, this.platform).createDataUrl(0));
         matOptions.bumpScale = bumpScale;
       }
       if (occlusion) {
         matOptions.aoMapIntensity = occlusionStrength;
-        matOptions.aoMap = loader.load(await occlusion.createDataUrl(0));
+        matOptions.aoMap = loader.load(await new Texture2DExtension(occlusion, this.version, this.platform).createDataUrl(0));
       }
       if (metallicGloss) {
         matOptions.metalness = metallic;
-        matOptions.metalnessMap = loader.load(await metallicGloss.createDataUrl(0));
+        matOptions.metalnessMap = loader.load(await new Texture2DExtension(metallicGloss, this.version, this.platform).createDataUrl(0));
       }
 
       material = new MeshPhysicalMaterial(matOptions);
@@ -170,7 +132,7 @@ export class SkinnedMeshRenderer extends Renderer {
       });
     }
 
-    let mesh = new Mesh(this.mesh.object.toGeometry(), material);
+    let mesh = new Mesh(new MeshExtension(this.object.m_Mesh.object, this.version).toGeometry(), material);
 
     // const skeleton = await this.createSkeleton();
     // console.log(skeleton)
@@ -192,8 +154,8 @@ export class SkinnedMeshRenderer extends Renderer {
 
   async createPreview() {
     // await this.createSkeleton()
-    this.mesh.resolve();
-    if (this.mesh.object) {
+    this.object.m_Mesh.resolve();
+    if (this.object.m_Mesh.object) {
       const scene = new Scene();
       scene.background = new Color(0x606060);
 
