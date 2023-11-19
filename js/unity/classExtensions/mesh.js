@@ -110,7 +110,7 @@ export class MeshExtension extends Extension {
     }
     this.getStreams();
     this.processVertexData();
-    // this.decompressMesh();
+    this.decompressMesh();
     this.getTriangles();
   }
 
@@ -266,12 +266,12 @@ export class MeshExtension extends Extension {
   }
 
   decompressMesh() {
-    if (this.compressedMesh.vertices.length > 0) {
-      this.vertexCount = this.compressedMesh.vertices.length / 3;
-      this.vertices = this.compressedMesh.vertices.unpack(3, 3 * 4);
+    if (this.object.m_CompressedMesh.vertices.length > 0) {
+      this.vertexCount = this.object.m_CompressedMesh.vertices.length / 3;
+      this.vertices = this.object.m_CompressedMesh.vertices.unpack(3, 3 * 4);
     }
-    if (this.compressedMesh.uv.length > 0) {
-      let uvInfo = this.compressedMesh.uvInfo;
+    if (this.object.m_CompressedMesh.uv.length > 0) {
+      let uvInfo = this.object.m_CompressedMesh.uvInfo;
       if (uvInfo !== 0) {
         const infoBitsPerUV = 4;
         const uvDimensionMask = 3;
@@ -284,31 +284,22 @@ export class MeshExtension extends Extension {
           texCoordBits &= (1 << infoBitsPerUV) - 1;
           if ((texCoordBits & uvChannelExists) !== 0) {
             let uvDim = 1 + (texCoordBits & uvDimensionMask);
-            this[`uv${uv}`] = this.compressedMesh.uv.unpack(uvDim, uvDim * 4, uvSrcOffset, this.vertexCount);
-            uvSrcOffset += uvDim * this.vertexCount;
+            this[`uv${uv}`] = this.object.m_CompressedMesh.uv.unpack(uvDim, uvDim * 4, uvSrcOffset, this.object.m_VertexCount);
+            uvSrcOffset += uvDim * this.object.m_VertexCount;
           }
         }
       } else {
-        this.uv0 = this.compressedMesh.uv.unpack(2, 2 * 4, 0, this.vertexCount);
-        if (this.compressedMesh.uv.length >= this.vertexCount * 4) {
-          this.uv1 = this.compressedMesh.uv.unpack(2, 2 * 4, this.vertexCount * 2, this.vertexCount);
+        this.uv0 = this.object.m_CompressedMesh.uv.unpack(2, 2 * 4, 0, this.object.m_VertexCount);
+        if (this.object.m_CompressedMesh.uv.length >= this.object.m_VertexCount * 4) {
+          this.uv1 = this.object.m_CompressedMesh.uv.unpack(2, 2 * 4, this.object.m_VertexCount * 2, this.object.m_VertexCount);
         }
       }
     }
-    if (this._version[0] < 5) {
-      if (this.compressedMesh.bindPoses.length > 0) {
-        this.bindPose = [];
-        let rawBindPoses = this.compressedMesh.bindPoses.unpack(16, 16 * 4);
-        for (let i = 0; i < this.compressedMesh.bindPoses.length; i++) {
-          this.bindPose.push(new Matrix4x4(rawBindPoses.slice(i * 16, (i + 1) * 16)));
-        }
-      }
-    }
-    if (this.compressedMesh.normals.length > 0) {
-      let normalData = this.compressedMesh.normals.unpack(2, 4 * 2);
-      let signs = this.compressedMesh.normalSigns.unpack();
+    if (this.object.m_CompressedMesh.normals.length > 0) {
+      let normalData = this.object.m_CompressedMesh.normals.unpack(2, 4 * 2);
+      let signs = this.object.m_CompressedMesh.normalSigns.unpack();
       this.normals = [];
-      for (let i = 0; i < this.compressedMesh.normals.length / 2; i++) {
+      for (let i = 0; i < this.object.m_CompressedMesh.normals.length / 2; i++) {
         let x = normalData[i * 2];
         let y = normalData[i * 2 + 1];
         let zsqr = 1 - x * x - y * y;
@@ -331,11 +322,11 @@ export class MeshExtension extends Extension {
         this.normals[i * 3 + 2] = z;
       }
     }
-    if (this.compressedMesh.tangents.length > 0) {
-      let tangentData = this.compressedMesh.tangents.unpack(2, 4 * 2);
-      let signs = this.compressedMesh.tangentSigns.unpack();
+    if (this.object.m_CompressedMesh.tangents.length > 0) {
+      let tangentData = this.object.m_CompressedMesh.tangents.unpack(2, 4 * 2);
+      let signs = this.object.m_CompressedMesh.tangentSigns.unpack();
       this.tangents = [];
-      for (let i = 0; i < this.compressedMesh.tangents.length / 2; i++) {
+      for (let i = 0; i < this.object.m_CompressedMesh.tangents.length / 2; i++) {
         let x = tangentData[i * 2];
         let y = tangentData[i * 2 + 1];
         let zsqr = 1 - x * x - y * y;
@@ -360,14 +351,9 @@ export class MeshExtension extends Extension {
         this.tangents[i * 4 + 3] = w;
       }
     }
-    if (this._version >= 5) {
-      if (this.compressedMesh.floatColors.length > 0) {
-        this.colors = this.compressedMesh.floatColors.unpack(1, 4);
-      }
-    }
-    if (this.compressedMesh.weights.length > 0) {
-      let weights = this.compressedMesh.weights.unpack();
-      let boneIndices = this.compressedMesh.boneIndices.unpack();
+    if (this.object.m_CompressedMesh.weights.length > 0) {
+      let weights = this.object.m_CompressedMesh.weights.unpack();
+      let boneIndices = this.object.m_CompressedMesh.boneIndices.unpack();
       this.initMSkin();
 
       let bonePos = 0;
@@ -375,37 +361,37 @@ export class MeshExtension extends Extension {
       let j = 0;
       let sum = 0;
 
-      for (let i = 0; i < this.compressedMesh.weights.length; i++) {
-        this.skin[bonePos].weight[j] = weights[i] / 31;
-        this.skin[bonePos].boneIndex[j] = boneIndices[boneIndexPos++];
+      for (let i = 0; i < this.object.m_CompressedMesh.weights.length; i++) {
+        this.object.m_Skin[bonePos][`weight[${j}]`] = weights[i] / 31;
+        this.object.m_Skin[bonePos][`boneIndex[${j}]`] = boneIndices[boneIndexPos++];
         j++;
         sum += weights[i];
         if (sum >= 31) {
           for (; j < 4; j++) {
-            this.skin[bonePos].weight[j] = 0;
-            this.skin[bonePos].boneIndex[j] = 0;
+            this.object.m_Skin[bonePos][`weight[${j}]`] = 0;
+            this.object.m_Skin[bonePos][`boneIndex[${j}]`] = 0;
           }
           bonePos++;
           j = 0;
           sum = 0;
         } else if (j === 3) {
-          this.skin[bonePos].weight[j] = (31 - sum) / 31;
-          this.skin[bonePos].boneIndex[j] = boneIndices[boneIndexPos++];
+          this.object.m_Skin[bonePos][`weight[${j}]`] = (31 - sum) / 31;
+          this.object.m_Skin[bonePos][`boneIndex[${j}]`] = boneIndices[boneIndexPos++];
           bonePos++;
           j = 0;
           sum = 0;
         }
       }
     }
-    if (this.compressedMesh.triangles.length > 0) {
-      this.indexBuffer = this.compressedMesh.triangles.unpack();
+    if (this.object.m_CompressedMesh.triangles.length > 0) {
+      this.indexBuffer = this.object.m_CompressedMesh.triangles.unpack();
     }
-    if (this.compressedMesh.colors.length > 0) {
-      this.compressedMesh.colors.length *= 4;
-      this.compressedMesh.colors.bitSize /= 4;
-      let colors = this.compressedMesh.colors.unpack();
+    if (this.object.m_CompressedMesh.colors.length > 0) {
+      this.object.m_CompressedMesh.colors.length *= 4;
+      this.object.m_CompressedMesh.colors.bitSize /= 4;
+      let colors = this.object.m_CompressedMesh.colors.unpack();
       this.colors = [];
-      for (let i = 0; i < this.compressedMesh.colors.length / 4; i += 4) {
+      for (let i = 0; i < this.object.m_CompressedMesh.colors.length / 4; i += 4) {
         this.colors.push([colors[i] / 0xFF, colors[i + 1] / 0xFF, colors[i + 2] / 0xFF, colors[i + 3] / 0xFF]);
       }
     }

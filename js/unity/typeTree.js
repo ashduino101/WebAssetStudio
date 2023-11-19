@@ -1,5 +1,6 @@
 import {GeneratedObject} from "./generatedObject";
 import {PPtr} from "./pptr";
+import {CompressedMesh} from "./compressedMesh";
 
 
 const SUPPORTED_TYPES = {
@@ -42,7 +43,12 @@ const SUPPORTED_TYPES = {
 
   'TypelessData': 'reader.read(reader.readUInt32())',
 
-  'string': 'reader.readAlignedString()'  // strings are always aligned
+  'string': 'reader.readAlignedString()',  // strings are always aligned
+
+  // though this is provided in the type tree, it's a bit hard to
+  // tell if it's an int or a float vector, so we just handle the
+  // entire compressed mesh as a class
+  'CompressedMesh': 'new CompressedMesh(reader);'
 }
 
 const SUPPORTED_ARRAY_OVERRIDES = {
@@ -134,7 +140,7 @@ export class BaseTypeTree {
   }
 
   async compile() {
-    let s = `const PPtr=this.PPtr;return(class ${this.type} extends this.GeneratedObject{constructor(reader){super(reader);`
+    let s = `const PPtr=this.PPtr;const CompressedMesh=this.CompressedMesh;return(class ${this.type} extends this.GeneratedObject{constructor(reader){super(reader);`
     for (const child of this.children) {
       s += await this._generateParser(child);
     }
@@ -143,6 +149,6 @@ export class BaseTypeTree {
     window.global__compileStats.total = window.global__compileStats.total ?? 0;
     window.global__compileStats.total += s.length;
     console.log('Total:', window.global__compileStats.total);
-    return Function(s).bind({GeneratedObject, PPtr})();
+    return Function(s).bind({GeneratedObject, PPtr, CompressedMesh})();
   }
 }

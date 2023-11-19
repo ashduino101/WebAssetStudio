@@ -342,6 +342,9 @@ export class AssetFile {
     } else {
       this.unityVersion = '2.5.0f5';
     }
+    if (parseInt(this.unityVersion) < 5) {
+      throw new Error('Unity assets before version 5 are unsupported');
+    }
     if (this.version >= 8) {
       this.targetPlatform = BuildTarget[this.reader.readUInt32()];
     }
