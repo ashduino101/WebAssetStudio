@@ -1,6 +1,6 @@
 import {defineConfig} from "vite";
 import wasm from 'vite-plugin-wasm';
-import legacy from '@vitejs/plugin-legacy';
+// import legacy from '@vitejs/plugin-legacy';
 
 export default defineConfig({
   esbuild: {
@@ -9,5 +9,5 @@ export default defineConfig({
       'top-level-await': true
     }
   },
-  plugins: [wasm(), legacy()]
+  plugins: [wasm()/*, legacy()*/]
 });

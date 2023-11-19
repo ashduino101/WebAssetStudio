@@ -78,7 +78,6 @@ export class SkinnedMeshRendererExtension extends Extension {
 
   async createMesh() {
     let material;
-    console.log(this.object);
     if (this.object.m_Materials.length > 0) {
       this.object.m_Materials[0].resolve();
       const mat = new MaterialExtension(this.object.m_Materials[0].object);
@@ -94,8 +93,6 @@ export class SkinnedMeshRendererExtension extends Extension {
       const metallic = mat.getFloat('_Metallic') ?? 0.7;
       const occlusionStrength = mat.getFloat('_OcclusionStrength') ?? 0.75;
       const enableEmission = mat.getFloat('_EnableEmission') ?? true;
-
-      console.log(mat, tex);
 
       const loader = new TextureLoader();
 
