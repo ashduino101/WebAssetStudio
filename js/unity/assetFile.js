@@ -373,6 +373,8 @@ export class AssetFile {
     }
     const end = performance.now();
     console.log(`Classes compiled in ${end - start}ms`);
+    console.log('Compiled size:', window.global__compileStats.total);
+    console.log('Total compiled:', window.global__compileStats.numCompiled);
 
     // Objects
     let objectCount = this.reader.readInt32();
