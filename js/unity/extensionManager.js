@@ -31,7 +31,9 @@ export class ExtensionManager {
     const extClass = EXTENSIONS[object.classID] ?? Extension;
     return new extClass(
       object.object,
-      object._unityVersion.replaceAll(/\D/g, '.').split('.').map(Number),
+      (typeof object._unityVersion == 'string')
+        ? object._unityVersion.replaceAll(/\D/g, '.').split('.').map(Number)
+        : object._unityVersion,
       object._targetPlatform
     );
   }
