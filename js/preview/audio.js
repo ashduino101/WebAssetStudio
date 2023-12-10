@@ -1,8 +1,8 @@
 import {BasePreview} from './basePreview';
 
 export class AudioPreview extends BasePreview {
-  async create(wavData) {
-    const url = URL.createObjectURL(new Blob([wavData], {type: 'audio/wav'}));
+  create(data, isOGG = false) {
+    const url = URL.createObjectURL(new Blob([data], {type: isOGG ? 'audio/ogg' : 'audio/wav'}));
     const elem = document.createElement('audio');
     elem.style.display = 'block';
     elem.style.position = 'relative';

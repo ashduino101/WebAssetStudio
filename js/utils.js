@@ -16,6 +16,12 @@ export function compareFilter(op, a, b) {
   return false;
 }
 
+export function arraysEqual(a, b) {
+  return (a.length === b.length) && a.every(function(element, index) {
+    return element === b[index];
+  });
+}
+
 export function saveBlob(filename, data, type) {
   const file = new Blob(data, {type: type});
   const a = document.createElement('a');

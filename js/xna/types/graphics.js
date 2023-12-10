@@ -2,7 +2,7 @@ import {
   decode_a8,
   decode_bgr565, decode_bgra4444, decode_bgra5551,
   decode_dxt1, decode_dxt3,
-  decode_dxt5, decode_normalizedbyte2,
+  decode_dxt5, decode_la16,
   decode_rg32,
   decode_rgb565, decode_rgba1010102,
   decode_rgba4444,
@@ -63,7 +63,7 @@ function loadImageRaw(width, height, data, surfaceFormat) {
     case 'Dxt5':
       return decode_dxt5(data, width, height);
     case 'NormalizedByte2':
-      return decode_normalizedbyte2(data, width, height);
+      return decode_la16(data, width, height);
     case 'NormalizedByte4':
       return data;
     case 'Rgba1010102':

@@ -1,5 +1,5 @@
-mod utils;
-mod pngenc;
-mod texdec;
-mod fp16;
-mod compress;
+pub mod utils;
+pub mod pngenc;
+pub mod texdec;
+pub mod fp16;
+pub mod compress;

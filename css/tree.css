@@ -22,6 +22,12 @@
   background-position: -72px 0 !important;
 }
 
+.icon-dir {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -96px 0 !important;
+}
+
 .icon-object {
   background-image: url('/css/sheet.png') !important;
   background-size: 192px 192px;

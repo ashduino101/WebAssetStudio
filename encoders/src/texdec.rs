@@ -176,14 +176,16 @@ pub fn decode_bgra4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
 }
 
 #[wasm_bindgen]
-pub fn decode_normalizedbyte2(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgba5551(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
-    out.resize(width * height * 4, 0);
     for i in 0..(width * height) {
-        out[i * 4] = data[i * 2];
-        out[i * 4 + 1] = data[i * 2];
-        out[i * 4 + 2] = data[i * 2];
-        out[i * 4 + 3] = data[i * 2 + 1];
+        let color = u16::from_le_bytes([data[i * 2], data[i * 2 + 1]]);
+        out.write_all(&[
+            ((color & 0x001F) << 3) as u8,
+            ((color & 0x03E0) >> 2) as u8,
+            ((color & 0x7C00) >> 7) as u8,
+            (if (color & 0x8000) == 0x8000 {0xff} else {0x00}) as u8
+        ]).expect("rgba5551");
     }
     out.into()
 }
@@ -266,6 +268,22 @@ pub fn decode_rghalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
 }
 
 #[wasm_bindgen]
+pub fn decode_rgbhalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut out = Vec::new();
+    for i in 0..(width * height) {
+        let r = ((data[i * 6 + 1] as u16) << 8) | (data[i * 6] as u16);
+        let g = ((data[i * 6 + 3] as u16) << 8) | (data[i * 6 + 2] as u16);
+        let b = ((data[i * 6 + 5] as u16) << 8) | (data[i * 6 + 4] as u16);
+        out.write_all(&[
+            (fp16_ieee_to_fp32_value(r) * 255.0) as u8,
+            (fp16_ieee_to_fp32_value(g) * 255.0) as u8,
+            (fp16_ieee_to_fp32_value(b) * 255.0) as u8,
+        ]).expect("rgbhalf");
+    }
+    out.into()
+}
+
+#[wasm_bindgen]
 pub fn decode_rgbahalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
@@ -278,7 +296,7 @@ pub fn decode_rgbahalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
             (fp16_ieee_to_fp32_value(g) * 255.0) as u8,
             (fp16_ieee_to_fp32_value(b) * 255.0) as u8,
             (fp16_ieee_to_fp32_value(a) * 255.0) as u8,
-        ]).expect("rghalf");
+        ]).expect("rgbahalf");
     }
     out.into()
 }
@@ -307,6 +325,19 @@ pub fn decode_rgfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]>
             0,
             0xff
         ]).expect("rgfloat");
+    }
+    out.into()
+}
+
+#[wasm_bindgen]
+pub fn decode_rgbfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut out = Vec::new();
+    for i in 0..(width * height) {
+        out.write_all(&[
+            f32::from_le_bytes([data[i * 12], data[i * 12 + 1], data[i * 12 + 2], data[i * 12 + 3]]) as u8,
+            f32::from_le_bytes([data[i * 12 + 4], data[i * 12 + 5], data[i * 12 + 6], data[i * 12 + 7]]) as u8,
+            f32::from_le_bytes([data[i * 12 + 8], data[i * 12 + 9], data[i * 12 + 10], data[i * 12 + 11]]) as u8,
+        ]).expect("rgbfloat");
     }
     out.into()
 }
@@ -404,6 +435,32 @@ pub fn decode_r8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
         out[i * 4 + 1] = 0;
         out[i * 4 + 2] = 0;
         out[i * 4 + 3] = 0xff;
+    }
+    out.into()
+}
+
+#[wasm_bindgen]
+pub fn decode_l8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut out = Vec::new();
+    out.resize(width * height * 4, 0);
+    for i in 0..(width * height) {
+        out[i * 4] = data[i];
+        out[i * 4 + 1] = data[i];
+        out[i * 4 + 2] = data[i];
+        out[i * 4 + 3] = 0xff;
+    }
+    out.into()
+}
+
+#[wasm_bindgen]
+pub fn decode_la16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+    let mut out = Vec::new();
+    out.resize(width * height * 4, 0);
+    for i in 0..(width * height) {
+        out[i * 4] = data[i * 2];
+        out[i * 4 + 1] = data[i * 2];
+        out[i * 4 + 2] = data[i * 2];
+        out[i * 4 + 3] = data[i * 2 + 1];
     }
     out.into()
 }
@@ -617,7 +674,29 @@ pub fn decode(format: &str, data: &mut [u8], width: usize, height: usize, is_xbo
             if is_xbox { swap_bytes_xbox(data) };
             decode_rgb565(data, width, height)
         },
-        "R16" => decode_r16(data, width, height),
+        "RGBA4444" => decode_rgba4444(data, width, height),
+        "RGBA5551" => decode_rgba5551(data, width, height),
+        "BGRA32" => decode_bgra32(data, width, height),
+
+        "RHalf" => decode_rhalf(data, width, height),
+        "RGHalf" => decode_rghalf(data, width, height),
+        "RGBHalf" => decode_rgbhalf(data, width, height),
+        "RGBAHalf" => decode_rgbahalf(data, width, height),
+
+        "RFloat" => decode_rfloat(data, width, height),
+        "RGFloat" => decode_rgfloat(data, width, height),
+        "RGBFloat" => decode_rgbfloat(data, width, height),
+        "RGBAFloat" => decode_rgbafloat(data, width, height),
+
+        "YUY2" => decode_yuy2(data, width, height),
+
+        "RGB9e5Float" => decode_rgb9e5float(data, width, height),
+
+        "BC6H" => decode_bc6h(data, width, height),
+        "BC7" => decode_bc7(data, width, height),
+        "BC4" => decode_bc4(data, width, height),
+        "BC5" => decode_bc5(data, width, height),
+
         "DXT1" => {
             if is_xbox { swap_bytes_xbox(data) };
             decode_dxt1(data, width, height)
@@ -629,46 +708,40 @@ pub fn decode(format: &str, data: &mut [u8], width: usize, height: usize, is_xbo
             if is_xbox { swap_bytes_xbox(data) };
             decode_dxt5(data, width, height)
         },
-        "RGBA4444" => {
-            decode_rgba4444(data, width, height)
-        },
-        "BGRA32" => decode_bgra32(data, width, height),
-        "RHalf" => decode_rhalf(data, width, height),
-        "RGHalf" => decode_rghalf(data, width, height),
-        "RGBAHalf" => decode_rgbahalf(data, width, height),
-        "RFloat" => decode_rfloat(data, width, height),
-        "RGFloat" => decode_rgfloat(data, width, height),
-        "RGBAFloat" => decode_rgbafloat(data, width, height),
-        "YUY2" => decode_yuy2(data, width, height),
-        "RGB9e5Float" => decode_rgb9e5float(data, width, height),
-        "BC6H" => decode_bc6h(data, width, height),
-        "BC7" => decode_bc7(data, width, height),
-        "BC4" => decode_bc4(data, width, height),
-        "BC5" => decode_bc5(data, width, height),
         "DXT1Crunched" => decode_dxt1(data, width, height),
         "DXT5Crunched" => decode_dxt5(data, width, height),
+
         "PVRTC_RGB2" | "PVRTC_RGBA2" => decode_pvrtc(data, width, height, true),
         "PVRTC_RGB4" | "PVRTC_RGBA4" => decode_pvrtc(data, width, height, false),
-        "ETC_RGB4" | "ETC_RGB4_3DS" => decode_etc1(data, width, height),
+
         "ATC_RGB4" => decode_atc_rgb4(data, width, height),
         "ATC_RGBA8" => decode_atc_rgba8(data, width, height),
+
         "EAC_R" => decode_eacr(data, width, height),
         "EAC_R_SIGNED" => decode_eacr_signed(data, width, height),
         "EAC_RG" => decode_eacrg(data, width, height),
         "EAC_RG_SIGNED" => decode_eacrg_signed(data, width, height),
+
+        "ETC_RGB4" | "ETC_RGB4_3DS" => decode_etc1(data, width, height),
         "ETC2_RGB" => decode_etc2(data, width, height),
         "ETC2_RGBA1" => decode_etc2_a1(data, width, height),
         "ETC2_RGBA8" | "ETC2_RGBA8_3DS" => decode_etc2_a8(data, width, height),
+        "ETC_RGB4Crunched" => decode_etc1(data, width, height),
+        "ETC_RGBA8Crunched" => decode_etc2_a8(data, width, height),
+
         "ASTC_RGB_4x4" | "ASTC_RGBA_4x4" | "ASTC_HDR_4x4" => decode_astc(data, width, height, 4, 4),
         "ASTC_RGB_5x5" | "ASTC_RGBA_5x5" | "ASTC_HDR_5x5" => decode_astc(data, width, height, 5, 5),
         "ASTC_RGB_6x6" | "ASTC_RGBA_6x6" | "ASTC_HDR_6x6" => decode_astc(data, width, height, 6, 6),
         "ASTC_RGB_8x8" | "ASTC_RGBA_8x8" | "ASTC_HDR_8x8" => decode_astc(data, width, height, 8, 8),
         "ASTC_RGB_10x10" | "ASTC_RGBA_10x10" | "ASTC_HDR_10x10" => decode_astc(data, width, height, 10, 10),
         "ASTC_RGB_12x12" | "ASTC_RGBA_12x12" | "ASTC_HDR_12x12" => decode_astc(data, width, height, 12, 12),
-        "RG16" => decode_rg16(data, width, height),
+
+        "L8" => decode_l8(data, width, height),
+        "LA16" => decode_la16(data, width, height),
+
         "R8" => decode_r8(data, width, height),
-        "ETC_RGB4Crunched" => decode_etc1(data, width, height),
-        "ETC_RGBA8Crunched" => decode_etc2_a8(data, width, height),
+        "R16" => decode_r16(data, width, height),
+        "RG16" => decode_rg16(data, width, height),
         "RG32" => decode_rg32(data, width, height),
         "RGB48" => decode_rgb48(data, width, height),
         "RGBA64" => decode_rgba64(data, width, height),

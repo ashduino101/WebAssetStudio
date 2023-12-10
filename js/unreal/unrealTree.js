@@ -1,5 +1,5 @@
 import {AssetTree} from "../treeview";
 
-class UnrealTree extends AssetTree {
+export class UnrealTree extends AssetTree {
 
 }

@@ -37,20 +37,4 @@ function main() {
   configureDebug();
 }
 
-// function test() {
-//   const input = document.getElementById('file-input');
-//   input.addEventListener('change', e => {
-//     let f = e.target.files[0];
-//     let reader = new FileReader();
-//     reader.onloadend = async b => {
-//       let arr = new Uint8Array(reader.result);
-//       const obj = parse_xnb(arr);
-//       console.log(obj);
-//     }
-//     reader.readAsArrayBuffer(f);
-//   });
-// }
-
 main();
-// test()
-

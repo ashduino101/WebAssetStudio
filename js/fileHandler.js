@@ -5,19 +5,26 @@ import {inflate} from "pako";
 import DefaultTree from "./defaultTree";
 import UnityTree from "./unityfs/unityTree";
 import XNBTree from "./xna/xnbTree";
+import {GodotTree} from "./godot/godotTree";
+import {UnrealTree} from "./unreal/unrealTree";
+import {NtExecutable} from "pe-library";
+import {ELFParser} from "@wokwi/elfist";
 
-const fileTypes = {
+export const fileTypes = {
   Resource: 0,
   UnityBundle: 1,
   UnityAsset: 2,
   GodotPck: 10,
   GodotResource: 11,
-  GodotTexture: 12,
-  GodotScene: 13,
+  GodotStreamTexture: 12,
+  GodotCompressedTexture: 13,
+  GodotScene: 14,
   FSB5: 20,
   UnrealPak: 30,
   UnrealPackage: 31,
-  XNB: 40
+  XNB: 40,
+  PE: 51,
+  ELF: 52,
 }
 
 export default class FileHandler {
@@ -101,8 +108,10 @@ export default class FileHandler {
     if (this._checkMagicBasic(4, [0x47, 0x44, 0x50, 0x43])) return fileTypes.GodotPck;
     // Resource: "RSRC"
     if (this._checkMagicBasic(4, [0x52, 0x53, 0x52, 0x43])) return fileTypes.GodotResource;
-    // Texture: "GDST"
-    if (this._checkMagicBasic(4, [0x47, 0x44, 0x53, 0x54])) return fileTypes.GodotTexture;
+    // StreamTexture: "GDST"
+    if (this._checkMagicBasic(4, [0x47, 0x44, 0x53, 0x54])) return fileTypes.GodotStreamTexture;
+    // CompressedTexture: "GST2"
+    if (this._checkMagicBasic(4, [0x47, 0x53, 0x54, 0x32])) return fileTypes.GodotCompressedTexture;
     // Scene: "GDSC"
     if (this._checkMagicBasic(4, [0x47, 0x44, 0x53, 0x43])) return fileTypes.GodotScene;
     // [FSB5]
@@ -116,6 +125,11 @@ export default class FileHandler {
     // [XNA]
     // XNB asset: "XNB"
     if (this._checkMagicBasic(3, [0x58, 0x4e, 0x42])) return fileTypes.XNB;
+    // [Executables]
+    // PE program: "MZ"
+    if (this._checkMagicBasic(2, [0x4d, 0x5a])) return fileTypes.PE;
+    // ELF executable: "\x7fELF"
+    if (this._checkMagicBasic(4, [0x7f, 0x45, 0x4c, 0x46])) return fileTypes.ELF;
 
     // [Special types]
     // GZip-compressed
@@ -129,6 +143,7 @@ export default class FileHandler {
   }
 
   async getTree() {
+    let shouldLoad = true;
     let tree;
     switch (this.getType()) {
       case fileTypes.UnityBundle:
@@ -138,11 +153,38 @@ export default class FileHandler {
       case fileTypes.XNB:
         tree = new XNBTree(this.treeSelector);
         break;
+      case fileTypes.GodotPck:
+      case fileTypes.GodotResource:
+      case fileTypes.GodotScene:
+      case fileTypes.GodotStreamTexture:
+      case fileTypes.GodotCompressedTexture:
+        tree = new GodotTree(this.treeSelector);
+        break;
+      case fileTypes.UnrealPak:
+      case fileTypes.UnrealPackage:
+        tree = new UnrealTree(this.treeSelector);
+        break;
+      case fileTypes.PE:
+        let pe = NtExecutable.from(this.data);
+        let pakSection = pe.getAllSections().filter(s => s.info.name === 'pck')[0];
+        if (pakSection) {
+          let offset = pakSection.info.pointerToRawData;
+          tree = new GodotTree(this.treeSelector);
+          // Manually load the file here
+          shouldLoad = false;
+          await tree.loadFile(this.data.slice(offset, offset + pakSection.info.sizeOfRawData))
+        }
+        break;
+      case fileTypes.ELF:
+        let elf = new ELFParser(this.data);
+        break;
       default:
         tree = new DefaultTree(this.treeSelector);
         break;
     }
-    await tree.loadFile(this.data);
+    if (shouldLoad) {
+      await tree.loadFile(this.data);
+    }
     return tree;
   }
 }

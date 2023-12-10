@@ -1,7 +1,11 @@
 import {getString, Variant} from "./variant";
+import {ResourceType} from "./type";
+import {OggSampleExtension} from "./extensions/oggSampleExtension";
+import {WavSampleExtension} from "./extensions/wavSampleExtension";
 
-export class Resource {
+export class Resource extends ResourceType {
   constructor(reader) {
+    super();
     if (reader.readChars(4) !== 'RSRC') {
       throw new Error('Invalid resource file');
     }
@@ -30,14 +34,26 @@ export class Resource {
         offset: reader.readInt64()
       }
     }, reader.readInt32());
+    let typeName = reader.readString();
+    let properties = {};
+    let numProperties = reader.readInt32();
+    for (let i = 0; i < numProperties; i++) {
+      properties[getString(reader, this.stringTable)] = new Variant(reader).value;
+    }
     this.resource = {
-      typeName: reader.readString(),
-      properties: reader.readArrayT(() => {
-        return {
-          name: getString(reader, this.stringTable),
-          value: new Variant(reader)
-        }
-      }, reader.readInt32())
+      typeName,
+      properties
+    }
+  }
+
+  createPreview() {
+    switch (this.typeName) {
+      case 'AudioStreamOGGVorbis':
+        return new OggSampleExtension().createPreview(this);
+      case 'AudioStreamSample':
+        return new WavSampleExtension().createPreview(this);
+      default:
+        return document.createElement('div');
     }
   }
 }

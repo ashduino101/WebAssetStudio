@@ -382,12 +382,12 @@ export function decode_bgra4444(data, width, height) {
 * @param {number} height
 * @returns {Uint8Array}
 */
-export function decode_normalizedbyte2(data, width, height) {
+export function decode_rgba5551(data, width, height) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
         var len0 = WASM_VECTOR_LEN;
-        wasm.decode_normalizedbyte2(retptr, ptr0, len0, addHeapObject(data), width, height);
+        wasm.decode_rgba5551(retptr, ptr0, len0, addHeapObject(data), width, height);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var v2 = getArrayU8FromWasm0(r0, r1).slice();
@@ -514,6 +514,28 @@ export function decode_rghalf(data, width, height) {
 * @param {number} height
 * @returns {Uint8Array}
 */
+export function decode_rgbhalf(data, width, height) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        var ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
+        wasm.decode_rgbhalf(retptr, ptr0, len0, addHeapObject(data), width, height);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayU8FromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 1, 1);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
 export function decode_rgbahalf(data, width, height) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
@@ -564,6 +586,28 @@ export function decode_rgfloat(data, width, height) {
         var ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
         var len0 = WASM_VECTOR_LEN;
         wasm.decode_rgfloat(retptr, ptr0, len0, addHeapObject(data), width, height);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayU8FromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 1, 1);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_rgbfloat(data, width, height) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        var ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
+        wasm.decode_rgbfloat(retptr, ptr0, len0, addHeapObject(data), width, height);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var v2 = getArrayU8FromWasm0(r0, r1).slice();
@@ -674,6 +718,50 @@ export function decode_r8(data, width, height) {
         var ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
         var len0 = WASM_VECTOR_LEN;
         wasm.decode_r8(retptr, ptr0, len0, addHeapObject(data), width, height);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayU8FromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 1, 1);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_l8(data, width, height) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        var ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
+        wasm.decode_l8(retptr, ptr0, len0, addHeapObject(data), width, height);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayU8FromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 1, 1);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_la16(data, width, height) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        var ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_malloc);
+        var len0 = WASM_VECTOR_LEN;
+        wasm.decode_la16(retptr, ptr0, len0, addHeapObject(data), width, height);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var v2 = getArrayU8FromWasm0(r0, r1).slice();
@@ -1280,7 +1368,7 @@ export function encode_png(width, height, data, flip) {
     }
 }
 
-function __wbg_adapter_72(arg0, arg1, arg2, arg3, arg4) {
+function __wbg_adapter_76(arg0, arg1, arg2, arg3, arg4) {
     wasm.wasm_bindgen__convert__closures__invoke3_mut__h331e9dad6f2f58c0(arg0, arg1, addHeapObject(arg2), arg3, addHeapObject(arg4));
 }
 
@@ -1291,7 +1379,7 @@ function handleError(f, args) {
         wasm.__wbindgen_exn_store(addHeapObject(e));
     }
 }
-function __wbg_adapter_85(arg0, arg1, arg2, arg3) {
+function __wbg_adapter_89(arg0, arg1, arg2, arg3) {
     wasm.wasm_bindgen__convert__closures__invoke2_mut__h4be52c405766fc87(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
@@ -1516,7 +1604,7 @@ export function __wbg_forEach_c4a9c2a1e9a630ba(arg0, arg1, arg2) {
             const a = state0.a;
             state0.a = 0;
             try {
-                return __wbg_adapter_72(a, state0.b, arg0, arg1, arg2);
+                return __wbg_adapter_76(a, state0.b, arg0, arg1, arg2);
             } finally {
                 state0.a = a;
             }
@@ -1549,7 +1637,7 @@ export function __wbg_new_43f1b47c28813cbd(arg0, arg1) {
             const a = state0.a;
             state0.a = 0;
             try {
-                return __wbg_adapter_85(a, state0.b, arg0, arg1);
+                return __wbg_adapter_89(a, state0.b, arg0, arg1);
             } finally {
                 state0.a = a;
             }
@@ -1693,7 +1781,7 @@ export function __wbg_stack_7ffb21b96b519484(arg0) {
     return addHeapObject(ret);
 };
 
-export function __wbindgen_closure_wrapper1327(arg0, arg1, arg2) {
+export function __wbindgen_closure_wrapper1343(arg0, arg1, arg2) {
     const ret = makeMutClosure(arg0, arg1, 158, __wbg_adapter_20);
     return addHeapObject(ret);
 };

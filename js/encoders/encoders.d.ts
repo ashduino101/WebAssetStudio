@@ -75,7 +75,7 @@ export function decode_bgra4444(data: Uint8Array, width: number, height: number)
 * @param {number} height
 * @returns {Uint8Array}
 */
-export function decode_normalizedbyte2(data: Uint8Array, width: number, height: number): Uint8Array;
+export function decode_rgba5551(data: Uint8Array, width: number, height: number): Uint8Array;
 /**
 * @param {Uint8Array} data
 * @param {number} width
@@ -117,6 +117,13 @@ export function decode_rghalf(data: Uint8Array, width: number, height: number): 
 * @param {number} height
 * @returns {Uint8Array}
 */
+export function decode_rgbhalf(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
 export function decode_rgbahalf(data: Uint8Array, width: number, height: number): Uint8Array;
 /**
 * @param {Uint8Array} data
@@ -132,6 +139,13 @@ export function decode_rfloat(data: Uint8Array, width: number, height: number): 
 * @returns {Uint8Array}
 */
 export function decode_rgfloat(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_rgbfloat(data: Uint8Array, width: number, height: number): Uint8Array;
 /**
 * @param {Uint8Array} data
 * @param {number} width
@@ -167,6 +181,20 @@ export function decode_rg16(data: Uint8Array, width: number, height: number): Ui
 * @returns {Uint8Array}
 */
 export function decode_r8(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_l8(data: Uint8Array, width: number, height: number): Uint8Array;
+/**
+* @param {Uint8Array} data
+* @param {number} width
+* @param {number} height
+* @returns {Uint8Array}
+*/
+export function decode_la16(data: Uint8Array, width: number, height: number): Uint8Array;
 /**
 * @param {Uint8Array} data
 * @param {number} width
