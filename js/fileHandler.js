@@ -172,7 +172,7 @@ export default class FileHandler {
           tree = new GodotTree(this.treeSelector);
           // Manually load the file here
           shouldLoad = false;
-          await tree.loadFile(this.data.slice(offset, offset + pakSection.info.sizeOfRawData))
+          await tree.loadFile(this.data.slice(offset, offset + pakSection.info.sizeOfRawData), offset);
         }
         break;
       case fileTypes.ELF:

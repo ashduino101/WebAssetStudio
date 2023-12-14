@@ -33,6 +33,17 @@ export class GodotTree extends AssetTree {
     }
   }
 
+  async onNodeSelect(evt, data) {
+    if (data.node.data.type === 'pck_entry') {
+      console.log(data.node.data.path);
+      console.log(this.parser.getFile(data.node.data.path));
+    }
+  }
+
+  async onNodeOpen(evt, data) {
+
+  }
+
   async createTreeForPck(parent) {
     await this.createNode(parent, parent + '-files', this.styleTextAs('res://', 'generic'), 'icon-dir');
     let nodes = [];
@@ -52,7 +63,8 @@ export class GodotTree extends AssetTree {
         } else {
           let newNode = {
             text: part,
-            children: []
+            children: [],
+            root: path
           }
           currentNode.push(newNode);
           currentNode = newNode.children;
@@ -64,7 +76,9 @@ export class GodotTree extends AssetTree {
         parent,
         parent + '-' + elem.text,
         this.styleTextAs(elem.text, 'generic'),
-        elem.children.length === 0 ? 'icon-generic' : 'icon-dir'
+        elem.children.length === 0 ? 'icon-generic' : 'icon-dir',
+        false,
+        elem.children.length === 0 ? {type: 'pck_entry', path: elem.root} : {type: 'pck_dir'}
       );
       for (const child of elem.children) {
         await createPath(parent + '-' + elem.text, child);
@@ -73,6 +87,7 @@ export class GodotTree extends AssetTree {
         this.tree.jstree('hide_node', parent + '-' + elem.text);
       }
     }
+
     for (const node of nodes) {
       await createPath(parent + '-files', node);
     }

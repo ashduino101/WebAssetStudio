@@ -44,4 +44,11 @@ export class PckFile {
     }
     this.pathOrder = sortPaths(this.files.map(f => f.path), '/');
   }
+
+  getFile(path) {
+    if (!path.startsWith('res://')) {
+      path = 'res://' + path;
+    }
+    return this.files.filter(f => f.path === path)[0];
+  }
 }

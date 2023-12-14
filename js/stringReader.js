@@ -23,6 +23,10 @@ export default class StringReader {
     return this.data.slice(this.pos, this.pos + n);
   }
 
+  backtrack(n=1) {
+    this.pos -= n;
+  }
+
   skipWhitespace() {
     while (this.canRead() && this.peek() === ' ') {
       this.read(1);
