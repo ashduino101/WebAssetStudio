@@ -1,6 +1,10 @@
 import {AssetTree} from "../treeview";
 import {GodotFile} from "./godotFile";
 import {fileTypes} from "../fileHandler";
+import {VariantParser} from "./variantParser";
+import {Resource} from "./resource";
+import {BinaryReader} from "../binaryReader";
+import {saveBlob} from "../utils";
 
 export class GodotTree extends AssetTree {
   async createTreeForObject(obj, rootNode, name, style = 'generic', icon = 'icon-generic', isOpened = false) {
@@ -33,15 +37,69 @@ export class GodotTree extends AssetTree {
     }
   }
 
+  styleNameClass(name, className) {
+    return `<span class="tree-label label-objectname">${this.htmlEscape(name)}</span>
+            <span class="tree-label label-generic"> : </span>
+            <span class="tree-label label-objecttype">${className}</span>`;
+  }
+
   async onNodeSelect(evt, data) {
-    if (data.node.data.type === 'pck_entry') {
-      console.log(data.node.data.path);
-      console.log(this.parser.getFile(data.node.data.path));
+    if (data.node.data.type === 'pck_import') {
+      const imp = data.node.data.import;
+      if (imp.err) {
+        console.error(`At line ${imp.line}:`, imp.err);
+      } else {
+        const remap = imp.value.remap;
+        let src = imp.value.deps.source_file;
+        if (src) {
+          src = src.substring(src.lastIndexOf('/') + 1);
+        }
+        if (!remap) {
+          console.error('no remap available');
+          return;
+        }
+        let path = remap.path;
+        let file = this.parser.getFile(path);
+        if (!file) {
+          console.error('could not get file');
+          return;
+        }
+        let res = new Resource(new BinaryReader(this.parser.getData(file), 'little'));
+        await res.load();
+        let filename = data.node.data.filename;
+        if (filename.endsWith('.import')) {
+          filename = filename.substring(0, filename.length - 7);
+        }
+        document.getElementById('download-object').onclick = () => {
+          saveBlob(src ?? filename, [res.getExport()]);
+        }
+        const preview = document.getElementById('preview');
+        preview.innerHTML = '<h2 class="no-preview">Loading preview...</h2>';
+        let prevElem = await res.createPreview();
+        preview.innerHTML = '';
+        preview.appendChild(prevElem);
+      }
     }
   }
 
   async onNodeOpen(evt, data) {
 
+  }
+
+  getIconClass(typeID) {
+    switch (typeID) {
+      case 'AudioStreamSample':
+        return 'icon-wav';
+      case 'AudioStreamOGGVorbis':
+        return 'icon-ogg';
+      case 'AudioStreamMP3':
+        return 'icon-mp3';
+      case 'StreamTexture':
+      case 'CompressedTexture':
+        return 'icon-img';
+      default:
+        return 'icon-generic';
+    }
   }
 
   async createTreeForPck(parent) {
@@ -72,13 +130,34 @@ export class GodotTree extends AssetTree {
       }
     }
     const createPath = async (parent, elem) => {
+      let d = {type: 'pck_entry'};
+      let icon = 'icon-generic';
+      let text = this.styleTextAs(elem.text, 'generic');
+      if (elem.children.length > 0) {
+        d.type = 'pck_dir';
+        d.path = elem.root;
+        icon = 'icon-dir';
+      } else if (elem.text.endsWith('.import')) {
+        d.type = 'pck_import';
+        d.import = new VariantParser(
+          new TextDecoder('utf-8').decode(
+            this.parser.getData(
+              this.parser.getFile(elem.root)
+            )
+          )
+        ).parseResource();
+        d.filename = elem.text;
+        let type = d.import.value?.remap?.type ?? 'Unknown';
+        icon = this.getIconClass(type);
+        text = this.styleNameClass(elem.text, type);
+      }
       await this.createNode(
         parent,
         parent + '-' + elem.text,
-        this.styleTextAs(elem.text, 'generic'),
-        elem.children.length === 0 ? 'icon-generic' : 'icon-dir',
+        text,
+        icon,
         false,
-        elem.children.length === 0 ? {type: 'pck_entry', path: elem.root} : {type: 'pck_dir'}
+        d
       );
       for (const child of elem.children) {
         await createPath(parent + '-' + elem.text, child);
@@ -136,6 +215,7 @@ export class GodotTree extends AssetTree {
         await this.loadPck();
         break;
       case fileTypes.GodotResource:
+        await this.parser.load();
         await this.loadResource();
         break;
     }

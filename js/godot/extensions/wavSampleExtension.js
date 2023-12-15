@@ -3,14 +3,17 @@ import {BaseExtension} from "./baseExtension";
 import {BinaryWriter} from "../../binaryWriter";
 
 export class WavSampleExtension extends BaseExtension {
+  static type = 'variant';
+  static extension = '.wav';
+
   constructor() {
     super();
   }
 
-  createPreview(resource) {
+  getWAV(resource) {
     // TODO check .sample
     const sampleRate = 44100;
-    const numChannels = resource.resource.properties.stereo + 1;
+    const numChannels = resource.resource.properties.stereo ? 2 : 1;
     const bitsPerSample = resource.resource.properties.format === 1 ? 16 : 32;
     let writer = new BinaryWriter(resource.resource.properties.data.length, 'little', 8192);
     writer.writeChars('RIFF');
@@ -29,6 +32,14 @@ export class WavSampleExtension extends BaseExtension {
     writer.write(resource.resource.properties.data);
     writer.seek(4);
     writer.writeUInt32(writer.size);
-    return new AudioPreview().create(writer.getData());
+    return writer.getData();
+  }
+
+  async createPreview(resource) {
+    return new AudioPreview().create(this.getWAV(resource));
+  }
+
+  exportFile(res) {
+    return this.getWAV(res);
   }
 }

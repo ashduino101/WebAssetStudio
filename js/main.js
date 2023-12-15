@@ -2,6 +2,7 @@ import 'jstree';
 import '../css/vendor/jstree/style.min.css';
 import FileHandler from "./fileHandler";
 import {isDebug} from "./config";
+import {VariantParser} from "./godot/variantParser";
 
 function configureDebug() {
   if (isDebug) {

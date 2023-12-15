@@ -112,7 +112,7 @@ class Tag {
 
 export class VariantParser {
   constructor(data) {
-    this.stream = new StringReader(data + '\n');  // stupid hack: add a newline so that eofs don't truncate the data when we readahead 2 bytes
+    this.stream = new StringReader(data.split('\0')[0].replaceAll('\r', '') + '\n\n');  // stupid hack: add a newline so that eofs don't truncate the data when we readahead 2 bytes
   }
 
   getToken() {
@@ -430,16 +430,16 @@ export class VariantParser {
         return {value: null, err: 'Unexpected EOF while parsing array'};
       }
 
-      let {token, err} = this.getToken();
-      if (err) return {value: null, err};
+      let {token, line, err} = this.getToken();
+      if (err) return {value: null, line, err};
 
       if (token.type === TokenType.TK_BRACKET_CLOSE) {
-        return {value: array, err: null};
+        return {value: array, line, err: null};
       }
 
       if (needComma) {
         if (token.type !== TokenType.TK_COMMA) {
-          return {value: null, err: 'Expected \',\''};
+          return {value: null, line, err: 'Expected \',\''};
         } else {
           needComma = false;
           continue;
@@ -447,7 +447,7 @@ export class VariantParser {
       }
 
       let {value, err: valErr} = this.parseValue(token);
-      if (valErr) return {value: null, err: valErr};
+      if (valErr) return {value: null, line, err: valErr};
 
       array.push(value);
       needComma = true;
@@ -462,20 +462,20 @@ export class VariantParser {
 
     while (true) {
       if (!this.stream.canRead()) {
-        return {value: null, err: 'Unexpected EOF while parsing dictionary'};
+        return {value: null, line: null, err: 'Unexpected EOF while parsing dictionary'};
       }
 
       if (atKey) {
-        let {token, err} = this.getToken();
-        if (err) return {value: null, err};
+        let {token, line, err} = this.getToken();
+        if (err) return {value: null, line, err};
 
         if (token.type === TokenType.TK_CURLY_BRACKET_CLOSE) {
-          return {value: dict, err: null};
+          return {value: dict, line, err: null};
         }
 
         if (needComma) {
           if (token.type !== TokenType.TK_COMMA) {
-            return {value: null, err: 'Expected \'}\' or \',\''};
+            return {value: null, line, err: 'Expected \'}\' or \',\''};
           } else {
             needComma = false;
             continue;
@@ -483,24 +483,24 @@ export class VariantParser {
         }
 
         let {value, err: valErr} = this.parseValue(token);
-        if (valErr) return {value: null, valErr};
+        if (valErr) return {value: null, line, valErr};
 
         key = value;
 
         let t = this.getToken();
 
-        if (t.err) return {value: null, err: t.err};
+        if (t.err) return {value: null, line: t.line, err: t.err};
 
         if (t.token.type !== TokenType.TK_COLON) {
-          return {value: null, err: 'Expected \':\''};
+          return {value: null, line: t.line, err: 'Expected \':\''};
         }
         atKey = false;
       } else {
-        let {token, err} = this.getToken();
-        if (err) return {value: null, err};
+        let {token, line, err} = this.getToken();
+        if (err) return {value: null, line, err};
 
         let {value: pValue, err: valErr} = this.parseValue(token);
-        if (valErr) return {value: null, err: valErr};
+        if (valErr) return {value: null, line, err: valErr};
 
         dict[key] = pValue;
         needComma = true;
@@ -534,7 +534,7 @@ export class VariantParser {
         if (def) {
           if (c.construct) {
             if (c.construct.length !== def.length) {
-              return {value: null, err: `Expected ${def.length} arguments for constructor`};
+              return {value: null, line: c.line, err: `Expected ${def.length} arguments for constructor`};
             }
             const f = {};
             let i = 0;
@@ -556,93 +556,93 @@ export class VariantParser {
       } else if (value === 'NodePath') {
         let tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_OPEN) {
-          return {value: null, err: 'Expected \'(\''};
+          return {value: null, line: tok.line, err: 'Expected \'(\''};
         }
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_STRING) {
-          return {value: null, err: 'Expected string as argument for NodePath()'};
+          return {value: null, line: tok.line, err: 'Expected string as argument for NodePath()'};
         }
 
         value = tok.token.value;
 
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_CLOSE) {
-          return {value: null, err: 'Expected \')\''};
+          return {value: null, line: tok.line, err: 'Expected \')\''};
         }
       } else if (value === 'RID') {
         let tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_OPEN) {
-          return {value: null, err: 'Expected \'(\''};
+          return {value: null, line: tok.line, err: 'Expected \'(\''};
         }
 
         tok = this.getToken();
         if (tok.token.type === TokenType.TK_PARENTHESIS_CLOSE) {
           value = null;
-          return {value, err: null};
+          return {value, line: tok.line, err: null};
         } else if (tok.token.type !== TokenType.TK_NUMBER) {
-          return {value: null, err: 'Expected number as RID argument'};
+          return {value: null, line: tok.line, err: 'Expected number as RID argument'};
         }
 
         value = tok.token.value;
 
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_CLOSE) {
-          return {value: null, err: 'Expected \')\''};
+          return {value: null, line: tok.line, err: 'Expected \')\''};
         }
       } else if (value === 'Signal') {
         let tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_OPEN) {
-          return {value: null, err: 'Expected \'(\''};
+          return {value: null, line: tok.line, err: 'Expected \'(\''};
         }
 
         value = null;
 
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_CLOSE) {
-          return {value: null, err: 'Expected \')\''};
+          return {value: null, line: tok.line, err: 'Expected \')\''};
         }
       } else if (value === 'Object') {
         throw new Error('TODO: object parsing');
       } else if (value === 'Resource' || value === 'SubResource' || value === 'ExtResource') {
         let tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_OPEN) {
-          return {value: null, err: 'Expected \'(\''};
+          return {value: null, line: tok.line, err: 'Expected \'(\''};
         }
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_STRING) {
-          return {value: null, err: 'Expected string as an argument for Resource()'};
+          return {value: null, line: tok.line, err: 'Expected string as an argument for Resource()'};
         }
 
         value = tok.token.value;
 
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_CLOSE) {
-          return {value: null, err: 'Expected \')\''};
+          return {value: null, line: tok.line, err: 'Expected \')\''};
         }
       } else if (value === 'Array') {
         let tok = this.getToken();
         if (tok.token.type !== TokenType.TK_BRACKET_OPEN) {
-          return {value: null, err: 'Expected \'(\''};
+          return {value: null, line: tok.line, err: 'Expected \'(\''};
         }
 
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_IDENTIFIER) {
-          return {value: null, err: 'Expected type identifier'};
+          return {value: null, line: tok.line, err: 'Expected type identifier'};
         }
 
         let {value: arr, err} = this.parseArray();
-        if (err) return {value: null, err}
+        if (err) return {value: null, line: tok.line, err}
 
         tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_CLOSE) {
-          return {value: null, err: 'Expected \')\''};
+          return {value: null, line: tok.line, err: 'Expected \')\''};
         }
 
         value = arr;
       } else if (value === 'PackedStringArray' || value === 'PoolStringArray' || value === 'StringArray') {
         let tok = this.getToken();
         if (tok.token.type !== TokenType.TK_PARENTHESIS_OPEN) {
-          return {value: null, err: 'Expected \'(\''};
+          return {value: null, line: tok.line, err: 'Expected \'(\''};
         }
 
         let cs = [];
@@ -650,22 +650,22 @@ export class VariantParser {
         let first = true;
         while (true) {
           if (!first) {
-            let {token, err} = this.getToken();
+            let {token, line, err} = this.getToken();
             if (token.type === TokenType.TK_COMMA) {
 
             } else if (token.type === TokenType.TK_PARENTHESIS_CLOSE) {
               break;
             } else {
-              return {value: null, err: 'Expected \',\' or \')\''};
+              return {value: null, line, err: 'Expected \',\' or \')\''};
             }
           }
 
-          let {token, err} = this.getToken();
+          let {token, line, err} = this.getToken();
 
           if (token.type === TokenType.TK_PARENTHESIS_CLOSE) {
             break;
           } else if (token.type !== TokenType.TK_STRING) {
-            return {value: null, err: 'Expected string'};
+            return {value: null, line, err: 'Expected string'};
           }
 
           first = false;
@@ -674,20 +674,20 @@ export class VariantParser {
 
         value = cs;
       } else {
-        return {value: null, err: `Unexpected identifier '${value}'`};
+        return {value: null, line: token.line, err: `Unexpected identifier '${value}'`};
       }
-      return {value, err: null};
+      return {value, line: token.line, err: null};
     } else if ([TokenType.TK_NUMBER, TokenType.TK_STRING, TokenType.TK_STRING_NAME, TokenType.TK_CURLY_BRACKET_OPEN]
       .includes(token.type)) {
-      return {value: token.value, err: null};
+      return {value: token.value, line: token.line, err: null};
     } else {
-      return {value: null, err: `Expected value, got ${TOKEN_NAMES[token.type]}`};
+      return {value: null, line: token.line, err: `Expected value, got ${TOKEN_NAMES[token.type]}`};
     }
   }
 
   parseTag(token) {
     if (token.type !== TokenType.TK_BRACKET_OPEN) {
-      return {value: null, err: 'Expected \'[\''};
+      return {value: null, line: token.line, err: 'Expected \'[\''};
     }
 
     // TODO: support complex tags
@@ -710,7 +710,7 @@ export class VariantParser {
       tagName += c;
     }
 
-    return {value: tagName, err: null};
+    return {value: tagName, line: token.line, err: null};
   }
 
   parseResource() {
@@ -720,8 +720,9 @@ export class VariantParser {
     while (true) {
       if (!this.stream.canRead(2)) break;
 
-      let {token, err} = this.getToken();
-      if (err) return {value: null, err};
+      let {token, line, err} = this.getToken();
+      if (token.type === TokenType.TK_EOF) break;
+      if (err) return {value: null, line, err};
 
       if (token.type === TokenType.TK_BRACKET_OPEN) {
         // A tag
@@ -750,10 +751,11 @@ export class VariantParser {
         }
         key = key.replaceAll(/[ \n]/g, '');
         if (tagEnd) break;
-        let {token, err} = this.getToken();
-        if (err) return {value: null, err};
+        let {token, line, err} = this.getToken();
+        if (token.type === TokenType.TK_EOF) break;
+        if (err) return {value: null, line, err};
         let val = this.parseValue(token);
-        if (val.err) return {value: null, err: val.err};
+        if (val.err) return {value: null, line, err: val.err};
         const recAssign = (c, p, v) => {
           if (p.length > 1) {
             let part = p.pop();

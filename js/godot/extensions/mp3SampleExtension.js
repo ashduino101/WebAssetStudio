@@ -1,16 +1,16 @@
 import {BaseExtension} from "./baseExtension";
 import {AudioPreview} from "../../preview/audio";
 
-export class OggSampleExtension extends BaseExtension {
+export class Mp3SampleExtension extends BaseExtension {
   static type = 'variant';
-  static extension = '.ogg';
+  static extension = '.mp3';
 
   constructor() {
     super();
   }
 
   async createPreview(resource) {
-    return new AudioPreview().create(resource.resource.properties.data);
+    return new AudioPreview().create(resource.resource.properties.data, false, true);
   }
 
   exportFile(res) {

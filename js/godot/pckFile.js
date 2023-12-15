@@ -1,4 +1,5 @@
 import sortPaths from 'sort-paths'
+import {VariantParser} from "./variantParser";
 
 class PckEntry {
   constructor(reader, fmtVersion, fileOffset, origOffset) {
@@ -42,6 +43,8 @@ export class PckFile {
     for (let i = 0; i < this.numFiles; i++) {
       this.files.push(new PckEntry(reader, this.formatVersion, this.fileOffset, origOffset));
     }
+    this.reader = reader;
+
     this.pathOrder = sortPaths(this.files.map(f => f.path), '/');
   }
 
@@ -50,5 +53,10 @@ export class PckFile {
       path = 'res://' + path;
     }
     return this.files.filter(f => f.path === path)[0];
+  }
+
+  getData(file) {
+    this.reader.seek(file.offset);
+    return this.reader.read(file.size);
   }
 }

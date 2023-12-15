@@ -1,5 +1,11 @@
 export class ResourceType {
-  createPreview() {
+  static extension = '.dat';
+
+  async createPreview() {
+
+  }
+
+  exportFile(res) {
 
   }
 }

@@ -7,7 +7,7 @@
 .icon-generic {
   background-image: url('/css/sheet.png') !important;
   background-size: 192px 192px;
-  background-position: -120px 0 !important;
+  background-position: 0 0 !important;
 }
 
 .icon-bundle {
@@ -33,3 +33,28 @@
   background-size: 192px 192px;
   background-position: -48px 0 !important;
 }
+
+.icon-wav {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: 0 -48px !important;
+}
+
+.icon-ogg {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -24px -48px !important;
+}
+
+.icon-mp3 {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: 0 -72px !important;
+}
+
+.icon-img {
+  background-image: url('/css/sheet.png') !important;
+  background-size: 192px 192px;
+  background-position: -48px -48px !important;
+}
+
