@@ -111,6 +111,13 @@ export class Resource extends ResourceType {
   }
 
   getExport() {
+    if (this.type === TYPE_BINARY) {
+      if (this.parser && typeof this.parser.exportFile == 'function') {
+        return this.parser.exportFile();
+      } else {
+        return document.createElement('div');
+      }
+    }
     return this.getExtension().exportFile(this);
   }
 }

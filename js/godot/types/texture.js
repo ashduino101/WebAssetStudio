@@ -101,6 +101,8 @@ export class StreamTexture extends ResourceType {  // older v3 format (last comm
         false
       )];
     }
+
+    this._lastViewed = 0;
   }
 
   createDataUrl(imageNum) {
@@ -112,11 +114,13 @@ export class StreamTexture extends ResourceType {  // older v3 format (last comm
   async createPreview() {
     return await new ImagePreview(this.mipMaps, m => this.createDataUrl(m)).create();
   }
+
+  exportFile(res) {
+    return this.images[this._lastViewed];
+  }
 }
 
 export class CompressedTexture extends ResourceType {  // newer format
-  static extension = '.png';
-
   constructor(reader) {
     super();
     if (reader.readChars(4) !== 'GST2') {
@@ -188,6 +192,6 @@ export class CompressedTexture extends ResourceType {  // newer format
   }
 
   exportFile(res) {
-    return this.createDataUrl(this._lastViewed);
+    return this.images[this._lastViewed];
   }
 }
