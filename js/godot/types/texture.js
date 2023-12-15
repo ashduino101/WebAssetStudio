@@ -112,7 +112,10 @@ export class StreamTexture extends ResourceType {  // older v3 format (last comm
   }
 
   async createPreview() {
-    return await new ImagePreview(this.mipMaps, m => this.createDataUrl(m)).create();
+    return await new ImagePreview(this.mipMaps, m => {
+      this._lastViewed = m;
+      this.createDataUrl(m);
+    }).create();
   }
 
   exportFile(res) {
@@ -187,7 +190,7 @@ export class CompressedTexture extends ResourceType {  // newer format
   async createPreview() {
     return await new ImagePreview(this.mipmapCount, m => {
       this._lastViewed = m;
-      this.createDataUrl(m)
+      this.createDataUrl(m);
     }).create();
   }
 
