@@ -1,4 +1,4 @@
-import {decode, encode_png} from "../../encoders";
+import {decode, encode_png, get_mipmap_byte_size, get_mipmap_offset_and_size} from "../../encoders";
 import {arraysEqual} from "../../utils";
 import {ResourceType} from "../type";
 import {ImagePreview} from "../../preview/image";
@@ -132,10 +132,8 @@ export class CompressedTexture extends ResourceType {  // newer format
 
     this.version = reader.readInt32();
 
-    this.width = reader.readInt16();
-    this.customWidth = reader.readInt16();
-    this.height = reader.readInt16();
-    this.customHeight = reader.readInt16();
+    this.width = reader.readInt32();
+    this.height = reader.readInt32();
 
     this.flags = reader.readUInt32();
     this.mipmapLimit = reader.readInt32();
@@ -146,7 +144,7 @@ export class CompressedTexture extends ResourceType {  // newer format
     this.imageWidth = reader.readInt16();
     this.imageHeight = reader.readInt16();
     this.mipmapCount = reader.readInt32() + 1;
-    this.imageFormat = reader.readInt32();  // of formatNames
+    this.imageFormat = formatNames[reader.readInt32()];
 
     this.images = [];
     switch (this.dataFormat) {
@@ -157,17 +155,21 @@ export class CompressedTexture extends ResourceType {  // newer format
         }
         break;
       case DATA_FORMAT_IMAGE:
-        // TODO: this probably doesn't work with variable compression if that can even be used
-        const sizePerMip = Math.floor(reader.readUInt32() / this.mipmapCount);
         for (let i = 0; i < this.mipmapCount; i++) {
+          const r1 = get_mipmap_offset_and_size(i, this.imageFormat, this.imageWidth, this.imageHeight);
+          const r2 = get_mipmap_offset_and_size(i + 1, this.imageFormat, this.imageWidth, this.imageHeight);
+          const mipSize = r2[0] - r1[0];
+          const w = r1[1];
+          const h = r1[2];
+          const data = reader.read(mipSize);
           this.images.push(encode_png(
-            this.width,
-            this.height,
+            w,
+            h,
             decode(
-              format,
-              reader.read(sizePerMip),
-              this.width,
-              this.height,
+              this.imageFormat,
+              data,
+              w,
+              h,
               false
             ),
             false

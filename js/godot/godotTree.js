@@ -50,7 +50,7 @@ export class GodotTree extends AssetTree {
         console.error(`At line ${imp.line}:`, imp.err);
       } else {
         const remap = imp.value.remap;
-        let src = imp.value.deps.source_file;
+        let src = imp.value?.deps?.source_file;
         if (src) {
           src = src.substring(src.lastIndexOf('/') + 1);
         }
@@ -58,7 +58,9 @@ export class GodotTree extends AssetTree {
           console.error('no remap available');
           return;
         }
-        let path = remap.path;
+        // some remaps have weird custom keys for paths like 'path.s3tc'
+        const customKey = Object.keys(remap).filter(k => k.startsWith('path.'))[0];
+        let path = remap.path ?? remap[customKey];
         let file = this.parser.getFile(path);
         if (!file) {
           console.error('could not get file');

@@ -1,5 +1,6 @@
 import sortPaths from 'sort-paths'
-import {VariantParser} from "./variantParser";
+import {BinaryReader} from "../binaryReader";
+import aes from 'aes-js';
 
 class PckEntry {
   constructor(reader, fmtVersion, fileOffset, origOffset) {
@@ -32,13 +33,22 @@ export class PckFile {
       this.fileOffset = Number(reader.readUInt64());
     }
 
-    if (this.fileFlags & 1) {
-      throw new Error('PCK is encrypted');
-    }
-
     reader.read(64);  // reserved
 
     this.numFiles = reader.readUInt32();
+
+    if (this.fileFlags & 1) {
+      throw new Error('Cannot load PCK with encrypted dir');
+      // const md5 = reader.readGUID();
+      // const length = reader.readUInt64();
+      // const iv = reader.read(16);
+      // let encData = reader.read(Number(length));
+      // const key = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      // console.log('keylen:', key.length)
+      // const aesCfb = new aes.ModeOfOperation.cfb(key, iv);
+      // console.log(aesCfb.decrypt(encData));
+    }
+
     this.files = [];
     for (let i = 0; i < this.numFiles; i++) {
       this.files.push(new PckEntry(reader, this.formatVersion, this.fileOffset, origOffset));

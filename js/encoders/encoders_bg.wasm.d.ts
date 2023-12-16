@@ -52,6 +52,16 @@ export function decode_bc7(a: number, b: number, c: number, d: number, e: number
 export function decode_atc_rgb4(a: number, b: number, c: number, d: number, e: number, f: number): void;
 export function decode_atc_rgba8(a: number, b: number, c: number, d: number, e: number, f: number): void;
 export function decode_astc(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number): void;
+export function get_format_block_size(a: number, b: number): number;
+export function __wbg_mipmapoffsetandsize_free(a: number): void;
+export function __wbg_get_mipmapoffsetandsize_0(a: number): number;
+export function __wbg_set_mipmapoffsetandsize_0(a: number, b: number): void;
+export function __wbg_get_mipmapoffsetandsize_1(a: number): number;
+export function __wbg_set_mipmapoffsetandsize_1(a: number, b: number): void;
+export function __wbg_get_mipmapoffsetandsize_2(a: number): number;
+export function __wbg_set_mipmapoffsetandsize_2(a: number, b: number): void;
+export function get_mipmap_offset_and_size(a: number, b: number, c: number, d: number, e: number): number;
+export function get_mipmap_byte_size(a: number, b: number, c: number, d: number, e: number): number;
 export function decode(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): void;
 export function lz4_compress(a: number, b: number, c: number, d: number): void;
 export function lz4_decompress(a: number, b: number, c: number, d: number, e: number): void;

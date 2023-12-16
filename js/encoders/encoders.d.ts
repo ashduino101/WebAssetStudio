@@ -353,6 +353,27 @@ export function decode_atc_rgba8(data: Uint8Array, width: number, height: number
 */
 export function decode_astc(data: Uint8Array, width: number, height: number, block_width: number, block_height: number): Uint8Array;
 /**
+* @param {string} format
+* @returns {number}
+*/
+export function get_format_block_size(format: string): number;
+/**
+* @param {number} mipmap
+* @param {string} format
+* @param {number} width
+* @param {number} height
+* @returns {MipMapOffsetAndSize}
+*/
+export function get_mipmap_offset_and_size(mipmap: number, format: string, width: number, height: number): MipMapOffsetAndSize;
+/**
+* @param {number} mipmap
+* @param {string} format
+* @param {number} width
+* @param {number} height
+* @returns {number}
+*/
+export function get_mipmap_byte_size(mipmap: number, format: string, width: number, height: number): number;
+/**
 * Decodes a texture of arbitrary format.
 * Crunched textures must be unpacked before decoding.
 *
@@ -424,6 +445,20 @@ export function __wbgtest_console_warn(args: Array<any>): void;
 * @param {Array<any>} args
 */
 export function __wbgtest_console_error(args: Array<any>): void;
+/**
+*/
+export class MipMapOffsetAndSize {
+  free(): void;
+/**
+*/
+  0: number;
+/**
+*/
+  1: number;
+/**
+*/
+  2: number;
+}
 /**
 * Runtime test harness support instantiated in JS.
 *

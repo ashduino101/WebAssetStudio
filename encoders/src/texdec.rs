@@ -7,6 +7,7 @@ use std::panic;
 use crate::fp16::fp16_ieee_to_fp32_value;
 use texture2ddecoder;
 use texture2ddecoder::{decode_astc as decode_astc_, decode_atc_rgb4_block, decode_atc_rgba8_block, decode_bc1_block, decode_bc3_block, decode_bc4_block, decode_bc5_block, decode_bc6_block, decode_bc7_block, decode_eacr_block, decode_eacr_signed_block, decode_eacrg_block, decode_eacrg_signed_block, decode_etc1_block, decode_etc2_a8_block, decode_etc2_rgb_block, decode_etc2_rgba1_block, decode_etc2_rgba8_block, decode_pvrtc as decode_pvrtc_};
+use wasm_bindgen::convert::IntoWasmAbi;
 use wasm_bindgen_test::console_log;
 
 #[wasm_bindgen]
@@ -643,6 +644,141 @@ pub fn decode_astc(data: &mut [u8], width: usize, height: usize, block_width: us
     out.resize((width * height) as usize, 0);
     decode_astc_(&data, width, height, block_width, block_height, &mut out).expect("pvrtc");
     encode_data(out).into()
+}
+
+pub fn get_format_pixel_size(format: &str) -> i32 {
+    match format {
+        "Alpha8" => 1,
+        "ARGB4444" => 2,
+        "RGB24" => 3,
+        "RGBA32" => 4,
+        "RGB565" => 2,
+        "RGBA4444" => 2,
+        "RGBA5551" => 2,
+        "BGRA32" => 4,
+
+        "RHalf" => 2,
+        "RGHalf" => 4,
+        "RGBHalf" => 6,
+        "RGBAHalf" => 8,
+
+        "RFloat" => 4,
+        "RGFloat" => 8,
+        "RGBFloat" => 12,
+        "RGBAFloat" => 16,
+
+        "YUY2" => 2,
+
+        "RGB9e5Float" => 4,
+
+        "BC6H" => 1,
+        "BC7" => 1,
+        "BC4" => 1,
+        "BC5" => 1,
+
+        "DXT1" => 1,
+        "DXT3" => 1,
+        "DXT5" => 1,
+
+        "PVRTC_RGB2" | "PVRTC_RGBA2" => 1,
+        "PVRTC_RGB4" | "PVRTC_RGBA4" => 1,
+
+        "ATC_RGB4" => 1,
+        "ATC_RGBA8" => 1,
+
+        "EAC_R" => 1,
+        "EAC_R_SIGNED" => 1,
+        "EAC_RG" => 1,
+        "EAC_RG_SIGNED" => 1,
+
+        "ETC_RGB4" | "ETC_RGB4_3DS" => 1,
+        "ETC2_RGB" => 1,
+        "ETC2_RGBA1" => 1,
+        "ETC2_RGBA8" | "ETC2_RGBA8_3DS" => 1,
+
+        "ASTC_RGB_4x4" | "ASTC_RGBA_4x4" | "ASTC_HDR_4x4" => 1,
+        "ASTC_RGB_5x5" | "ASTC_RGBA_5x5" | "ASTC_HDR_5x5" => 1,
+        "ASTC_RGB_6x6" | "ASTC_RGBA_6x6" | "ASTC_HDR_6x6" => 1,
+        "ASTC_RGB_8x8" | "ASTC_RGBA_8x8" | "ASTC_HDR_8x8" => 1,
+        "ASTC_RGB_10x10" | "ASTC_RGBA_10x10" | "ASTC_HDR_10x10" => 1,
+        "ASTC_RGB_12x12" | "ASTC_RGBA_12x12" | "ASTC_HDR_12x12" => 1,
+
+        "L8" => 1,
+        "LA16" => 2,
+
+        "R8" => 1,
+        "R16" => 2,
+        "RG16" => 2,
+        "RG32" => 4,
+        "RGB48" => 6,
+        "RGBA64" => 8,
+        _ => 0
+    }
+}
+
+pub fn get_format_min_pixel_size(format: &str) -> (i32, i32) {
+    match format {
+        "DXT1" | "DXT3" | "DXT5" | "BC4" | "BC5" | "BC6H" | "BC7" |
+        "ETC2_RGB" | "ETC2_RGBA8" | "ETC2_RGBA1" |
+        "ASTC_RGB_4x4" | "ASTC_HDR_4x4" | "ASTC_RGB_8x8" | "ASTC_HDR_8x8" => (4, 4),
+        _ => (1, 1)
+    }
+}
+
+pub fn get_format_pixel_rshift(format: &str) -> i32 {
+    match format {
+        "ASTC_RGB_8x8" | "ASTC_HDR_8x8" => 2,
+        "DXT1" | "BC4" | "ETC2_RGB" | "ETC2_RGBA8" | "ETC2_RGBA1" => 1,
+        _ => 0
+    }
+}
+
+#[wasm_bindgen]
+pub fn get_format_block_size(format: &str) -> i32 {
+    match format {
+        "DXT1" | "DXT3" | "DXT5" | "BC4" | "BC5" | "BC6H" | "BC7" |
+        "ETC2_RGB" | "ETC2_RGBA8" | "ETC2_RGBA1" |
+        "ASTC_RGB_4x4" | "ASTC_HDR_4x4" => 4,
+        "ASTC_RGB_8x8" | "ASTC_HDR_8x8" => 8,
+        _ => 1
+    }
+}
+
+#[wasm_bindgen]
+pub struct MipMapOffsetAndSize(pub i32, pub i32, pub i32);
+
+#[wasm_bindgen]
+pub fn get_mipmap_offset_and_size(mipmap: i32, format: &str, width: i32, height: i32) -> MipMapOffsetAndSize {
+    let mut w = width;
+    let mut h = height;
+    let mut ofs = 0;
+
+    let pixel_size = get_format_pixel_size(&format);
+    let pixel_rshift = get_format_pixel_rshift(&format);
+    let block = get_format_block_size(&format);
+    let (minw, minh) = get_format_min_pixel_size(&format);
+
+    for i in 0..mipmap {
+        let bw: i32 = if w % block != 0 {w + (block - w % block)} else {w};
+        let bh: i32 = if h % block != 0 {h + (block - h % block)} else {h};
+
+        let mut s = bw * bh;
+
+        s *= pixel_size;
+        s >>= pixel_rshift;
+        ofs += s;
+        w = max(minw, w >> 1);
+        h = max(minh, h >> 1);
+    }
+
+    return MipMapOffsetAndSize(ofs, w, h);
+}
+
+#[wasm_bindgen]
+pub fn get_mipmap_byte_size(mipmap: i32, format: &str, width: i32, height: i32) -> i32 {
+    let os1 = get_mipmap_offset_and_size(mipmap, format, width, height);
+    let os2 = get_mipmap_offset_and_size(mipmap + 1, format, width, height);
+    return os2.0 - os1.0;
 }
 
 #[wasm_bindgen]

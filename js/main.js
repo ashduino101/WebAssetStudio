@@ -2,7 +2,7 @@ import 'jstree';
 import '../css/vendor/jstree/style.min.css';
 import FileHandler from "./fileHandler";
 import {isDebug} from "./config";
-import {VariantParser} from "./godot/variantParser";
+import {get_mipmap_byte_size, get_mipmap_offset_and_size} from "./encoders";
 
 function configureDebug() {
   if (isDebug) {

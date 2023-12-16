@@ -1260,6 +1260,45 @@ export function decode_astc(data, width, height, block_width, block_height) {
 }
 
 /**
+* @param {string} format
+* @returns {number}
+*/
+export function get_format_block_size(format) {
+    const ptr0 = passStringToWasm0(format, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_format_block_size(ptr0, len0);
+    return ret;
+}
+
+/**
+* @param {number} mipmap
+* @param {string} format
+* @param {number} width
+* @param {number} height
+* @returns {MipMapOffsetAndSize}
+*/
+export function get_mipmap_offset_and_size(mipmap, format, width, height) {
+    const ptr0 = passStringToWasm0(format, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_mipmap_offset_and_size(mipmap, ptr0, len0, width, height);
+    return MipMapOffsetAndSize.__wrap(ret);
+}
+
+/**
+* @param {number} mipmap
+* @param {string} format
+* @param {number} width
+* @param {number} height
+* @returns {number}
+*/
+export function get_mipmap_byte_size(mipmap, format, width, height) {
+    const ptr0 = passStringToWasm0(format, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_mipmap_byte_size(mipmap, ptr0, len0, width, height);
+    return ret;
+}
+
+/**
 * Decodes a texture of arbitrary format.
 * Crunched textures must be unpacked before decoding.
 *
@@ -1368,7 +1407,7 @@ export function encode_png(width, height, data, flip) {
     }
 }
 
-function __wbg_adapter_76(arg0, arg1, arg2, arg3, arg4) {
+function __wbg_adapter_85(arg0, arg1, arg2, arg3, arg4) {
     wasm.wasm_bindgen__convert__closures__invoke3_mut__h331e9dad6f2f58c0(arg0, arg1, addHeapObject(arg2), arg3, addHeapObject(arg4));
 }
 
@@ -1379,7 +1418,7 @@ function handleError(f, args) {
         wasm.__wbindgen_exn_store(addHeapObject(e));
     }
 }
-function __wbg_adapter_89(arg0, arg1, arg2, arg3) {
+function __wbg_adapter_98(arg0, arg1, arg2, arg3) {
     wasm.wasm_bindgen__convert__closures__invoke2_mut__h4be52c405766fc87(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
@@ -1474,6 +1513,69 @@ export function __wbgtest_console_error(args) {
     }
 }
 
+/**
+*/
+export class MipMapOffsetAndSize {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(MipMapOffsetAndSize.prototype);
+        obj.__wbg_ptr = ptr;
+
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_mipmapoffsetandsize_free(ptr);
+    }
+    /**
+    * @returns {number}
+    */
+    get 0() {
+        const ret = wasm.__wbg_get_mipmapoffsetandsize_0(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set 0(arg0) {
+        wasm.__wbg_set_mipmapoffsetandsize_0(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @returns {number}
+    */
+    get 1() {
+        const ret = wasm.__wbg_get_mipmapoffsetandsize_1(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set 1(arg0) {
+        wasm.__wbg_set_mipmapoffsetandsize_1(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @returns {number}
+    */
+    get 2() {
+        const ret = wasm.__wbg_get_mipmapoffsetandsize_2(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set 2(arg0) {
+        wasm.__wbg_set_mipmapoffsetandsize_2(this.__wbg_ptr, arg0);
+    }
+}
 /**
 * Runtime test harness support instantiated in JS.
 *
@@ -1604,7 +1706,7 @@ export function __wbg_forEach_c4a9c2a1e9a630ba(arg0, arg1, arg2) {
             const a = state0.a;
             state0.a = 0;
             try {
-                return __wbg_adapter_76(a, state0.b, arg0, arg1, arg2);
+                return __wbg_adapter_85(a, state0.b, arg0, arg1, arg2);
             } finally {
                 state0.a = a;
             }
@@ -1637,7 +1739,7 @@ export function __wbg_new_43f1b47c28813cbd(arg0, arg1) {
             const a = state0.a;
             state0.a = 0;
             try {
-                return __wbg_adapter_89(a, state0.b, arg0, arg1);
+                return __wbg_adapter_98(a, state0.b, arg0, arg1);
             } finally {
                 state0.a = a;
             }
@@ -1781,7 +1883,7 @@ export function __wbg_stack_7ffb21b96b519484(arg0) {
     return addHeapObject(ret);
 };
 
-export function __wbindgen_closure_wrapper1343(arg0, arg1, arg2) {
+export function __wbindgen_closure_wrapper1366(arg0, arg1, arg2) {
     const ret = makeMutClosure(arg0, arg1, 158, __wbg_adapter_20);
     return addHeapObject(ret);
 };

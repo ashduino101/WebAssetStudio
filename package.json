@@ -16,8 +16,10 @@
   "dependencies": {
     "@vitejs/plugin-legacy": "^4.1.1",
     "@wokwi/elfist": "^1.0.2",
+    "aes-js": "^3.1.2",
     "av": "^0.4.9",
     "crc-32": "^1.2.2",
+    "crypto-js": "^4.2.0",
     "highlight.js": "^11.9.0",
     "jquery": "^3.7.0",
     "jstree": "^3.3.15",
