@@ -7,7 +7,6 @@ use std::panic;
 use crate::fp16::fp16_ieee_to_fp32_value;
 use texture2ddecoder;
 use texture2ddecoder::{decode_astc as decode_astc_, decode_atc_rgb4_block, decode_atc_rgba8_block, decode_bc1_block, decode_bc3_block, decode_bc4_block, decode_bc5_block, decode_bc6_block, decode_bc7_block, decode_eacr_block, decode_eacr_signed_block, decode_eacrg_block, decode_eacrg_signed_block, decode_etc1_block, decode_etc2_a8_block, decode_etc2_rgb_block, decode_etc2_rgba1_block, decode_etc2_rgba8_block, decode_pvrtc as decode_pvrtc_};
-use wasm_bindgen::convert::IntoWasmAbi;
 use wasm_bindgen_test::console_log;
 
 #[wasm_bindgen]
@@ -758,7 +757,7 @@ pub fn get_mipmap_offset_and_size(mipmap: i32, format: &str, width: i32, height:
     let block = get_format_block_size(&format);
     let (minw, minh) = get_format_min_pixel_size(&format);
 
-    for i in 0..mipmap {
+    for _ in 0..mipmap {
         let bw: i32 = if w % block != 0 {w + (block - w % block)} else {w};
         let bh: i32 = if h % block != 0 {h + (block - h % block)} else {h};
 
