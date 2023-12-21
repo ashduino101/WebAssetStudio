@@ -30,11 +30,11 @@ export const fileTypes = {
 export default class FileHandler {
   constructor(treeSelector) {
     this.data = null;
-    this.name = null;
+    this.name = '';
     this.treeSelector = treeSelector;
   }
 
-  loadFile(file) {
+  async loadFile(file) {
     return new Promise(resolve => {
       let reader = new FileReader();
       reader.onloadend = async b => {
@@ -97,7 +97,6 @@ export default class FileHandler {
   }
 
   getType() {
-    const reader = new BinaryReader(this.data);
     // [Unity]
     // Bundle: "Unity" -- matches all bundle types ("FS", "Web", etc)
     if (this._checkMagicBasic(5, [0x55, 0x6e, 0x69, 0x74, 0x79])) return fileTypes.UnityBundle;
