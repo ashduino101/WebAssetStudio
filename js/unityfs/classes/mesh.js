@@ -616,7 +616,7 @@ export class Mesh extends NamedObject {
       this.streamData = new StreamingInfo(reader);
     }
 
-    this.process();
+    this._has_processed = false;
   }
 
   async process() {
@@ -632,6 +632,8 @@ export class Mesh extends NamedObject {
       this.decompressMesh();
     }
     this.getTriangles();
+
+    this._has_processed = true;
   }
 
   processVertexData() {
@@ -961,7 +963,8 @@ export class Mesh extends NamedObject {
     }
   }
 
-  toGeometry() {
+  async toGeometry() {
+    if (!this._has_processed) await this.process();
     const geometry = new THREE.BufferGeometry();
 
     let vertices = [];
@@ -1022,7 +1025,7 @@ export class Mesh extends NamedObject {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x606060);
 
-    let mesh = new THREE.Mesh(this.toGeometry(), new THREE.MeshPhongMaterial({
+    let mesh = new THREE.Mesh(await this.toGeometry(), new THREE.MeshPhongMaterial({
       color: 0xffffff,
       flatShading: true
     }));
@@ -1084,9 +1087,9 @@ export class Mesh extends NamedObject {
   }
 
   async getExport() {
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
       const scene = new THREE.Scene();
-      const mesh = new THREE.Mesh(this.toGeometry(), new THREE.MeshBasicMaterial({color: '#000000'}));
+      const mesh = new THREE.Mesh(await this.toGeometry(), new THREE.MeshBasicMaterial({color: '#000000'}));
       scene.add(mesh);
 
       const exporter = new GLTFExporter();

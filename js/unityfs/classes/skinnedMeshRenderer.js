@@ -170,7 +170,7 @@ export class SkinnedMeshRenderer extends Renderer {
       });
     }
 
-    let mesh = new Mesh(this.mesh.object.toGeometry(), material);
+    let mesh = new Mesh(await this.mesh.object.toGeometry(), material);
 
     // const skeleton = await this.createSkeleton();
     // console.log(skeleton)
