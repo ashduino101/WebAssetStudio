@@ -46,3 +46,8 @@ pub fn lz4_decompress(data: &[u8], out_size: usize) -> Result<Bytes, String> {
         Err(e) => Err(e.to_string())
     }
 }
+
+
+pub trait FromBytes {
+    fn from_bytes(data: &mut Bytes) -> Self;
+}

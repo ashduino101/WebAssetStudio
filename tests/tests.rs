@@ -15,7 +15,7 @@ mod tests {
     use std::io::{Read};
     use webassetstudio::unity::asset_file::AssetFile;
     use bytes::{Bytes};
-    use webassetstudio::unity::bundle_file::BundleFile;
+    use webassetstudio::unity::bundle::file::BundleFile;
 
     #[test]
     fn test_bundle() {
