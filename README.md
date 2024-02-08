@@ -11,11 +11,11 @@ WebAssetStudio currently supports the following formats:
  - UnityFS (`.unity3d`, `.assets`, `level*`)
  - FSB5 (currently only for UnityFS bundles)
  - XNA/FNA serialized assets (`.xnb`, `.xnb.deploy`)
+ - Godot bundles (`.pck`) (beta)
  - GZip-compressed versions of the formats listed above
 
 ## Planned support
 WebAssetStudio plans to eventually support the following formats:
- - Godot (`.pck`)
  - Wwise BNK (`.bnk`)
  - Unreal bundles (`.pak`) and assets (`.uasset`, `.ubulk`, etc)
 
