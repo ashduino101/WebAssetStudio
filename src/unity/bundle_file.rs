@@ -1,9 +1,10 @@
 use bytes::{Bytes, Buf, BytesMut, BufMut};
+use crate::unity::compression::decompress;
 use crate::utils::{BufExt, lz4_decompress};
 
 #[derive(Debug)]
 pub struct BundleFileHeader {
-    magic: String,
+    pub magic: String,
     pub version: i32,
     pub unity_version: String,
     pub unity_revision: String,
@@ -15,11 +16,11 @@ pub struct BundleFileHeader {
 
 #[derive(Debug)]
 pub struct BundleFlags {
-    compression_type: u8,
-    has_dir_info: bool,
-    block_info_at_end: bool,
-    old_web_plugin_compat: bool,
-    block_info_has_padding: bool
+    pub compression_type: u8,
+    pub has_dir_info: bool,
+    pub block_info_at_end: bool,
+    pub old_web_plugin_compat: bool,
+    pub block_info_has_padding: bool
 }
 
 impl BundleFlags {
@@ -36,8 +37,8 @@ impl BundleFlags {
 
 #[derive(Debug)]
 pub struct BlockFlags {
-    compression_type: u8,
-    is_streamed: bool
+    pub compression_type: u8,
+    pub is_streamed: bool
 }
 
 impl BlockFlags {
@@ -50,8 +51,48 @@ impl BlockFlags {
 }
 
 #[derive(Debug)]
+pub struct BlockInfo {
+    pub compressed_size: usize,
+    pub uncompressed_size: usize,
+    pub flags: BlockFlags
+}
+
+impl BlockInfo {
+
+}
+
+#[derive(Debug)]
+pub struct NodeFlags {
+    // TODO
+}
+
+impl NodeFlags {
+    pub fn from_bits(i: u32) -> NodeFlags {
+        NodeFlags {
+            // TODO
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Node {
+    pub offset: usize,
+    pub size: usize,
+    pub flags: NodeFlags,
+    pub path: String
+}
+
+#[derive(Debug)]
+pub struct StorageInfo {
+    pub blocks: Vec<BlockInfo>,
+    pub nodes: Vec<Node>,
+    pub data_hash: Bytes,
+}
+
+#[derive(Debug)]
 pub struct BundleFile {
-    header: BundleFileHeader
+    pub header: BundleFileHeader,
+    pub storage: StorageInfo
 }
 
 impl BundleFile {
@@ -61,9 +102,9 @@ impl BundleFile {
 
     fn from_bytes(data: &mut Bytes) -> BundleFile {
         let header = Self::parse_header(data);
-        let block_info = Self::parse_block_info(data, header.compressed_block_info_size,
+        let storage = Self::parse_storage_info(data, header.compressed_block_info_size,
                                                 header.uncompressed_block_info_size, &header.flags);
-        Self { header }
+        Self { header, storage }
     }
 
     fn parse_header(data: &mut Bytes) -> BundleFileHeader {
@@ -83,33 +124,38 @@ impl BundleFile {
         h
     }
 
-    fn parse_block_info(data: &mut Bytes, compressed_block_info_size: u32, uncompressed_block_info_size: u32, flags: &BundleFlags) {
-        let mut comp_block = data.slice(0..compressed_block_info_size as usize);
-        let mut decomp = match flags.compression_type {
-            0 => Bytes::from(comp_block),
-            1 => panic!("lzma not supported"),  // TODO lzma
-            2 => lz4_decompress(&comp_block[..], uncompressed_block_info_size as usize).expect("could not decompress lz4"),
-            3 => lz4_decompress(&comp_block[..], uncompressed_block_info_size as usize).expect("could not decompress lz4hc"),
-            _ => panic!("unsupported compression method")
-        };
+    fn parse_storage_info(data: &mut Bytes, compressed_block_info_size: u32, uncompressed_block_info_size: u32, flags: &BundleFlags) -> StorageInfo {
+        let mut decomp = decompress(
+            data,
+            flags.compression_type,
+            compressed_block_info_size as usize,
+            uncompressed_block_info_size as usize
+        );
         let data_hash = decomp.slice(0..16);
         decomp.advance(16);
-        println!("{:x?}", data_hash);
         let block_info_count = decomp.get_u32();
-        println!("{}", block_info_count);
+        let mut blocks = Vec::<BlockInfo>::new();
         for _ in 0..block_info_count {
-            let uncompressed_size = decomp.get_u32();
-            let compressed_size = decomp.get_u32();
-            let flags = BlockFlags::from_bits(decomp.get_u16());
-            println!("{} {} {:?}", uncompressed_size, compressed_size, flags);
+            blocks.push(BlockInfo {
+                compressed_size: decomp.get_u32() as usize,
+                uncompressed_size: decomp.get_u32() as usize,
+                flags: BlockFlags::from_bits(decomp.get_u16())
+            });
         }
         let node_count = decomp.get_u32();
+        let mut nodes = Vec::<Node>::new();
         for _ in 0..node_count {
-            let offset = decomp.get_u64();
-            let size = decomp.get_u64();
-            let flags = decomp.get_u32();
-            let path = decomp.get_cstring();
-            println!("{} {} {} {}", offset, size, flags, path);
+            nodes.push(Node {
+                offset: decomp.get_u64() as usize,
+                size: decomp.get_u64() as usize,
+                flags: NodeFlags::from_bits(decomp.get_u32()),
+                path: decomp.get_cstring()
+            });
+        }
+        StorageInfo {
+            data_hash,
+            blocks,
+            nodes
         }
     }
 }

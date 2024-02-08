@@ -22,6 +22,6 @@ mod tests {
         let mut data = Vec::from(include_bytes!("data/01.avtr"));
         let mut b = Bytes::from(data);
         let mut af = BundleFile::new(&mut b);
-        println!("{:?}", af);
+        println!("{:#?}", af);
     }
 }
