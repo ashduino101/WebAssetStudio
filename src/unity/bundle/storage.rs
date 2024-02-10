@@ -14,9 +14,9 @@ pub struct StorageInfo {
 impl StorageInfo {
     pub fn new(blocks: Vec<BlockInfo>, nodes: Vec<Node>, data_hash: Bytes) -> StorageInfo {
         // Create a hashmap for lookups
-        let lookup = HashMap::<String, usize>::new();
+        let mut lookup = HashMap::<String, usize>::new();
         for (i, node) in nodes.iter().enumerate() {
-            lookup.insert(node.path, i);
+            lookup.insert((*node.path).to_string(), i);
         }
 
         StorageInfo {

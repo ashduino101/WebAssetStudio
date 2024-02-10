@@ -98,7 +98,7 @@ impl BundleFile {
         for _ in 0..node_count {
             nodes.push(Node::from_bytes(&mut decomp));
         }
-        StorageInfo::new(data_hash, blocks, nodes)
+        StorageInfo::new(blocks, nodes, data_hash)
     }
 
     pub fn get_file(&self, name: &str) {
