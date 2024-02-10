@@ -1,3 +1,4 @@
+import enum
 import io
 import os
 import re
@@ -61,12 +62,13 @@ class Node:
             child = self.get(name)
 
             if not other.get(name):
-                added['*'].append(child)
+                added['*'].append(self.get(name))
             elif not self.get(name):
-                removed['*'].append(child)
+                removed['*'].append(other.get(name))
             else:
-                if len((self.get(name) or other.get(name)).children) > 0:
-                    diff = child.diff(other.get(name))
+                item = other.get(name)
+                if len(item.children) > 0:
+                    diff = child.diff(item)
                     if len(diff[0]['*']) > 0:
                         added[name] = diff[0]
                     if len(diff[1]['*']) > 0:
@@ -128,6 +130,36 @@ def version2int(version):
     return int(res)
 
 
+class ModificationType(enum.Enum):
+    Add = 0
+    Remove = 1
+
+
+class Modification:
+    def __init__(self, typ, node, version):
+        self.type = typ
+        self.node = node
+        self.version = version
+
+
+class TypeDefNode:
+    def __init__(self, class_name):
+        self.class_name = class_name
+        self.modifications = []
+        self.children = []
+        self._map = {}
+
+    def update(self, add, remove, version):
+        self._update(add, ModificationType.Add, version)
+        self._update(remove, ModificationType.Remove, version)
+
+    def _update(self, items: dict[str, list], typ, version):
+        a = items.copy()
+        flat = a.pop('*')
+        for i in flat:
+            self.modifications.append(Modification(typ, i, version))
+
+
 def main():
     trees = {}
 
@@ -137,6 +169,7 @@ def main():
         versions.append([version2int(f[:-4]), f[:-4]])
 
     versions = sorted(versions, key=lambda i: i[0])
+    initial = load_tree(versions[0][1])
 
     for i, v in enumerate(versions):
         if i == 0:
@@ -146,18 +179,24 @@ def main():
         new = load_tree(v[1])
         print(f'computing deltas for {v[1]}')
         for elem2 in new:
+            elem2 = [i for i in new if i.type_name == 'Texture2D'][0]
             elem1 = [i for i in old if i.type_name == elem2.type_name]
+
             if len(elem1) == 0:
                 print(f'new {elem2.type_name}')
-                continue
+                elem1.append(Node())
+                trees[elem2.type_name] = TypeDefNode(elem2.type_name)
             elem1 = elem1[0]
             added, removed = elem2.diff(elem1)
-            if len(added['*']) > 0 or len(added) > 1:
-                print('ADDED ---')
-                print(f'{str(added):<40}', elem2.type_name)
-            if len(removed['*']) > 0 or len(removed) > 1:
-                print('REMOVED ---')
-                print(f'{str(removed):<40}', elem2.type_name)
+            trees[elem2.type_name].update(added, removed, v[0])
+            print(added, removed)
+            # if len(added['*']) > 0 or len(added) > 1:
+            #     print('ADDED ---')
+            #     print(f'{str(added):<40}', elem2.type_name)
+            # if len(removed['*']) > 0 or len(removed) > 1:
+            #     print('REMOVED ---')
+            #     print(f'{str(removed):<40}', elem2.type_name)
+            break
 
     # cls = 'Texture2D'
     # elem1 = [i for i in old if i.type_name == cls][0]
