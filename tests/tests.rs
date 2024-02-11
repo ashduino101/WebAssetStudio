@@ -16,6 +16,7 @@ mod tests {
     use webassetstudio::unity::asset_file::AssetFile;
     use bytes::{Bytes};
     use webassetstudio::unity::bundle::file::BundleFile;
+    use webassetstudio::unity::classes::{Animator, MonoBehaviour, SkinnedMeshRenderer, TypeDefFromBytes};
 
     #[test]
     fn test_bundle() {
@@ -23,5 +24,13 @@ mod tests {
         let mut b = Bytes::from(data);
         let mut af = BundleFile::new(&mut b);
         println!("{:#?}", af);
+    }
+
+    #[test]
+    fn test_generated() {
+        let mut data = Vec::from(include_bytes!("data/SkinnedMeshRenderer.dat"));
+        let mut b = Bytes::from(data);
+        let mut a = SkinnedMeshRenderer::from_bytes(&mut b, 180420201);
+        println!("{:?}", a);
     }
 }
