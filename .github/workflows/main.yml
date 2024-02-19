@@ -1,0 +1,22 @@
+name: webassetstudio-build
+run-name: Build
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      # - name: Build main WASM (FUTURE)
+      #   run: wasm-pack build
+      # TODO: add MojoShader build script when the rewrite is complete
+      - name: Build encoders
+        run: cd encoders && wasm-pack build --out-dir ../js/encoders
+      - name: Install dependencies
+        run: npm install
+      - name: Build web
+        run: npm run build
