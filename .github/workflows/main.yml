@@ -20,11 +20,8 @@ jobs:
         run: npm install
       - name: Build web
         run: npm run build
-      - name: Install SSH keys
-        run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+      - name: Trust host
+        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
       - name: Deploy to server
         run: scp -P ${{ secrets.SSH_PORT }} -p ${{ secrets.SSH_PASS }} -r dist ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORK_DIR }}/
       - name: Cleanup
