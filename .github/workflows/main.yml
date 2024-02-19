@@ -20,9 +20,7 @@ jobs:
         run: npm install
       - name: Build web
         run: npm run build
-      - name: Trust host
-        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
       - name: Deploy to server
-        run: scp -P ${{ secrets.SSH_PORT }} -p ${{ secrets.SSH_PASS }} -r dist ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORK_DIR }}/
+        run: scp -P ${{ secrets.SSH_PORT }} -p ${{ secrets.SSH_PASS }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r dist ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORK_DIR }}/
       - name: Cleanup
         run: rm -rf ~/.ssh && rm -rf dist
