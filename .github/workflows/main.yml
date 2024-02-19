@@ -29,4 +29,3 @@ jobs:
         run: scp -r dist ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORK_DIR }}/ -p ${{ secrets.SSH_PORT }}
       - name: Cleanup
         run: rm -rf ~/.ssh
-        
