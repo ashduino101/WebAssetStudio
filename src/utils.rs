@@ -1,9 +1,11 @@
 use bytes::{Buf, Bytes};
 use lz4_flex::{compress, decompress};
 use lz4_flex::block::DecompressError;
-use std::char;
+use lzxd::{Lzxd, WindowSize};
+use std::{char, io};
+use std::convert::TryInto;
 use std::error::Error;
-use std::io::ErrorKind;
+use std::io::{ErrorKind, Read};
 use std::string::FromUtf8Error;
 
 pub trait BufExt {
@@ -75,6 +77,15 @@ pub fn lz4_decompress(data: &[u8], out_size: usize) -> Result<Bytes, String> {
         Ok(v) => Ok(Bytes::from(v)),
         Err(e) => Err(e.to_string())
     }
+}
+
+pub fn lzx_decompress(mut data: &[u8], out_size: usize) -> Vec<u8> {
+    let mut lzxd = Lzxd::new(WindowSize::KB64);
+
+
+    let res = lzxd.decompress_next(&mut data, out_size).unwrap();
+
+    res.to_vec()
 }
 
 

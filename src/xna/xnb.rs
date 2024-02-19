@@ -5,20 +5,10 @@ use crate::utils::{BufExt, FromBytes};
 const XNB_MAGIC: &str = "XNB";
 
 
-#[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct TypeReader {
-    #[wasm_bindgen(skip)]
     pub typename: String,
     pub version: i32
-}
-
-#[wasm_bindgen]
-impl TypeReader {
-    #[wasm_bindgen(getter)]
-    pub fn typename(&self) -> String {
-        self.typename.to_string()
-    }
 }
 
 impl FromBytes for TypeReader {
@@ -30,34 +20,27 @@ impl FromBytes for TypeReader {
     }
 }
 
-#[wasm_bindgen]
-pub struct XNB {
+#[derive(Debug)]
+pub struct XNBFile {
     pub version: u8,
-    #[wasm_bindgen(skip)]
     pub platform: String,
     pub is_hi_def: bool,
     pub is_compressed: bool,
     pub size: u32,
     pub uncompressed_size: u32,
-    #[wasm_bindgen(skip)]
     pub type_readers: Vec<TypeReader>
 }
 
-#[wasm_bindgen]
-impl XNB {
-    #[wasm_bindgen(getter)]
+impl XNBFile {
     pub fn platform(&self) -> String {
         self.platform.to_string()
     }
 
-    #[wasm_bindgen(getter)]
     pub fn type_readers(&self) -> Box<[TypeReader]> {
         self.type_readers.clone().into()
     }
-}
 
-impl FromBytes for XNB {
-    fn from_bytes(data: &mut Bytes) -> Self {
+    pub fn new(data: &mut Bytes) -> Self {
         let mut magic = data.slice(0..3);
         data.advance(3);
         if magic.get_chars(3) != XNB_MAGIC {
@@ -83,7 +66,8 @@ impl FromBytes for XNB {
         for _ in 0..num_type_readers {
             type_readers.push(TypeReader::from_bytes(data))
         }
-        XNB {
+        let num_shared_resources = data.get_varint();
+        XNBFile {
             version: format_version,
             platform,
             is_hi_def,

@@ -116,5 +116,35 @@
   </div>
 
   <script src="js/main.js" type="module"></script>
+
+  <script type="module">
+    import "./pkg/webassetstudio.js";
+    // console.log(was);
+  </script>
+<script>
+  function getCharPtr(ptr) {
+    if (ptr === 0) {
+      return null;
+    }
+    let i = 0;
+    let b = 1;
+    let r = '';
+    while (b !== 0) {
+      b = HEAPU8[ptr + i];
+      if (b !== 0) {
+        r += String.fromCharCode(b);
+      }
+      i++;
+    }
+    return r;
+  }
+  function get128(ptr) {
+    return HEAPU8.slice(ptr, ptr + 128);
+  }
+  function setHeap(data, allocFunc) {
+    let ptr = allocFunc(data.length);
+    HEAPU8.set(data, ptr);
+  }
+</script>
 </body>
 </html>
