@@ -1,0 +1,3 @@
+[submodule "thirdparty/mojoshader"]
+	path = thirdparty/mojoshader
+	url = https://github.com/ashduino101/mojoshader
