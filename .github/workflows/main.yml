@@ -21,6 +21,6 @@ jobs:
       - name: Build web
         run: npm run build
       - name: Deploy to server
-        run: sshpass -p ${{ secrets.SSH_PASS }} scp -P ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r dist ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORK_DIR }}/
+        run: sshpass -p "${{ secrets.SSH_PASS }}" "scp -P ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r dist ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.WORK_DIR }}/"
       - name: Cleanup
         run: rm -rf ~/.ssh && rm -rf dist
