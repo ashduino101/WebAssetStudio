@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use crate::utils::lz4_decompress;
+use crate::utils::compress::lz4_decompress;
 
 pub fn decompress(data: &mut Bytes, compression_type: u8, compressed_size: usize, uncompressed_size: usize) -> Bytes {
     let mut comp_block = data.slice(0..compressed_size);

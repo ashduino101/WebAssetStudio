@@ -1,30 +1,31 @@
 use bytes::{Bytes, Buf};
 use js_sys::{ArrayBuffer, DataView, Float32Array, Float64Array, Function, Int16Array, Int32Array, Int8Array, Object, Reflect, Uint16Array, Uint32Array, Uint8Array, WebAssembly};
-use wasm_bindgen::__rt::IntoJsResult;
+// use wasm_bindgen::__rt::IntoJsResult;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{spawn_local, JsFuture};
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(a: &str);
-}
+// #[wasm_bindgen]
+// extern "C" {
+//     #[wasm_bindgen(js_namespace = console)]
+//     fn log(a: &str);
+// }
+//
+// macro_rules! console_log {
+//     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+// }
 
-macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
-
-const WASM: &[u8] = include_bytes!("../../lib/dxdisassemble.wasm");
-const TEST: &[u8] = include_bytes!("../../test.fxc");
+const WASM: &[u8] = include_bytes!("../../thirdparty/mojoshader/dxdisassemble.wasm");
+const TEST: &[u8] = include_bytes!("../../Breathing.fxc");
 
 async fn load() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
 
     let mut imports = Object::new();
-    let mut env = &Object::new();
+    let mut env = Object::new();
 
     Reflect::set(&env, &"__assert_fail".into(), &Function::new_with_args(&"val", "")).unwrap();
     Reflect::set(&env, &"emscripten_asm_const_int".into(), &Function::new_with_args(&"code, sig, args", "")).unwrap();
+    Reflect::set(&env, &"emscripten_memcpy_js".into(), &Function::new_with_args(&"val", "console.log('mcpyjs')")).unwrap();
     Reflect::set(&env, &"emscripten_memcpy_big".into(), &Function::new_with_args(&"val", "console.log('mcpy')")).unwrap();
     Reflect::set(&env, &"emscripten_resize_heap".into(), &Function::new_with_args(&"val", "console.log('rh')")).unwrap();
     Reflect::set(&env, &"STACKTOP".into(), &JsValue::from(0)).unwrap();
@@ -87,7 +88,6 @@ async fn load() -> Result<(), JsValue> {
         .dyn_into::<Function>()
         .expect("cannot load free");
 
-    console_log!("{:?} {:?}", malloc, free);
     on_init.call1(&JsValue::undefined(), &module);
 
     let prof = malloc.call1(&JsValue::undefined(), &JsValue::from(5)).unwrap();
@@ -98,23 +98,23 @@ async fn load() -> Result<(), JsValue> {
     let res = do_parse.call3(&JsValue::undefined(), &dat, &JsValue::from(TEST.len()), &prof).unwrap();
     let res_ptr: u32 = unsafe {res.as_f64().unwrap().to_int_unchecked()};
 
-    console_log!("res {:?}", res_ptr);
+    // console_log!("res {:?}", res_ptr);
 
     let mut view = DataView::new(&membuf.slice(res_ptr), 0, (256 * 65536 - res_ptr) as usize);
     let num_objects = view.get_uint32_endian(0, true);
-    console_log!("{}", num_objects);
+    // console_log!("{}", num_objects);
     for i in 0..num_objects {
         let obj_ptr = view.get_uint32_endian((i * 4 + 4) as usize, true);
-        console_log!("{}", obj_ptr);
+        // console_log!("{}", obj_ptr);
     }
 
 
     Ok(())
 }
 
-#[wasm_bindgen(start)]
-fn run() {
-    spawn_local(async {
-        load().await.unwrap();
-    });
-}
+// #[wasm_bindgen(start)]
+// fn run() {
+//     spawn_local(async {
+//         load().await.unwrap();
+//     });
+// }

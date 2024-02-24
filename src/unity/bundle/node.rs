@@ -1,5 +1,5 @@
 use bytes::{Buf, Bytes};
-use crate::utils::{BufExt, FromBytes};
+use crate::utils::buf::{BufExt, FromBytes};
 
 #[derive(Debug)]
 pub struct NodeFlags {

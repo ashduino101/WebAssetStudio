@@ -3,7 +3,8 @@ use crate::unity::bundle::block::{BlockFlags, BlockInfo};
 use crate::unity::bundle::node::{Node, NodeFlags};
 use crate::unity::bundle::storage::StorageInfo;
 use crate::unity::compression::decompress;
-use crate::utils::{BufExt, FromBytes, lz4_decompress};
+use crate::utils::buf::{BufExt, FromBytes};
+use crate::utils::compress::lz4_decompress;
 
 #[derive(Debug)]
 pub struct BundleFileHeader {

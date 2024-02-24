@@ -1,14 +1,7 @@
 use bytes::{Buf, Bytes};
-use lz4_flex::{compress, decompress};
-use lz4_flex::block::DecompressError;
-use lzxd::{Lzxd, WindowSize};
-use std::{char, io};
-use std::convert::TryInto;
-use std::error::Error;
-use std::io::{ErrorKind, Read};
-use std::string::FromUtf8Error;
 
 pub trait BufExt {
+    fn get_raw(&mut self, nbytes: usize) -> Bytes;
     fn get_string(&mut self) -> String;
     fn get_string_varint(&mut self) -> String;
     fn get_cstring(&mut self) -> String;
@@ -18,6 +11,12 @@ pub trait BufExt {
 }
 
 impl BufExt for Bytes {
+    fn get_raw(&mut self, nbytes: usize) -> Bytes {
+        let sub = self.slice(0..nbytes);
+        self.advance(nbytes);
+        sub
+    }
+
     fn get_string(&mut self) -> String {
         let len = self.get_u32_le() as usize;
         self.get_chars(len)
@@ -70,24 +69,6 @@ impl BufExt for Bytes {
         }
     }
 }
-
-
-pub fn lz4_decompress(data: &[u8], out_size: usize) -> Result<Bytes, String> {
-    match decompress(data, out_size) {
-        Ok(v) => Ok(Bytes::from(v)),
-        Err(e) => Err(e.to_string())
-    }
-}
-
-pub fn lzx_decompress(mut data: &[u8], out_size: usize) -> Vec<u8> {
-    let mut lzxd = Lzxd::new(WindowSize::KB64);
-
-
-    let res = lzxd.decompress_next(&mut data, out_size).unwrap();
-
-    res.to_vec()
-}
-
 
 pub trait FromBytes {
     fn from_bytes(data: &mut Bytes) -> Self;

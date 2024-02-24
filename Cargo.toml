@@ -3,6 +3,9 @@ name = "webassetstudio"
 version = "0.1.0"
 authors = ["ashduino101"]
 edition = "2018"
+license = "MIT"
+repository = "https://github.com/ashduino101/WebAssetStudio"
+description = "An online tool to view, modify, and extract game asset files for a variety of game engines."
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -26,6 +29,7 @@ lzxd = "0.2.5"
 js-sys = "0.3.68"
 wasm-bindgen-futures = "0.4.41"
 wasm-bindgen-test = "0.3.41"
+wgpu = "0.19.1"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.34"

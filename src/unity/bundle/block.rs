@@ -1,5 +1,5 @@
 use bytes::{Buf, Bytes};
-use crate::utils::FromBytes;
+use crate::utils::buf::FromBytes;
 
 #[derive(Debug)]
 pub struct BlockFlags {

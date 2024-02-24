@@ -1,6 +1,13 @@
 use bytes::{Buf, Bytes};
 use wasm_bindgen::prelude::*;
-use crate::utils::{BufExt, FromBytes};
+use crate::base::asset::Void;
+use crate::base::types::{Matrix4x4, Quaternion, Vector2, Vector3, Vector4};
+use crate::logger::Logger;
+use crate::utils::buf::{BufExt, FromBytes};
+use crate::xna::type_base::XNBType;
+use crate::xna::types::graphics::Texture2D;
+use crate::xna::types::math::*;
+use crate::xna::types::system::*;
 
 const XNB_MAGIC: &str = "XNB";
 
@@ -28,7 +35,8 @@ pub struct XNBFile {
     pub is_compressed: bool,
     pub size: u32,
     pub uncompressed_size: u32,
-    pub type_readers: Vec<TypeReader>
+    pub type_readers: Vec<TypeReader>,
+    pub primary_asset: Box<dyn XNBType>
 }
 
 impl XNBFile {
@@ -40,7 +48,7 @@ impl XNBFile {
         self.type_readers.clone().into()
     }
 
-    pub fn new(data: &mut Bytes) -> Self {
+    pub fn new(data: &mut Bytes) -> Box<XNBFile> {
         let mut magic = data.slice(0..3);
         data.advance(3);
         if magic.get_chars(3) != XNB_MAGIC {
@@ -67,14 +75,36 @@ impl XNBFile {
             type_readers.push(TypeReader::from_bytes(data))
         }
         let num_shared_resources = data.get_varint();
-        XNBFile {
+        Box::from(XNBFile {
             version: format_version,
             platform,
             is_hi_def,
             is_compressed,
             size,
             uncompressed_size,
-            type_readers
+            type_readers: type_readers.clone(),
+            primary_asset: XNBFile::read_type(&type_readers.get((data.get_varint() - 1) as usize).expect("invalid index").typename, data)
+        })
+    }
+
+    fn read_type(class: &str, data: &mut Bytes) -> Box<dyn XNBType> {
+        println!("read type {:?}", class);
+        match class {
+            "Microsoft.Xna.Framework.Content.TimeSpanReader" => Box::from(TimeSpan::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.DateTimeReader" => Box::from(DateTime::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.DecimalReader" => Box::from(Decimal::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.ExternalReferenceReader" => Box::from(ExternalReference::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.Vector2Reader" => Box::from(Vector2::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.Vector3Reader" => Box::from(Vector3::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.Vector4Reader" => Box::from(Vector4::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.MatrixReader" => Box::from(Matrix4x4::from_bytes(data)),
+            "Microsoft.Xna.Framework.Content.QuaternionReader" => Box::from(Quaternion::from_bytes(data)),
+
+            "Microsoft.Xna.Framework.Content.Texture2DReader" => Box::from(Texture2D::from_bytes(data)),
+            _ => {
+                // Logger::get_logger("XNB").warn(&format!("Unknown class {}, parsing void", class));
+                Box::from(Void::from_bytes(data))
+            }
         }
     }
 }

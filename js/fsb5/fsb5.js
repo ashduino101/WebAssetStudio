@@ -40,6 +40,7 @@ export class FSB5 {
       };
       this.fmodModule['INITIAL_MEMORY'] = 64 * 1024 * 1024;
       FMODModule(this.fmodModule);
+      console.log(this.fmodModule);
     });
   }
 
