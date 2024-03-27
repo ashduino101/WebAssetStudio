@@ -1,4 +1,6 @@
+use std::iter::FromIterator;
 use bytes::{Bytes, Buf, BytesMut, BufMut};
+use wasm_bindgen_test::console_log;
 use crate::unity::bundle::block::{BlockFlags, BlockInfo};
 use crate::unity::bundle::node::{Node, NodeFlags};
 use crate::unity::bundle::storage::StorageInfo;
@@ -20,8 +22,12 @@ pub struct BundleFileHeader {
 
 impl FromBytes for BundleFileHeader {
     fn from_bytes(data: &mut Bytes) -> Self {
+        let magic = data.get_cstring();
+        if !magic.starts_with("Unity") {  // might need more checks
+            panic!("not a Unity asset bundle!");
+        };
         BundleFileHeader {
-            magic: data.get_cstring(),
+            magic,
             version: data.get_i32(),
             unity_version: data.get_cstring(),
             unity_revision: data.get_cstring(),
@@ -57,7 +63,8 @@ impl BundleFlags {
 #[derive(Debug)]
 pub struct BundleFile {
     pub header: BundleFileHeader,
-    pub storage: StorageInfo
+    pub storage: StorageInfo,
+    block_data: Bytes
 }
 
 impl BundleFile {
@@ -69,7 +76,9 @@ impl BundleFile {
         let header = Self::parse_header(data);
         let storage = Self::parse_storage_info(data, header.compressed_block_info_size,
                                                header.uncompressed_block_info_size, &header.flags);
-        Self { header, storage }
+        let block_data = data.clone();
+
+        Self { header, storage, block_data }
     }
 
     fn parse_header(data: &mut Bytes) -> BundleFileHeader {
@@ -87,6 +96,7 @@ impl BundleFile {
             compressed_block_info_size as usize,
             uncompressed_block_info_size as usize
         );
+        data.advance(compressed_block_info_size as usize);
         let data_hash = decomp.slice(0..16);
         decomp.advance(16);
         let block_info_count = decomp.get_u32();
@@ -102,7 +112,25 @@ impl BundleFile {
         StorageInfo::new(blocks, nodes, data_hash)
     }
 
-    pub fn get_file(&self, name: &str) {
+    pub fn list_files(&self) -> Vec<String> {
+        return Vec::from_iter(self.storage.nodes.iter().map(|n| n.path.clone()));
+    }
 
+    pub fn get_file(&self, path: &str) -> Option<Bytes> {
+        let node = self.storage.get_node_by_path(path)?;
+        let blocks = self.storage.get_blocks_for_node(node);
+        let mut buf = BytesMut::new();
+        let mut offset = 0;
+        for block in blocks {
+            buf.put(decompress(
+                &mut self.block_data.slice(offset..block.compressed_size),
+                block.flags.compression_type,
+                block.compressed_size,
+                block.uncompressed_size
+            ));
+            console_log!("got to {}", offset);
+            offset += block.compressed_size;
+        };
+        Some(Bytes::from(buf))
     }
 }

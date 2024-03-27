@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter};
 use bytes::{Buf, Bytes};
 use crate::base::asset::Asset;
+use crate::create_img;
 use crate::utils::buf::{BufExt, FromBytes};
 use crate::xna::type_base::XNBType;
 
@@ -81,11 +82,15 @@ pub struct Texture2D {
     pub width: u32,
     pub height: u32,
     pub num_mips: u32,
-    pub textures: Mip
+    pub textures: Vec<Mip>
 }
 
 impl Asset for Texture2D {
-
+    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+        let elem = doc.create_element("img").expect("failed to create element");
+        elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize));
+        elem
+    }
 }
 
 impl XNBType for Texture2D {
@@ -96,12 +101,16 @@ impl XNBType for Texture2D {
         let num_mips = data.get_u32_le();
         let data_size = data.get_u32_le() as usize;
         let mut texture_data = data.get_raw(data_size);
+        let mut textures = Vec::new();
+        for i in 0..num_mips {
+            textures.push(Mip::decode(&mut texture_data.slice(0..(texture_data.len() / num_mips as usize))))
+        }
         Texture2D {
             surface_format,
             width,
             height,
             num_mips,
-            textures: Mip::decode(&mut texture_data)
+            textures
         }
     }
 }

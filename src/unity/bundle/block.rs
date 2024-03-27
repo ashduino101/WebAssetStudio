@@ -30,8 +30,8 @@ impl BlockInfo {
 impl FromBytes for BlockInfo {
     fn from_bytes(data: &mut Bytes) -> Self {
         BlockInfo {
-            compressed_size: data.get_u32() as usize,
             uncompressed_size: data.get_u32() as usize,
+            compressed_size: data.get_u32() as usize,
             flags: BlockFlags::from_bits(data.get_u16())
         }
     }

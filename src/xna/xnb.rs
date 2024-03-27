@@ -49,9 +49,7 @@ impl XNBFile {
     }
 
     pub fn new(data: &mut Bytes) -> Box<XNBFile> {
-        let mut magic = data.slice(0..3);
-        data.advance(3);
-        if magic.get_chars(3) != XNB_MAGIC {
+        if data.get_chars(3) != XNB_MAGIC {
             panic!("not an XNB file");
         };
         let platform = match data.get_u8() {

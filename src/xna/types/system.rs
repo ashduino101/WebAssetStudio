@@ -9,7 +9,11 @@ pub struct TimeSpan {
 }
 
 impl Asset for TimeSpan {
-
+    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+        let elem = doc.create_element("p").expect("failed to create element");
+        elem.set_text_content(Some(&*format!("{} ticks", self.ticks)));
+        elem
+    }
 }
 
 impl XNBType for TimeSpan {
@@ -24,7 +28,11 @@ pub struct DateTime {
 }
 
 impl Asset for DateTime {
-
+    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+        let elem = doc.create_element("p").expect("failed to create element");
+        elem.set_text_content(Some(&*format!("{}", self.value)));
+        elem
+    }
 }
 
 impl XNBType for DateTime {
@@ -39,7 +47,11 @@ pub struct Decimal {
 }
 
 impl Asset for Decimal {
-
+    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+        let elem = doc.create_element("p").expect("failed to create element");
+        elem.set_text_content(Some(&*format!("RAW: {}", self.raw)));  // TODO display properly
+        elem
+    }
 }
 
 impl XNBType for Decimal {
@@ -54,7 +66,11 @@ pub struct ExternalReference {
 }
 
 impl Asset for ExternalReference {
-
+    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+        let elem = doc.create_element("p").expect("failed to create element");
+        elem.set_text_content(Some(&*format!("Asset: {}", self.asset_name)));
+        elem
+    }
 }
 
 impl XNBType for ExternalReference {

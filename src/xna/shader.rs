@@ -15,7 +15,7 @@ use wasm_bindgen_futures::{spawn_local, JsFuture};
 // }
 
 const WASM: &[u8] = include_bytes!("../../thirdparty/mojoshader/dxdisassemble.wasm");
-const TEST: &[u8] = include_bytes!("../../Breathing.fxc");
+const TEST: &[u8] = include_bytes!("../../test.fxc");
 
 async fn load() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
