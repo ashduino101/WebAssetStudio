@@ -40,10 +40,11 @@ fn main() {
     // body.append_child(&elem);
     //
     // console_log!("{:?}", xnb);
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../test2.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 
-
-    console_log!("{:?}", f.get_file(&f.list_files()[1]).expect("nonexistent file"));
+    console_log!("start decompress");
+    let file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
+    console_log!("end decompress: {} bytes", file.len());
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
 }

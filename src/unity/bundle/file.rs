@@ -82,21 +82,33 @@ impl BundleFile {
     }
 
     fn parse_header(data: &mut Bytes) -> BundleFileHeader {
+        let start_len = data.len();
         let h = BundleFileHeader::from_bytes(data);
         if h.version >= 7 {
-            data.align(h.size as usize, 16);
+            data.align(start_len, 16);
         }
         h
     }
 
     fn parse_storage_info(data: &mut Bytes, compressed_block_info_size: u32, uncompressed_block_info_size: u32, flags: &BundleFlags) -> StorageInfo {
-        let mut decomp = decompress(
-            data,
-            flags.compression_type,
-            compressed_block_info_size as usize,
-            uncompressed_block_info_size as usize
-        );
-        data.advance(compressed_block_info_size as usize);
+        let mut decomp = if flags.block_info_at_end {
+            let mut infodata = data.slice(data.len() - compressed_block_info_size as usize..);
+            decompress(
+                &mut infodata,
+                flags.compression_type,
+                compressed_block_info_size as usize,
+                uncompressed_block_info_size as usize
+            )
+        } else {
+            let mut d = decompress(
+                data,
+                flags.compression_type,
+                compressed_block_info_size as usize,
+                uncompressed_block_info_size as usize
+            );
+            data.advance(compressed_block_info_size as usize);
+            d
+        };
         let data_hash = decomp.slice(0..16);
         decomp.advance(16);
         let block_info_count = decomp.get_u32();
@@ -118,17 +130,16 @@ impl BundleFile {
 
     pub fn get_file(&self, path: &str) -> Option<Bytes> {
         let node = self.storage.get_node_by_path(path)?;
-        let blocks = self.storage.get_blocks_for_node(node);
+        let (blocks, first_offset) = self.storage.get_blocks_for_node(node);
         let mut buf = BytesMut::new();
-        let mut offset = 0;
-        for block in blocks {
+        let mut offset = first_offset;
+        for block in &blocks {
             buf.put(decompress(
-                &mut self.block_data.slice(offset..block.compressed_size),
+                &mut self.block_data.slice(offset..offset + block.compressed_size),
                 block.flags.compression_type,
                 block.compressed_size,
                 block.uncompressed_size
             ));
-            console_log!("got to {}", offset);
             offset += block.compressed_size;
         };
         Some(Bytes::from(buf))

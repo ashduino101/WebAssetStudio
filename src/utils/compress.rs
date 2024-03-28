@@ -1,5 +1,5 @@
 use bytes::{Buf, Bytes};
-use lz4_flex::{compress, decompress};
+use lz4_flex::{compress as _lz4_compress, decompress as _lz4_decompress};
 use lz4_flex::block::DecompressError;
 use std::io::{BufReader, Cursor};
 use std::panic;
@@ -9,14 +9,14 @@ use lzxd::{Lzxd, WindowSize};
 
 
 pub fn lz4_decompress(data: &[u8], out_size: usize) -> Result<Bytes, String> {
-    match decompress(data, out_size) {
+    match _lz4_decompress(data, out_size) {
         Ok(v) => Ok(Bytes::from(v)),
         Err(e) => Err(e.to_string())
     }
 }
 
 pub fn lz4_compress(data: &mut [u8]) -> Box<[u8]> {
-    compress(data).into()
+    _lz4_compress(data).into()
 }
 
 pub fn lzx_decompress(mut data: &[u8], out_size: usize) -> Vec<u8> {

@@ -35,10 +35,11 @@ impl StorageInfo {
         }
     }
 
-    pub fn get_blocks_for_node(&self, node: &Node) -> Vec<&BlockInfo> {
+    pub fn get_blocks_for_node(&self, node: &Node) -> (Vec<&BlockInfo>, usize) {
         let mut should_add = false;
         let mut blocks = Vec::new();
         let mut offset = 0;
+        let mut data_offset = 0;
         let mut i = 0;
         for block in &self.blocks {
             if offset >= node.offset {
@@ -53,8 +54,13 @@ impl StorageInfo {
             }
 
             offset += block.uncompressed_size;
+
+            if !should_add {  // while we're before the block data, add to the compressed offset
+                data_offset += block.compressed_size;
+            }
+
             i += 1;
         }
-        blocks
+        (blocks, data_offset)
     }
 }
