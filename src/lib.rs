@@ -8,12 +8,13 @@ pub mod base;
 pub mod alert_hook;
 
 use std::{panic, thread};
+use std::mem::size_of_val;
 use std::panic::PanicInfo;
 use bytes::Bytes;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::console_log;
 use crate::logger::splash;
-use crate::unity::asset_file::AssetFile;
+use crate::unity::assets::file::AssetFile;
 use crate::unity::bundle::file::BundleFile;
 use crate::utils::dom::create_img;
 use crate::xna::xnb::XNBFile;
@@ -44,7 +45,11 @@ fn main() {
     let mut f = BundleFile::new(&mut dat);
 
     console_log!("start decompress");
-    let file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
+    let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
     console_log!("end decompress: {} bytes", file.len());
+
+    console_log!("start asset file parse");
+    let asset = AssetFile::new(&mut file);
+    console_log!("{:?}", asset);
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
 }

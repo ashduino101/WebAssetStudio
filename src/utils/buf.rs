@@ -8,6 +8,12 @@ pub trait BufExt {
     fn get_chars(&mut self, cnt: usize) -> String;
     fn get_varint(&mut self) -> i64;
     fn align(&mut self, start_length: usize, i: u8);
+    fn get_i16_ordered(&mut self, little_endian: bool) -> i16;
+    fn get_u16_ordered(&mut self, little_endian: bool) -> u16;
+    fn get_i32_ordered(&mut self, little_endian: bool) -> i32;
+    fn get_u32_ordered(&mut self, little_endian: bool) -> u32;
+    fn get_i64_ordered(&mut self, little_endian: bool) -> i64;
+    fn get_u64_ordered(&mut self, little_endian: bool) -> u64;
 }
 
 impl BufExt for Bytes {
@@ -67,6 +73,30 @@ impl BufExt for Bytes {
         if modulo != 0 {
             self.advance((i as usize) - modulo);
         }
+    }
+
+    fn get_i16_ordered(&mut self, little_endian: bool) -> i16 {
+        if little_endian { self.get_i16_le() } else { self.get_i16() }
+    }
+
+    fn get_u16_ordered(&mut self, little_endian: bool) -> u16 {
+        if little_endian { self.get_u16_le() } else { self.get_u16() }
+    }
+
+    fn get_i32_ordered(&mut self, little_endian: bool) -> i32 {
+        if little_endian { self.get_i32_le() } else { self.get_i32() }
+    }
+
+    fn get_u32_ordered(&mut self, little_endian: bool) -> u32 {
+        if little_endian { self.get_u32_le() } else { self.get_u32() }
+    }
+
+    fn get_i64_ordered(&mut self, little_endian: bool) -> i64 {
+        if little_endian { self.get_i64_le() } else { self.get_i64() }
+    }
+
+    fn get_u64_ordered(&mut self, little_endian: bool) -> u64 {
+        if little_endian { self.get_u64_le() } else { self.get_u64() }
     }
 }
 
