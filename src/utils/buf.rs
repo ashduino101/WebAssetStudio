@@ -3,6 +3,7 @@ use bytes::{Buf, Bytes};
 pub trait BufExt {
     fn get_raw(&mut self, nbytes: usize) -> Bytes;
     fn get_string(&mut self) -> String;
+    fn get_string_ordered(&mut self, little_endian: bool) -> String;
     fn get_string_varint(&mut self) -> String;
     fn get_cstring(&mut self) -> String;
     fn get_chars(&mut self, cnt: usize) -> String;
@@ -12,8 +13,10 @@ pub trait BufExt {
     fn get_u16_ordered(&mut self, little_endian: bool) -> u16;
     fn get_i32_ordered(&mut self, little_endian: bool) -> i32;
     fn get_u32_ordered(&mut self, little_endian: bool) -> u32;
+    fn get_f32_ordered(&mut self, little_endian: bool) -> f32;
     fn get_i64_ordered(&mut self, little_endian: bool) -> i64;
     fn get_u64_ordered(&mut self, little_endian: bool) -> u64;
+    fn get_f64_ordered(&mut self, little_endian: bool) -> f64;
 }
 
 impl BufExt for Bytes {
@@ -25,6 +28,11 @@ impl BufExt for Bytes {
 
     fn get_string(&mut self) -> String {
         let len = self.get_u32_le() as usize;
+        self.get_chars(len)
+    }
+
+    fn get_string_ordered(&mut self, little_endian: bool) -> String {
+        let len = self.get_u32_ordered(little_endian) as usize;
         self.get_chars(len)
     }
 
@@ -91,12 +99,20 @@ impl BufExt for Bytes {
         if little_endian { self.get_u32_le() } else { self.get_u32() }
     }
 
+    fn get_f32_ordered(&mut self, little_endian: bool) -> f32 {
+        if little_endian { self.get_f32_le() } else { self.get_f32() }
+    }
+
     fn get_i64_ordered(&mut self, little_endian: bool) -> i64 {
         if little_endian { self.get_i64_le() } else { self.get_i64() }
     }
 
     fn get_u64_ordered(&mut self, little_endian: bool) -> u64 {
         if little_endian { self.get_u64_le() } else { self.get_u64() }
+    }
+
+    fn get_f64_ordered(&mut self, little_endian: bool) -> f64 {
+        if little_endian { self.get_f64_le() } else { self.get_f64() }
     }
 }
 

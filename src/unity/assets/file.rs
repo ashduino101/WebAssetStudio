@@ -1,9 +1,11 @@
+use std::collections::HashMap;
 use bytes::{Bytes, Buf, BytesMut, BufMut};
 use wasm_bindgen_test::console_log;
 use crate::unity::assets::external::External;
 use crate::unity::assets::typetree::TypeInfo;
 use crate::unity::object::identifier::LocalObjectIdentifier;
 use crate::unity::object::info::ObjectInfo;
+use crate::unity::assets::typetree::TypeParser;
 use crate::utils::buf::{BufExt, FromBytes};
 
 #[derive(Debug)]
@@ -77,10 +79,18 @@ impl AssetFile {
             externals.push(External::from_bytes(data, version, little_endian));
         }
 
-        console_log!("{:?}", objects[10]);
-        console_log!("{}", types[objects[10].type_id as usize].string_repr);
-        console_log!("{:?}", object_data.slice(objects[10].offset..objects[10].offset + objects[10].size));
-
+        // for object in &objects {
+        //     let typ = &types[object.type_id as usize];
+        //     let data = &mut object_data.slice(object.offset..object.offset + object.size);
+        //     // console_log!("{}", typ.string_repr);
+        //     // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
+        //     let parsed = TypeParser::parse_object_from_info(typ, data);
+        //     if typ.class_id == 43 {
+        //         console_log!("{}", typ.string_repr);
+        //         console_log!("{:?}", parsed);
+        //     }
+        //     // console_log!("{:?}", parsed);
+        // }
 
         AssetFile {
             metadata_size,
