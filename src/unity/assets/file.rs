@@ -79,18 +79,18 @@ impl AssetFile {
             externals.push(External::from_bytes(data, version, little_endian));
         }
 
-        // for object in &objects {
-        //     let typ = &types[object.type_id as usize];
-        //     let data = &mut object_data.slice(object.offset..object.offset + object.size);
-        //     // console_log!("{}", typ.string_repr);
-        //     // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
-        //     let parsed = TypeParser::parse_object_from_info(typ, data);
-        //     if typ.class_id == 43 {
-        //         console_log!("{}", typ.string_repr);
-        //         console_log!("{:?}", parsed);
-        //     }
-        //     // console_log!("{:?}", parsed);
-        // }
+        for object in &objects {
+            let typ = &types[object.type_id as usize];
+            let data = &mut object_data.slice(object.offset..object.offset + object.size);
+            // console_log!("{}", typ.string_repr);
+            // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
+            let parsed = TypeParser::parse_object_from_info(typ, data);
+            if typ.class_id == 28 {
+                console_log!("{}", typ.string_repr);
+                console_log!("{:?}", parsed);
+            }
+            // console_log!("{:?}", parsed);
+        }
 
         AssetFile {
             metadata_size,

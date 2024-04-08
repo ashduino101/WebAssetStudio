@@ -54,7 +54,7 @@ async fn main() {
     let asset = AssetFile::new(&mut file);
     console_log!("{:?}", asset);
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
-    run().await;
+    // run().await;
 }
 
 pub async fn run() {
@@ -76,16 +76,25 @@ pub async fn run() {
         1000.0,
     );
     let mut control = OrbitControl::new(*camera.target(), 1.0, 100.0);
-    let mut gui = three_d::GUI::new(&context);
 
-    let mut loaded = three_d_asset::io::load_async(&[
-        "chinese_garden_4k.hdr", // Source: https://polyhaven.com/
+    let mut loaded = if let Ok(loaded) = three_d_asset::io::load_async(&[
+        "cobblestone_street_night_4k.hdr", // Source: https://polyhaven.com/
         "DamagedHelmet.glb", // Source: https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0
     ])
         .await
-        .expect("failed to download the necessary assets, to enable running this example offline, place the relevant assets in a folder called 'assets' next to the three-d source");
+    {
+        loaded
+    } else {
+        console_log!("falling back to alternate URLs");
+        three_d_asset::io::load_async(&[
+            "https://asny.github.io/three-d/assets/chinese_garden_4k.hdr",
+            "DamagedHelmet.glb",
+        ])
+            .await
+            .expect("failed to download the necessary assets, to enable running this example offline, place the relevant assets in a folder called 'assets' next to the three-d source")
+    };
 
-    let environment_map = loaded.deserialize("chinese").unwrap();
+    let environment_map = loaded.deserialize("cobblestone").unwrap();
     let skybox = Skybox::new_from_equirectangular(&context, &environment_map);
 
     let mut cpu_model: CpuModel = loaded.deserialize("DamagedHelmet").unwrap();
@@ -106,31 +115,10 @@ pub async fn run() {
     let mut albedo_map_enabled = true;
     let mut emissive_map_enabled = true;
     window.render_loop(move |mut frame_input| {
-        let mut panel_width = 0.0;
-        gui.update(
-            &mut frame_input.events,
-            frame_input.accumulated_time,
-            frame_input.viewport,
-            frame_input.device_pixel_ratio,
-            |gui_context| {
-                use three_d::egui::*;
-                SidePanel::left("side_panel").show(gui_context, |ui| {
-                    ui.heading("Debug Panel");
-                    ui.checkbox(&mut albedo_map_enabled, "Albedo map");
-                    ui.checkbox(&mut metallic_roughness_enabled, "Metallic roughness map");
-                    ui.checkbox(&mut normal_map_enabled, "Normal map");
-                    ui.checkbox(&mut occlusion_map_enabled, "Occlusion map");
-                    ui.checkbox(&mut emissive_map_enabled, "Emissive map");
-                });
-                panel_width = gui_context.used_rect().width();
-            },
-        );
-
         let viewport = Viewport {
-            x: (panel_width * frame_input.device_pixel_ratio) as i32,
+            x: 0,
             y: 0,
-            width: frame_input.viewport.width
-                - (panel_width * frame_input.device_pixel_ratio) as u32,
+            width: frame_input.viewport.width,
             height: frame_input.viewport.height,
         };
         camera.set_viewport(viewport);
@@ -140,7 +128,7 @@ pub async fn run() {
             .screen()
             .clear(ClearState::color_and_depth(0.5, 0.5, 0.5, 1.0, 1.0))
             .render(&camera, &skybox, &[])
-            .write(|| {
+            .write(|| -> Result<(), std::io::Error> {
                 let material = PhysicalMaterial {
                     name: model.material.name.clone(),
                     albedo: model.material.albedo,
@@ -186,7 +174,7 @@ pub async fn run() {
                     ),
                 };
                 model.render_with_material(&material, &camera, &[&light]);
-                gui.render()
+                Ok(())
             })
             .unwrap();
 

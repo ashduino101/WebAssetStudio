@@ -444,7 +444,7 @@ def main():
 
     with open('typedefs.rs', 'r') as tf:
         code += tf.read()
-        code += '\n'
+        code += '\n// BEGIN GENERATED CLASSES\n'
 
     for i in hist.values():
         # print(i)

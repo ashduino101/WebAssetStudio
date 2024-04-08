@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::error::Error;
+use std::ops::Index;
 use bytes::{Buf, Bytes};
 use wasm_bindgen_test::console_log;
 use crate::base::asset::Void;
@@ -16,92 +18,81 @@ fn get_string(table: &Bytes, offset: usize) -> String {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct ObjectError;
+
+#[derive(Debug)]
 pub enum ValueType {
-    Bool,
-    Int8,
-    UInt8,
-    Int16,
-    UInt16,
-    Int32,
-    UInt32,
-    Float32,
-    Int64,
-    UInt64,
-    Float64,
-    String,
-    Data,
-    Object
+    Void,
+    Bool(bool),
+    Int8(i8),
+    UInt8(u8),
+    Int16(i16),
+    UInt16(u16),
+    Int32(i32),
+    UInt32(u32),
+    Float32(f32),
+    Int64(i64),
+    UInt64(u64),
+    Float64(f64),
+    String(String),
+    Data(Bytes),
+    Array(Vec<ValueType>),
+    Object(HashMap<String, ValueType>)
+}
+
+impl ValueType {
+    pub fn as_bool(&self) -> Result<bool, ObjectError> {
+        if let ValueType::Bool(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_i8(&self) -> Result<i8, ObjectError> {
+        if let ValueType::Int8(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_u8(&self) -> Result<u8, ObjectError> {
+        if let ValueType::UInt8(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_i16(&self) -> Result<i16, ObjectError> {
+        if let ValueType::Int16(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_u16(&self) -> Result<u16, ObjectError> {
+        if let ValueType::UInt16(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_i32(&self) -> Result<i32, ObjectError> {
+        if let ValueType::Int32(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_u32(&self) -> Result<u32, ObjectError> {
+        if let ValueType::UInt32(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_f32(&self) -> Result<f32, ObjectError> {
+        if let ValueType::Float32(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_i64(&self) -> Result<i64, ObjectError> {
+        if let ValueType::Int64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_u64(&self) -> Result<u64, ObjectError> {
+        if let ValueType::UInt64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_f64(&self) -> Result<f64, ObjectError> {
+        if let ValueType::Float64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_string(&self) -> Result<String, ObjectError> {
+        if let ValueType::String(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+    }
+    pub fn as_bytes(&self) -> Result<Bytes, ObjectError> {
+        if let ValueType::Data(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+    }
+    pub fn as_array(&self) -> Result<&Vec<ValueType>, ObjectError> {
+        if let ValueType::Array(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+    }
+    pub fn as_object(&self) -> Result<&HashMap<String, ValueType>, ObjectError> {
+        if let ValueType::Object(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+    }
+    pub fn get(&self, key: &str) -> Result<&ValueType, ObjectError> {
+        Ok(self.as_object()?.get(key).ok_or(ObjectError {})?)
+    }
 }
 
 pub trait TypeTreeReadable : Debug {
-    // fn as_map<K, V>(&self) -> Option<&HashMap<K, V>> where K: Debug, V: Debug {
-    //     None
-    // }
-}
-
-impl<K, V> TypeTreeReadable for HashMap<K, V> where K: Debug, V: Debug {
-    // fn as_map<L, W>(&self) -> Option<&HashMap<L, W>> where L: Debug, W: Debug {
-    //     Some(self)
-    // }
-}
-
-impl<T> TypeTreeReadable for Vec<T> where T: Debug {
-
-}
-
-impl TypeTreeReadable for Void {
-
-}
-
-impl TypeTreeReadable for bool {
-
-}
-
-impl TypeTreeReadable for i8 {
-
-}
-
-impl TypeTreeReadable for u8 {
-
-}
-
-impl TypeTreeReadable for i16 {
-
-}
-
-impl TypeTreeReadable for u16 {
-
-}
-
-impl TypeTreeReadable for i32 {
-
-}
-
-impl TypeTreeReadable for u32 {
-
-}
-
-impl TypeTreeReadable for f32 {
-
-}
-
-impl TypeTreeReadable for i64 {
-
-}
-
-impl TypeTreeReadable for u64 {
-
-}
-
-impl TypeTreeReadable for f64 {
-
-}
-
-impl TypeTreeReadable for String {
-
-}
-
-impl TypeTreeReadable for Bytes {
 
 }
 
@@ -135,35 +126,35 @@ impl TypeNode {
         }
     }
 
-    pub fn parse_value(&self, data: &mut Bytes) -> Box<dyn TypeTreeReadable> {
-        let val: Box<dyn TypeTreeReadable> = match &*self.type_name {
-            "bool" => Box::new(data.get_u8() != 0),
+    pub fn parse_value(&self, data: &mut Bytes) -> ValueType {
+        let val = match &*self.type_name {
+            "bool" => ValueType::Bool(data.get_u8() != 0),
 
-            "SInt8" => Box::new(data.get_i8()),
-            "UInt8" | "char" => Box::new(data.get_u8()),
+            "SInt8" => ValueType::Int8(data.get_i8()),
+            "UInt8" | "char" => ValueType::UInt8(data.get_u8()),
 
-            "SInt16" | "short" => Box::new(data.get_i16_ordered(self.little_endian)),
-            "UInt16" | "unsigned short" => Box::new(data.get_u16_ordered(self.little_endian)),
+            "SInt16" | "short" => ValueType::Int16(data.get_i16_ordered(self.little_endian)),
+            "UInt16" | "unsigned short" => ValueType::UInt16(data.get_u16_ordered(self.little_endian)),
 
-            "SInt32" | "int" => Box::new(data.get_i32_ordered(self.little_endian)),
-            "UInt32" | "unsigned int" | "Type*" => Box::new(data.get_u32_ordered(self.little_endian)),
+            "SInt32" | "int" => ValueType::Int32(data.get_i32_ordered(self.little_endian)),
+            "UInt32" | "unsigned int" | "Type*" => ValueType::UInt32(data.get_u32_ordered(self.little_endian)),
 
-            "SInt64" | "long long" => Box::new(data.get_i64_ordered(self.little_endian)),
-            "UInt64" | "unsigned long long" | "FileSize" => Box::new(data.get_i64_ordered(self.little_endian)),
+            "SInt64" | "long long" => ValueType::Int64(data.get_i64_ordered(self.little_endian)),
+            "UInt64" | "unsigned long long" | "FileSize" => ValueType::UInt64(data.get_u64_ordered(self.little_endian)),
 
-            "float" => Box::new(data.get_f32_ordered(self.little_endian)),
-            "double" => Box::new(data.get_f64_ordered(self.little_endian)),
+            "float" => ValueType::Float32(data.get_f32_ordered(self.little_endian)),
+            "double" => ValueType::Float64(data.get_f64_ordered(self.little_endian)),
 
-            "string" => Box::new(data.get_string_ordered(self.little_endian)),
+            "string" => ValueType::String(data.get_string_ordered(self.little_endian)),
 
             "TypelessData" => {
                 let len = data.get_u32_ordered(self.little_endian) as usize;
                 let res = data.slice(0..len);
                 data.advance(len);
-                Box::new(res)
+                ValueType::Data(res)
             }
 
-            _ => Box::new(Void {})
+            _ => ValueType::Void
         };
         val
     }
@@ -256,7 +247,7 @@ pub struct TypeParser {
 }
 
 impl TypeParser {
-    pub fn parse_node(&mut self, node: &TypeNode, data: &mut Bytes, orig_length: usize) -> Box<dyn TypeTreeReadable> {
+    pub fn parse_node(&mut self, node: &TypeNode, data: &mut Bytes, orig_length: usize) -> ValueType {
         if primitive_parsing_supported(&node.type_name) {
             let val = node.parse_value(data);
             // console_log!("{} {} {:?}", node.type_name, node.name, val);
@@ -269,9 +260,9 @@ impl TypeParser {
             if node.meta_flags & 16384 != 0 {
                 data.align(orig_length, 4);
             }
-            return Box::from(val);
+            return val;
         } else if node.type_name == "Array" {
-            let mut arr = HashMap::new();  // TODO: can't box vecs for some reason, also this creates "Array" on the object
+            let mut arr = Vec::new();  // TODO: can't box vecs for some reason, also this creates "Array" on the object
             let length = data.get_u32_ordered(node.little_endian);  // TODO: this assumes arrays are always u32-prefixed
             self.index += 2;
             // console_log!("arr len {length} at {} (in {})", orig_length - data.len(), self.nodes[self.index - 3].name);
@@ -279,7 +270,7 @@ impl TypeParser {
             for i in 0..length {
                 self.index = val_idx;
                 let val_node = &self.nodes[self.index];
-                arr.insert(i, self.parse_node(&val_node.clone(), data, orig_length));
+                arr.push(self.parse_node(&val_node.clone(), data, orig_length));
             }
             if length == 0 {
                 while (self.index < self.nodes.len() - 1) && (self.nodes[self.index + 1].level > node.level) {
@@ -289,7 +280,7 @@ impl TypeParser {
             if node.meta_flags & 16384 != 0 {
                 data.align(orig_length, 4);
             }
-            return Box::from(arr);
+            return ValueType::Array(arr);
         } else if self.nodes[self.index + 1].level > node.level {  // a "child" of this node
             let mut child = HashMap::new();
             while (self.index < self.nodes.len() - 1) && (self.nodes[self.index + 1].level > node.level) {
@@ -300,13 +291,13 @@ impl TypeParser {
             if node.meta_flags & 16384 != 0 {
                 data.align(orig_length, 4);
             }
-            return Box::from(child);
+            return ValueType::Object(child);
         } else {
-            return Box::from(Void {});
+            return ValueType::Void;
         }
     }
 
-    pub fn parse_object_from_info(info: &TypeInfo, data: &mut Bytes) -> Box<dyn TypeTreeReadable> {
+    pub fn parse_object_from_info(info: &TypeInfo, data: &mut Bytes) -> ValueType {
         TypeParser::new(info.nodes.clone()).parse_node(&info.nodes[0], data, data.len())
     }
 
