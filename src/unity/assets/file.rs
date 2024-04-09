@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use bytes::{Bytes, Buf, BytesMut, BufMut};
 use wasm_bindgen_test::console_log;
+use crate::create_img;
 use crate::unity::assets::external::External;
 use crate::unity::assets::typetree::TypeInfo;
 use crate::unity::object::identifier::LocalObjectIdentifier;
 use crate::unity::object::info::ObjectInfo;
 use crate::unity::assets::typetree::TypeParser;
+use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::utils::buf::{BufExt, FromBytes};
 
 #[derive(Debug)]
@@ -86,8 +88,17 @@ impl AssetFile {
             // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
             let parsed = TypeParser::parse_object_from_info(typ, data);
             if typ.class_id == 28 {
-                console_log!("{}", typ.string_repr);
-                console_log!("{:?}", parsed);
+                // console_log!("{:?}", parsed);
+                let mut w = Texture2DWrapper::from_value(parsed).expect("failed to wrap object");
+                // console_log!("{:?}", w);
+
+                let window = web_sys::window().expect("no global `window` exists");
+                let document = window.document().expect("should have a document on window");
+                let body = document.body().expect("document should have a body");
+
+                let elem = document.create_element("img").expect("failed to create element");
+                elem.set_attribute("src", &create_img(w.get_image(w.num_images - 1).as_ref(), w.width as usize, w.height as usize));
+                body.append_child(&elem);
             }
             // console_log!("{:?}", parsed);
         }

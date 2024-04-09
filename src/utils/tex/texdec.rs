@@ -4,10 +4,90 @@ use std::mem::swap;
 use wasm_bindgen::prelude::*;
 extern crate console_error_panic_hook;
 use std::panic;
+use bytes::Bytes;
 use crate::utils::fp16::fp16_ieee_to_fp32_value;
 use texture2ddecoder;
 use texture2ddecoder::{decode_astc as decode_astc_, decode_atc_rgb4_block, decode_atc_rgba8_block, decode_bc1_block, decode_bc3_block, decode_bc4_block, decode_bc5_block, decode_bc6_block, decode_bc7_block, decode_eacr_block, decode_eacr_signed_block, decode_eacrg_block, decode_eacrg_signed_block, decode_etc1_block, decode_etc2_a8_block, decode_etc2_rgb_block, decode_etc2_rgba1_block, decode_etc2_rgba8_block, decode_pvrtc as decode_pvrtc_};
 use wasm_bindgen_test::console_log;
+
+// For Unity by default, but can also be used with match/case for other formats
+#[derive(FromPrimitive, Debug, Copy, Clone)]
+pub enum TextureFormat {
+    Alpha8 = 1,
+    ARGB4444 = 2,
+    RGB24 = 3,
+    RGBA32 = 4,
+    ARGB32 = 5,
+    ARGBFloat = 6,
+    RGB565 = 7,
+    BGR24 = 8,
+    R16 = 9,
+    DXT1 = 10,
+    DXT3 = 11,
+    DXT5 = 12,
+    RGBA4444 = 13,
+    BGRA32 = 14,
+    RHalf = 15,
+    RGHalf = 16,
+    RGBAHalf = 17,
+    RFloat = 18,
+    RGFloat = 19,
+    RGBAFloat = 20,
+    YUY2 = 21,
+    RGB9e5Float = 22,
+    RGBFloat = 23,
+    BC6H = 24,
+    BC7 = 25,
+    BC4 = 26,
+    BC5 = 27,
+    DXT1Crunched = 28,
+    DXT5Crunched = 29,
+    PVRTCRGB2 = 30,
+    PVRTCRGBA2 = 31,
+    PVRTCRGB4 = 32,
+    PVRTCRGBA4 = 33,
+    ETCRGB4 = 34,
+    ATCRGB4 = 35,
+    ATCRGBA8 = 36,
+    EACR = 41,
+    EACRSigned = 42,
+    EACRG = 43,
+    EACRGSigned = 44,
+    ETC2RGB = 45,
+    ETC2RGBA1 = 46,
+    ETC2RGBA8 = 47,
+    ASTCRGB4x4 = 48,
+    ASTCRGB5x5 = 49,
+    ASTCRGB6x6 = 50,
+    ASTCRGB8x8 = 51,
+    ASTCRGB10x10 = 52,
+    ASTCRGB12x12 = 53,
+    ASTCRGBA4x4 = 54,
+    ASTCRGBA5x5 = 55,
+    ASTCRGBA6x6 = 56,
+    ASTCRGBA8x8 = 57,
+    ASTCRGBA10x10 = 58,
+    ASTCRGBA12x12 = 59,
+    ETCRGB43DS = 60,
+    ETC2RGBA83DS = 61,
+    RG16 = 62,
+    R8 = 63,
+    ETCRGB4Crunched = 64,
+    ETC2RGBA8Crunched = 65,
+    ASTCHDR4x4 = 66,
+    ASTCHDR5x5 = 67,
+    ASTCHDR6x6 = 68,
+    ASTCHDR8x8 = 69,
+    ASTCHDR10x10 = 70,
+    ASTCHDR12x12 = 71,
+    RG32 = 72,
+    RGB48 = 73,
+    RGBA64 = 74,
+    RGBA5551,
+    RGBHalf,
+    L8,
+    LA16
+}
 
 pub fn swap_bytes_xbox(data: &mut [u8]) {
     for i in 0..(data.len() / 2) {
@@ -65,7 +145,7 @@ fn encode_data(data: Vec<u32>) -> Vec<u8> {
     outdata
 }
 
-pub fn decode_a8(data: &mut [u8]) -> Box<[u8]> {
+pub fn decode_a8(data: &mut Bytes) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..data.len() {
         out.write_all(&[0, 0, 0, data[i]]).expect("a8");
@@ -73,7 +153,7 @@ pub fn decode_a8(data: &mut [u8]) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_argb4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_argb4444(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -86,7 +166,7 @@ pub fn decode_argb4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
     out.into()
 }
 
-pub fn decode_rgb24(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgb24(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -99,7 +179,7 @@ pub fn decode_rgb24(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_argb32(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_argb32(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -112,7 +192,7 @@ pub fn decode_argb32(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
     out.into()
 }
 
-pub fn decode_rgb565(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgb565(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let d: u32 = ((data[(i * 2 + 1) as usize] as u32) << 8) | (data[(i * 2) as usize] as u32);
@@ -126,13 +206,13 @@ pub fn decode_rgb565(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
     out.into()
 }
 
-pub fn decode_bgr565(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bgr565(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut outdata = decode_rgb565(data, width, height);
     bgr2rgb(&mut outdata);
     outdata
 }
 
-pub fn decode_r16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_r16(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) as usize {
         out.write_all(&[
@@ -145,7 +225,7 @@ pub fn decode_r16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_rgba4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgba4444(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -158,13 +238,13 @@ pub fn decode_rgba4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
     out.into()
 }
 
-pub fn decode_bgra4444(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bgra4444(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut outdata = decode_rgba4444(data, width, height);
     bgr2rgb(&mut outdata);
     outdata
 }
 
-pub fn decode_rgba5551(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgba5551(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let color = u16::from_le_bytes([data[i * 2], data[i * 2 + 1]]);
@@ -178,7 +258,7 @@ pub fn decode_rgba5551(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
     out.into()
 }
 
-pub fn decode_bgra5551(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bgra5551(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let color = u16::from_le_bytes([data[i * 2], data[i * 2 + 1]]);
@@ -192,7 +272,7 @@ pub fn decode_bgra5551(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
     out.into()
 }
 
-pub fn decode_rgba1010102(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgba1010102(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let color = u32::from_le_bytes([data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]]);
@@ -208,7 +288,7 @@ pub fn decode_rgba1010102(data: &mut [u8], width: usize, height: usize) -> Box<[
 
 
 
-pub fn decode_bgra32(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bgra32(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) as usize {
         out.write_all(&[
@@ -221,7 +301,7 @@ pub fn decode_bgra32(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
     out.into()
 }
 
-pub fn decode_rhalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rhalf(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let d = ((data[i * 2 + 1] as u16) << 8) | (data[i * 2] as u16);
@@ -235,7 +315,7 @@ pub fn decode_rhalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_rghalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rghalf(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let r = ((data[i * 4 + 1] as u16) << 8) | (data[i * 4] as u16);
@@ -250,7 +330,7 @@ pub fn decode_rghalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
     out.into()
 }
 
-pub fn decode_rgbhalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgbhalf(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let r = ((data[i * 6 + 1] as u16) << 8) | (data[i * 6] as u16);
@@ -265,7 +345,7 @@ pub fn decode_rgbhalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]>
     out.into()
 }
 
-pub fn decode_rgbahalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgbahalf(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         let r = ((data[i * 8 + 1] as u16) << 8) | (data[i * 8] as u16);
@@ -282,7 +362,7 @@ pub fn decode_rgbahalf(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
     out.into()
 }
 
-pub fn decode_rfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rfloat(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -295,7 +375,7 @@ pub fn decode_rfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
     out.into()
 }
 
-pub fn decode_rgfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgfloat(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -308,7 +388,7 @@ pub fn decode_rgfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]>
     out.into()
 }
 
-pub fn decode_rgbfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgbfloat(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -320,7 +400,7 @@ pub fn decode_rgbfloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]
     out.into()
 }
 
-pub fn decode_rgbafloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgbafloat(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -333,7 +413,7 @@ pub fn decode_rgbafloat(data: &mut [u8], width: usize, height: usize) -> Box<[u8
     out.into()
 }
 
-pub fn decode_yuy2(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_yuy2(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     out.resize(width * height * 4, 0);
     let mut p = 0;
@@ -370,7 +450,7 @@ pub fn decode_yuy2(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_rgb9e5float(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgb9e5float(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     out.resize(width * height * 4, 0);
     for i in 0..(width * height) {
@@ -388,7 +468,7 @@ pub fn decode_rgb9e5float(data: &mut [u8], width: usize, height: usize) -> Box<[
     out.into()
 }
 
-pub fn decode_rg16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rg16(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     out.resize(width * height * 4, 0);
     for i in 0..(width * height) {
@@ -400,7 +480,7 @@ pub fn decode_rg16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_r8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_r8(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     out.resize(width * height * 4, 0);
     for i in 0..(width * height) {
@@ -412,7 +492,7 @@ pub fn decode_r8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_l8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_l8(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     out.resize(width * height * 4, 0);
     for i in 0..(width * height) {
@@ -424,7 +504,7 @@ pub fn decode_l8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_la16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_la16(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     out.resize(width * height * 4, 0);
     for i in 0..(width * height) {
@@ -436,7 +516,7 @@ pub fn decode_la16(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_rg32(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rg32(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -449,7 +529,7 @@ pub fn decode_rg32(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_rgb48(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgb48(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -462,7 +542,7 @@ pub fn decode_rgb48(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
     out.into()
 }
 
-pub fn decode_rgba64(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_rgba64(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     let mut out = Vec::new();
     for i in 0..(width * height) {
         out.write_all(&[
@@ -475,7 +555,7 @@ pub fn decode_rgba64(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> 
     out.into()
 }
 
-fn decode_generic_blocky(data: &mut [u8], width: usize, height: usize, func: impl Fn(&[u8], &mut [u32]), stride: usize) -> Box<[u8]> {
+fn decode_generic_blocky(data: &mut Bytes, width: usize, height: usize, func: impl Fn(&[u8], &mut [u32]), stride: usize) -> Box<[u8]> {
     let mut i = 0;
     let mut out: Vec<u32> = Vec::new();
     out.resize((width * height) as usize, 0);
@@ -490,12 +570,11 @@ fn decode_generic_blocky(data: &mut [u8], width: usize, height: usize, func: imp
     encode_data(out).into()
 }
 
-pub fn decode_dxt1(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_dxt1(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc1_block, 8)
 }
 
 fn decode_bc2_block(data: &[u8], outbuf: &mut [u32]) {
-    panic::set_hook(Box::new(console_error_panic_hook::hook));
     let mut alpha = [0xffu32; 16];
     for row in 0..4 {
         let a0 = (data[row * 2] >> 4) * 16;
@@ -516,192 +595,192 @@ fn decode_bc2_block(data: &[u8], outbuf: &mut [u32]) {
     }
 }
 
-pub fn decode_dxt3(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_dxt3(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc2_block, 16)
 }
 
-pub fn decode_dxt5(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_dxt5(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc3_block, 16)
 }
 
-pub fn decode_pvrtc(data: &mut [u8], width: usize, height: usize, is2bpp: bool) -> Box<[u8]> {
+pub fn decode_pvrtc(data: &mut Bytes, width: usize, height: usize, is2bpp: bool) -> Box<[u8]> {
     let mut out: Vec<u32> = Vec::new();
     out.resize((width * height) as usize, 0);
     decode_pvrtc_(&data, width, height, &mut out, is2bpp).expect("pvrtc");
     encode_data(out).into()
 }
 
-pub fn decode_etc1(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_etc1(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_etc1_block, 8)
 }
 
-pub fn decode_etc2(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_etc2(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_etc2_rgb_block, 8)
 }
 
-pub fn decode_etc2_a1(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_etc2_a1(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_etc2_rgba1_block, 8)
 }
 
-pub fn decode_etc2_a8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_etc2_a8(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_etc2_rgba8_block, 16)
 }
 
-pub fn decode_eacr(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_eacr(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_eacr_block, 8)
 }
 
-pub fn decode_eacr_signed(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_eacr_signed(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_eacr_signed_block, 8)
 }
 
-pub fn decode_eacrg(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_eacrg(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_eacrg_block, 16)
 }
 
-pub fn decode_eacrg_signed(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_eacrg_signed(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_eacrg_signed_block, 16)
 }
 
-pub fn decode_bc4(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bc4(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc4_block, 8)
 }
 
-pub fn decode_bc5(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bc5(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc5_block, 16)
 }
 
-pub fn decode_bc6h(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bc6h(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, |data: &[u8], outbuf: &mut [u32]| decode_bc6_block(data, outbuf, false), 16)
 }
 
-pub fn decode_bc7(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_bc7(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_bc7_block, 16)
 }
 
-pub fn decode_atc_rgb4(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_atc_rgb4(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_atc_rgb4_block, 8)
 }
 
-pub fn decode_atc_rgba8(data: &mut [u8], width: usize, height: usize) -> Box<[u8]> {
+pub fn decode_atc_rgba8(data: &mut Bytes, width: usize, height: usize) -> Box<[u8]> {
     decode_generic_blocky(data, width, height, decode_atc_rgba8_block, 16)
 }
 
-pub fn decode_astc(data: &mut [u8], width: usize, height: usize, block_width: usize, block_height: usize) -> Box<[u8]> {
+pub fn decode_astc(data: &mut Bytes, width: usize, height: usize, block_width: usize, block_height: usize) -> Box<[u8]> {
     let mut out: Vec<u32> = Vec::new();
     out.resize((width * height) as usize, 0);
     decode_astc_(&data, width, height, block_width, block_height, &mut out).expect("pvrtc");
     encode_data(out).into()
 }
 
-pub fn get_format_pixel_size(format: &str) -> i32 {
+pub fn get_format_pixel_size(format: TextureFormat) -> i32 {
     match format {
-        "Alpha8" => 1,
-        "ARGB4444" => 2,
-        "RGB24" => 3,
-        "RGBA32" => 4,
-        "RGB565" => 2,
-        "RGBA4444" => 2,
-        "RGBA5551" => 2,
-        "BGRA32" => 4,
+        TextureFormat::Alpha8 => 1,
+        TextureFormat::ARGB4444 => 2,
+        TextureFormat::RGB24 => 3,
+        TextureFormat::RGBA32 => 4,
+        TextureFormat::RGB565 => 2,
+        TextureFormat::RGBA4444 => 2,
+        TextureFormat::RGBA5551 => 2,
+        TextureFormat::BGRA32 => 4,
 
-        "RHalf" => 2,
-        "RGHalf" => 4,
-        "RGBHalf" => 6,
-        "RGBAHalf" => 8,
+        TextureFormat::RHalf => 2,
+        TextureFormat::RGHalf => 4,
+        TextureFormat::RGBHalf => 6,
+        TextureFormat::RGBAHalf => 8,
 
-        "RFloat" => 4,
-        "RGFloat" => 8,
-        "RGBFloat" => 12,
-        "RGBAFloat" => 16,
+        TextureFormat::RFloat => 4,
+        TextureFormat::RGFloat => 8,
+        TextureFormat::RGBFloat => 12,
+        TextureFormat::RGBAFloat => 16,
 
-        "YUY2" => 2,
+        TextureFormat::YUY2 => 2,
 
-        "RGB9e5Float" => 4,
+        TextureFormat::RGB9e5Float => 4,
 
-        "BC6H" => 1,
-        "BC7" => 1,
-        "BC4" => 1,
-        "BC5" => 1,
+        TextureFormat::BC6H => 1,
+        TextureFormat::BC7 => 1,
+        TextureFormat::BC4 => 1,
+        TextureFormat::BC5 => 1,
 
-        "DXT1" => 1,
-        "DXT3" => 1,
-        "DXT5" => 1,
+        TextureFormat::DXT1 => 1,
+        TextureFormat::DXT3 => 1,
+        TextureFormat::DXT5 => 1,
 
-        "PVRTC_RGB2" | "PVRTC_RGBA2" => 1,
-        "PVRTC_RGB4" | "PVRTC_RGBA4" => 1,
+        TextureFormat::PVRTCRGB2 | TextureFormat::PVRTCRGBA2 => 1,
+        TextureFormat::PVRTCRGB4 | TextureFormat::PVRTCRGBA4 => 1,
 
-        "ATC_RGB4" => 1,
-        "ATC_RGBA8" => 1,
+        TextureFormat::ATCRGB4 => 1,
+        TextureFormat::ATCRGBA8 => 1,
 
-        "EAC_R" => 1,
-        "EAC_R_SIGNED" => 1,
-        "EAC_RG" => 1,
-        "EAC_RG_SIGNED" => 1,
+        TextureFormat::EACR => 1,
+        TextureFormat::EACRSigned => 1,
+        TextureFormat::EACRG => 1,
+        TextureFormat::EACRGSigned => 1,
 
-        "ETC_RGB4" | "ETC_RGB4_3DS" => 1,
-        "ETC2_RGB" => 1,
-        "ETC2_RGBA1" => 1,
-        "ETC2_RGBA8" | "ETC2_RGBA8_3DS" => 1,
+        TextureFormat::ETCRGB4 | TextureFormat::ETCRGB43DS => 1,
+        TextureFormat::ETC2RGB => 1,
+        TextureFormat::ETC2RGBA1 => 1,
+        TextureFormat::ETC2RGBA8 | TextureFormat::ETC2RGBA83DS => 1,
 
-        "ASTC_RGB_4x4" | "ASTC_RGBA_4x4" | "ASTC_HDR_4x4" => 1,
-        "ASTC_RGB_5x5" | "ASTC_RGBA_5x5" | "ASTC_HDR_5x5" => 1,
-        "ASTC_RGB_6x6" | "ASTC_RGBA_6x6" | "ASTC_HDR_6x6" => 1,
-        "ASTC_RGB_8x8" | "ASTC_RGBA_8x8" | "ASTC_HDR_8x8" => 1,
-        "ASTC_RGB_10x10" | "ASTC_RGBA_10x10" | "ASTC_HDR_10x10" => 1,
-        "ASTC_RGB_12x12" | "ASTC_RGBA_12x12" | "ASTC_HDR_12x12" => 1,
+        TextureFormat::ASTCRGB4x4 | TextureFormat::ASTCRGBA4x4 | TextureFormat::ASTCHDR4x4 => 1,
+        TextureFormat::ASTCRGB5x5 | TextureFormat::ASTCRGBA5x5 | TextureFormat::ASTCHDR5x5 => 1,
+        TextureFormat::ASTCRGB6x6 | TextureFormat::ASTCRGBA6x6 | TextureFormat::ASTCHDR6x6 => 1,
+        TextureFormat::ASTCRGB8x8 | TextureFormat::ASTCRGBA8x8 | TextureFormat::ASTCHDR8x8 => 1,
+        TextureFormat::ASTCRGB10x10 | TextureFormat::ASTCRGBA10x10 | TextureFormat::ASTCHDR10x10 => 1,
+        TextureFormat::ASTCRGB12x12 | TextureFormat::ASTCRGBA12x12 | TextureFormat::ASTCHDR12x12 => 1,
 
-        "L8" => 1,
-        "LA16" => 2,
+        TextureFormat::L8 => 1,
+        TextureFormat::LA16 => 2,
 
-        "R8" => 1,
-        "R16" => 2,
-        "RG16" => 2,
-        "RG32" => 4,
-        "RGB48" => 6,
-        "RGBA64" => 8,
+        TextureFormat::R8 => 1,
+        TextureFormat::R16 => 2,
+        TextureFormat::RG16 => 2,
+        TextureFormat::RG32 => 4,
+        TextureFormat::RGB48 => 6,
+        TextureFormat::RGBA64 => 8,
         _ => 0
     }
 }
 
-pub fn get_format_min_pixel_size(format: &str) -> (i32, i32) {
+pub fn get_format_min_pixel_size(format: TextureFormat) -> (i32, i32) {
     match format {
-        "DXT1" | "DXT3" | "DXT5" | "BC4" | "BC5" | "BC6H" | "BC7" |
-        "ETC2_RGB" | "ETC2_RGBA8" | "ETC2_RGBA1" |
-        "ASTC_RGB_4x4" | "ASTC_HDR_4x4" | "ASTC_RGB_8x8" | "ASTC_HDR_8x8" => (4, 4),
+        TextureFormat::DXT1 | TextureFormat::DXT3 | TextureFormat::DXT5 | TextureFormat::BC4 | TextureFormat::BC5 | TextureFormat::BC6H | TextureFormat::BC7 |
+        TextureFormat::ETC2RGB | TextureFormat::ETC2RGBA8 | TextureFormat::ETC2RGBA1 |
+        TextureFormat::ASTCRGB4x4 | TextureFormat::ASTCHDR4x4 | TextureFormat::ASTCRGB8x8 | TextureFormat::ASTCHDR8x8 => (4, 4),
         _ => (1, 1)
     }
 }
 
-pub fn get_format_pixel_rshift(format: &str) -> i32 {
+pub fn get_format_pixel_rshift(format: TextureFormat) -> i32 {
     match format {
-        "ASTC_RGB_8x8" | "ASTC_HDR_8x8" => 2,
-        "DXT1" | "BC4" | "ETC2_RGB" | "ETC2_RGBA8" | "ETC2_RGBA1" => 1,
+        TextureFormat::ASTCRGB8x8 | TextureFormat::ASTCHDR8x8 => 2,
+        TextureFormat::DXT1 | TextureFormat::BC4 | TextureFormat::ETC2RGB | TextureFormat::ETC2RGBA8 | TextureFormat::ETC2RGBA1 => 1,
         _ => 0
     }
 }
 
-pub fn get_format_block_size(format: &str) -> i32 {
+pub fn get_format_block_size(format: TextureFormat) -> i32 {
     match format {
-        "DXT1" | "DXT3" | "DXT5" | "BC4" | "BC5" | "BC6H" | "BC7" |
-        "ETC2_RGB" | "ETC2_RGBA8" | "ETC2_RGBA1" |
-        "ASTC_RGB_4x4" | "ASTC_HDR_4x4" => 4,
-        "ASTC_RGB_8x8" | "ASTC_HDR_8x8" => 8,
+        TextureFormat::DXT1 | TextureFormat::DXT3 | TextureFormat::DXT5 | TextureFormat::BC4 | TextureFormat::BC5 | TextureFormat::BC6H | TextureFormat::BC7 |
+        TextureFormat::ETC2RGB | TextureFormat::ETC2RGBA8 | TextureFormat::ETC2RGBA1 |
+        TextureFormat::ASTCRGB4x4 | TextureFormat::ASTCHDR4x4 => 4,
+        TextureFormat::ASTCRGB8x8 | TextureFormat::ASTCHDR8x8 => 8,
         _ => 1
     }
 }
 
 pub struct MipMapOffsetAndSize(pub i32, pub i32, pub i32);
 
-pub fn get_mipmap_offset_and_size(mipmap: i32, format: &str, width: i32, height: i32) -> MipMapOffsetAndSize {
+pub fn get_mipmap_offset_and_size(mipmap: i32, format: TextureFormat, width: i32, height: i32) -> MipMapOffsetAndSize {
     let mut w = width;
     let mut h = height;
     let mut ofs = 0;
 
-    let pixel_size = get_format_pixel_size(&format);
-    let pixel_rshift = get_format_pixel_rshift(&format);
-    let block = get_format_block_size(&format);
-    let (minw, minh) = get_format_min_pixel_size(&format);
+    let pixel_size = get_format_pixel_size(format);
+    let pixel_rshift = get_format_pixel_rshift(format);
+    let block = get_format_block_size(format);
+    let (minw, minh) = get_format_min_pixel_size(format);
 
     for _ in 0..mipmap {
         let bw: i32 = if w % block != 0 {w + (block - w % block)} else {w};
@@ -719,7 +798,7 @@ pub fn get_mipmap_offset_and_size(mipmap: i32, format: &str, width: i32, height:
     return MipMapOffsetAndSize(ofs, w, h);
 }
 
-pub fn get_mipmap_byte_size(mipmap: i32, format: &str, width: i32, height: i32) -> i32 {
+pub fn get_mipmap_byte_size(mipmap: i32, format: TextureFormat, width: i32, height: i32) -> i32 {
     let os1 = get_mipmap_offset_and_size(mipmap, format, width, height);
     let os2 = get_mipmap_offset_and_size(mipmap + 1, format, width, height);
     return os2.0 - os1.0;
@@ -739,91 +818,91 @@ pub fn get_mipmap_byte_size(mipmap: i32, format: &str, width: i32, height: i32) 
 /// # Returns
 ///
 /// * A box containing the decompressed (raw) image data.
-pub fn decode(format: &str, data: &mut [u8], width: usize, height: usize, is_xbox: bool) -> Box<[u8]> {
+pub fn decode(format: TextureFormat, data: &mut Bytes, width: usize, height: usize, is_xbox: bool) -> Box<[u8]> {
     if data.len() == 0 {return [].into()}
     match format {
-        "Alpha8" => decode_a8(data),
-        "ARGB4444" => {
-            if is_xbox { swap_bytes_xbox(data) };
+        TextureFormat::Alpha8 => decode_a8(data),
+        TextureFormat::ARGB4444 => {
+            // if is_xbox { swap_bytes_xbox(data) };
             decode_argb4444(data, width, height)
         },
-        "RGB24" => decode_rgb24(data, width, height),
-        "RGBA32" => data.to_vec().into(),
-        "RGB565" => {
-            if is_xbox { swap_bytes_xbox(data) };
+        TextureFormat::RGB24 => decode_rgb24(data, width, height),
+        TextureFormat::RGBA32 => data.to_vec().into(),
+        TextureFormat::RGB565 => {
+            // if is_xbox { swap_bytes_xbox(data) };
             decode_rgb565(data, width, height)
         },
-        "RGBA4444" => decode_rgba4444(data, width, height),
-        "RGBA5551" => decode_rgba5551(data, width, height),
-        "BGRA32" => decode_bgra32(data, width, height),
+        TextureFormat::RGBA4444 => decode_rgba4444(data, width, height),
+        TextureFormat::RGBA5551 => decode_rgba5551(data, width, height),
+        TextureFormat::BGRA32 => decode_bgra32(data, width, height),
 
-        "RHalf" => decode_rhalf(data, width, height),
-        "RGHalf" => decode_rghalf(data, width, height),
-        "RGBHalf" => decode_rgbhalf(data, width, height),
-        "RGBAHalf" => decode_rgbahalf(data, width, height),
+        TextureFormat::RHalf => decode_rhalf(data, width, height),
+        TextureFormat::RGHalf => decode_rghalf(data, width, height),
+        TextureFormat::RGBHalf => decode_rgbhalf(data, width, height),
+        TextureFormat::RGBAHalf => decode_rgbahalf(data, width, height),
 
-        "RFloat" => decode_rfloat(data, width, height),
-        "RGFloat" => decode_rgfloat(data, width, height),
-        "RGBFloat" => decode_rgbfloat(data, width, height),
-        "RGBAFloat" => decode_rgbafloat(data, width, height),
+        TextureFormat::RFloat => decode_rfloat(data, width, height),
+        TextureFormat::RGFloat => decode_rgfloat(data, width, height),
+        TextureFormat::RGBFloat => decode_rgbfloat(data, width, height),
+        TextureFormat::RGBAFloat => decode_rgbafloat(data, width, height),
 
-        "YUY2" => decode_yuy2(data, width, height),
+        TextureFormat::YUY2 => decode_yuy2(data, width, height),
 
-        "RGB9e5Float" => decode_rgb9e5float(data, width, height),
+        TextureFormat::RGB9e5Float => decode_rgb9e5float(data, width, height),
 
-        "BC6H" => decode_bc6h(data, width, height),
-        "BC7" => decode_bc7(data, width, height),
-        "BC4" => decode_bc4(data, width, height),
-        "BC5" => decode_bc5(data, width, height),
+        TextureFormat::BC6H => decode_bc6h(data, width, height),
+        TextureFormat::BC7 => decode_bc7(data, width, height),
+        TextureFormat::BC4 => decode_bc4(data, width, height),
+        TextureFormat::BC5 => decode_bc5(data, width, height),
 
-        "DXT1" => {
-            if is_xbox { swap_bytes_xbox(data) };
+        TextureFormat::DXT1 => {
+            // if is_xbox { swap_bytes_xbox(data) };
             decode_dxt1(data, width, height)
         },
-        "DXT3" => {
+        TextureFormat::DXT3 => {
             decode_dxt3(data, width, height)
         },
-        "DXT5" => {
-            if is_xbox { swap_bytes_xbox(data) };
+        TextureFormat::DXT5 => {
+            // if is_xbox { swap_bytes_xbox(data) };
             decode_dxt5(data, width, height)
         },
-        "DXT1Crunched" => decode_dxt1(data, width, height),
-        "DXT5Crunched" => decode_dxt5(data, width, height),
+        TextureFormat::DXT1Crunched => decode_dxt1(data, width, height),
+        TextureFormat::DXT5Crunched => decode_dxt5(data, width, height),
 
-        "PVRTC_RGB2" | "PVRTC_RGBA2" => decode_pvrtc(data, width, height, true),
-        "PVRTC_RGB4" | "PVRTC_RGBA4" => decode_pvrtc(data, width, height, false),
+        TextureFormat::PVRTCRGB2 | TextureFormat::PVRTCRGBA2 => decode_pvrtc(data, width, height, true),
+        TextureFormat::PVRTCRGB4 | TextureFormat::PVRTCRGBA4 => decode_pvrtc(data, width, height, false),
 
-        "ATC_RGB4" => decode_atc_rgb4(data, width, height),
-        "ATC_RGBA8" => decode_atc_rgba8(data, width, height),
+        TextureFormat::ATCRGB4 => decode_atc_rgb4(data, width, height),
+        TextureFormat::ATCRGBA8 => decode_atc_rgba8(data, width, height),
 
-        "EAC_R" => decode_eacr(data, width, height),
-        "EAC_R_SIGNED" => decode_eacr_signed(data, width, height),
-        "EAC_RG" => decode_eacrg(data, width, height),
-        "EAC_RG_SIGNED" => decode_eacrg_signed(data, width, height),
+        TextureFormat::EACR => decode_eacr(data, width, height),
+        TextureFormat::EACRSigned => decode_eacr_signed(data, width, height),
+        TextureFormat::EACRG => decode_eacrg(data, width, height),
+        TextureFormat::EACRGSigned => decode_eacrg_signed(data, width, height),
 
-        "ETC_RGB4" | "ETC_RGB4_3DS" => decode_etc1(data, width, height),
-        "ETC2_RGB" => decode_etc2(data, width, height),
-        "ETC2_RGBA1" => decode_etc2_a1(data, width, height),
-        "ETC2_RGBA8" | "ETC2_RGBA8_3DS" => decode_etc2_a8(data, width, height),
-        "ETC_RGB4Crunched" => decode_etc1(data, width, height),
-        "ETC_RGBA8Crunched" => decode_etc2_a8(data, width, height),
+        TextureFormat::ETCRGB4 | TextureFormat::ETCRGB43DS => decode_etc1(data, width, height),
+        TextureFormat::ETC2RGB => decode_etc2(data, width, height),
+        TextureFormat::ETC2RGBA1 => decode_etc2_a1(data, width, height),
+        TextureFormat::ETC2RGBA8 | TextureFormat::ETC2RGBA83DS => decode_etc2_a8(data, width, height),
+        TextureFormat::ETCRGB4Crunched => decode_etc1(data, width, height),
+        TextureFormat::ETC2RGBA8Crunched => decode_etc2_a8(data, width, height),
 
-        "ASTC_RGB_4x4" | "ASTC_RGBA_4x4" | "ASTC_HDR_4x4" => decode_astc(data, width, height, 4, 4),
-        "ASTC_RGB_5x5" | "ASTC_RGBA_5x5" | "ASTC_HDR_5x5" => decode_astc(data, width, height, 5, 5),
-        "ASTC_RGB_6x6" | "ASTC_RGBA_6x6" | "ASTC_HDR_6x6" => decode_astc(data, width, height, 6, 6),
-        "ASTC_RGB_8x8" | "ASTC_RGBA_8x8" | "ASTC_HDR_8x8" => decode_astc(data, width, height, 8, 8),
-        "ASTC_RGB_10x10" | "ASTC_RGBA_10x10" | "ASTC_HDR_10x10" => decode_astc(data, width, height, 10, 10),
-        "ASTC_RGB_12x12" | "ASTC_RGBA_12x12" | "ASTC_HDR_12x12" => decode_astc(data, width, height, 12, 12),
+        TextureFormat::ASTCRGB4x4 | TextureFormat::ASTCRGBA4x4 | TextureFormat::ASTCHDR4x4 => decode_astc(data, width, height, 4, 4),
+        TextureFormat::ASTCRGB5x5 | TextureFormat::ASTCRGBA5x5 | TextureFormat::ASTCHDR5x5 => decode_astc(data, width, height, 5, 5),
+        TextureFormat::ASTCRGB6x6 | TextureFormat::ASTCRGBA6x6 | TextureFormat::ASTCHDR6x6 => decode_astc(data, width, height, 6, 6),
+        TextureFormat::ASTCRGB8x8 | TextureFormat::ASTCRGBA8x8 | TextureFormat::ASTCHDR8x8 => decode_astc(data, width, height, 8, 8),
+        TextureFormat::ASTCRGB10x10 | TextureFormat::ASTCRGBA10x10 | TextureFormat::ASTCHDR10x10 => decode_astc(data, width, height, 10, 10),
+        TextureFormat::ASTCRGB12x12 | TextureFormat::ASTCRGBA12x12 | TextureFormat::ASTCHDR12x12 => decode_astc(data, width, height, 12, 12),
 
-        "L8" => decode_l8(data, width, height),
-        "LA16" => decode_la16(data, width, height),
+        TextureFormat::L8 => decode_l8(data, width, height),
+        TextureFormat::LA16 => decode_la16(data, width, height),
 
-        "R8" => decode_r8(data, width, height),
-        "R16" => decode_r16(data, width, height),
-        "RG16" => decode_rg16(data, width, height),
-        "RG32" => decode_rg32(data, width, height),
-        "RGB48" => decode_rgb48(data, width, height),
-        "RGBA64" => decode_rgba64(data, width, height),
+        TextureFormat::R8 => decode_r8(data, width, height),
+        TextureFormat::R16 => decode_r16(data, width, height),
+        TextureFormat::RG16 => decode_rg16(data, width, height),
+        TextureFormat::RG32 => decode_rg32(data, width, height),
+        TextureFormat::RGB48 => decode_rgb48(data, width, height),
+        TextureFormat::RGBA64 => decode_rgba64(data, width, height),
         _ => [].into()
     }
 }

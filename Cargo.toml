@@ -31,8 +31,11 @@ wasm-bindgen-test = "0.3.41"
 png = "0.17.10"
 texture2ddecoder = { git = "https://github.com/ashduino101/texture2ddecoder-rgba" }
 anyhow = "1.0.81"
-three-d = { version = "0.17", features=["egui-gui"] }
+three-d = { version = "0.17", features = ["egui-gui"] }
 three-d-asset = { version = "0.7", features = ["gltf", "hdr", "jpeg", "http"] }
+num = "0.4.1"
+num-derive = "0.4.2"
+num-traits = "0.2.18"
 #wgpu = "0.19.1"
 
 [dependencies.lz4_flex]
