@@ -3,6 +3,7 @@ use wasm_bindgen_test::console_log;
 use crate::fsb::codecs::vorbis::fix_vorbis_container;
 use crate::utils::buf::BufExt;
 use crate::utils::dom::create_data_url;
+use crate::utils::pcm::{encode_wav, WavFormat};
 
 #[derive(Debug, Copy, Clone)]
 pub enum SoundFormat {
@@ -164,19 +165,38 @@ impl SoundBank {
                 }
             }
 
-            match format {
+            let data = match format {
                 SoundFormat::Vorbis => {
-                    let window = web_sys::window().expect("no global `window` exists");
-                    let document = window.document().expect("should have a document on window");
-                    let body = document.body().expect("document should have a body");
-                    let ogg = fix_vorbis_container(&mut sample_data, if stereo { 2 } else { 1 }, frequency, vorbis_crc, sample_rate as u32).expect("error while fixing vorbis container");
-                    let elem = document.create_element("audio").expect("failed to create element");
-                    elem.set_attribute("src", &create_data_url(&ogg[..]));
-                    elem.set_attribute("controls", "");
-                    body.append_child(&elem);
+                    fix_vorbis_container(&mut sample_data, if stereo { 2 } else { 1 }, frequency, vorbis_crc, sample_rate as u32).expect("error while fixing vorbis container")
                 },
-                _ => {}
-            }
+                SoundFormat::Pcm8 => {
+                    encode_wav(sample_data, WavFormat::PCM8, frequency, if stereo { 2 } else { 1 })
+                },
+                SoundFormat::Pcm16 => {
+                    encode_wav(sample_data, WavFormat::PCM16, frequency, if stereo { 2 } else { 1 })
+                },
+                SoundFormat::Pcm24 => {
+                    encode_wav(sample_data, WavFormat::PCM24, frequency, if stereo { 2 } else { 1 })
+                },
+                SoundFormat::Pcm32 => {
+                    encode_wav(sample_data, WavFormat::PCM32, frequency, if stereo { 2 } else { 1 })
+                },
+                SoundFormat::PcmFloat => {
+                    encode_wav(sample_data, WavFormat::PCMF32, frequency, if stereo { 2 } else { 1 })
+                },
+                // SoundFormat::ImaAdpcm => {
+                //     encode_wav(sample_data, WavFormat::IMAADPCM, frequency, if stereo { 2 } else { 1 })
+                // }
+                _ => todo!()
+            };
+
+            let window = web_sys::window().expect("no global `window` exists");
+            let document = window.document().expect("should have a document on window");
+            let body = document.body().expect("document should have a body");
+            let elem = document.create_element("audio").expect("failed to create element");
+            elem.set_attribute("src", &create_data_url(&data[..]));
+            elem.set_attribute("controls", "");
+            body.append_child(&elem);
         }
 
         data.advance(total_size as usize);

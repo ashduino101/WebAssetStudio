@@ -48,7 +48,7 @@ async fn main() {
     //
     // console_log!("{:?}", xnb);
 
-    let mut d = Bytes::from_static(include_bytes!("../test4.fsb"));
+    let mut d = Bytes::from_static(include_bytes!("../test.fsb"));
 
     // let mut i = 0;
     while d.remaining() > 0 {
