@@ -8,14 +8,16 @@ pub mod xna;
 pub mod logger;
 pub mod base;
 pub mod alert_hook;
+pub mod fsb;
 
 use std::{panic, thread};
 use std::mem::size_of_val;
 use std::panic::PanicInfo;
-use bytes::Bytes;
+use bytes::{Buf, Bytes};
 use three_d::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::console_log;
+use crate::fsb::bank::SoundBank;
 
 use crate::logger::splash;
 use crate::unity::assets::file::AssetFile;
@@ -45,6 +47,17 @@ async fn main() {
     // body.append_child(&elem);
     //
     // console_log!("{:?}", xnb);
+
+    let mut d = Bytes::from_static(include_bytes!("../test4.fsb"));
+
+    // let mut i = 0;
+    while d.remaining() > 0 {
+        console_log!("{:?}", SoundBank::new(&mut d));
+        // i += 1;
+        // if i > 10 {break}
+    }
+
+    return;
     let mut dat = Bytes::from(Vec::from(include_bytes!("../test2.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 

@@ -1,4 +1,5 @@
-use bytes::{Buf, Bytes};
+use std::fmt::Write;
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 
 pub trait BufExt {
     fn get_raw(&mut self, nbytes: usize) -> Bytes;
@@ -17,6 +18,24 @@ pub trait BufExt {
     fn get_i64_ordered(&mut self, little_endian: bool) -> i64;
     fn get_u64_ordered(&mut self, little_endian: bool) -> u64;
     fn get_f64_ordered(&mut self, little_endian: bool) -> f64;
+}
+
+pub trait BufMutExt {
+    fn put_string(&mut self, val: String);
+    fn put_string_ordered(&mut self, val: String, little_endian: bool);
+    fn put_string_varint(&mut self, val: String);
+    fn put_cstring(&mut self, val: String);
+    fn put_chars(&mut self, val: String);
+    fn put_varint(&mut self, val: i64);
+    fn align(&mut self, start_length: usize, i: u8);
+    fn put_i16_ordered(&mut self, val: i16, little_endian: bool);
+    fn put_u16_ordered(&mut self, val: u16, little_endian: bool);
+    fn put_i32_ordered(&mut self, val: i32, little_endian: bool);
+    fn put_u32_ordered(&mut self, val: u32, little_endian: bool);
+    fn put_f32_ordered(&mut self, val: f32, little_endian: bool);
+    fn put_i64_ordered(&mut self, val: i64, little_endian: bool);
+    fn put_u64_ordered(&mut self, val: u64, little_endian: bool);
+    fn put_f64_ordered(&mut self, val: f64, little_endian: bool);
 }
 
 impl BufExt for Bytes {
@@ -113,6 +132,72 @@ impl BufExt for Bytes {
 
     fn get_f64_ordered(&mut self, little_endian: bool) -> f64 {
         if little_endian { self.get_f64_le() } else { self.get_f64() }
+    }
+}
+
+impl BufMutExt for BytesMut {
+    fn put_string(&mut self, val: String) {
+        self.put_u32_le(val.len() as u32);
+        self.put_chars(val);
+    }
+
+    fn put_string_ordered(&mut self, val: String, little_endian: bool) {
+        self.put_u32_ordered(val.len() as u32, little_endian);
+        self.put_chars(val);
+    }
+
+    fn put_string_varint(&mut self, val: String) {
+        self.put_varint(val.len() as i64);
+        self.put_chars(val);
+    }
+
+    fn put_cstring(&mut self, val: String) {
+        self.put_chars(val);
+        self.put_u8(0);
+    }
+
+    fn put_chars(&mut self, val: String) {
+        self.write_str(&val).expect(&format!("invalid string {val}"));
+    }
+
+    fn put_varint(&mut self, val: i64) {
+        todo!()
+    }
+
+    fn align(&mut self, start_length: usize, i: u8) {
+        todo!()
+    }
+
+    fn put_i16_ordered(&mut self, val: i16, little_endian: bool) {
+        todo!()
+    }
+
+    fn put_u16_ordered(&mut self, val: u16, little_endian: bool) {
+        todo!()
+    }
+
+    fn put_i32_ordered(&mut self, val: i32, little_endian: bool) {
+        todo!()
+    }
+
+    fn put_u32_ordered(&mut self, val: u32, little_endian: bool) {
+        todo!()
+    }
+
+    fn put_f32_ordered(&mut self, val: f32, little_endian: bool) {
+        todo!()
+    }
+
+    fn put_i64_ordered(&mut self, val: i64, little_endian: bool) {
+        todo!()
+    }
+
+    fn put_u64_ordered(&mut self, val: u64, little_endian: bool) {
+        todo!()
+    }
+
+    fn put_f64_ordered(&mut self, val: f64, little_endian: bool) {
+        todo!()
     }
 }
 

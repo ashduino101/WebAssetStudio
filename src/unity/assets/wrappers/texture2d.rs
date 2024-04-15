@@ -12,7 +12,6 @@ use crate::utils::tex::texdec::{decode, get_mipmap_byte_size, get_mipmap_offset_
 
 #[derive(Debug)]
 pub struct Texture2DWrapper {
-    name: String,
     pub(crate) width: i32,
     pub(crate) height: i32,
     pub(crate) num_mips: i32,
@@ -29,15 +28,11 @@ impl Asset for Texture2DWrapper {
 }
 
 impl ClassWrapper for Texture2DWrapper {
-    fn get_name(&self) -> String {
-        self.name.clone()
-    }
 }
 
 impl Texture2DWrapper {
     pub fn from_value(value: ValueType) -> Result<Self, ObjectError> {
         Ok(Texture2DWrapper {
-            name: value.get("m_Name")?.as_string()?,
             width: value.get("m_Width")?.as_i32()?,
             height: value.get("m_Height")?.as_i32()?,
             num_mips: value.get("m_MipCount")?.as_i32()?,
