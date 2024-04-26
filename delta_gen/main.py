@@ -208,10 +208,10 @@ class Node:
             n = 'a' + n
 
         # Replace keywords
-        n = n.replace('type', 'type_')
-        n = n.replace('struct', 'struct_')
-        n = n.replace('override', 'override_')
-        n = n.replace('loop', 'loop_')
+        n = n.replace('type', 'r#type')
+        n = n.replace('struct', 'r#struct')
+        n = n.replace('override', 'r#override')
+        n = n.replace('loop', 'r#loop')
 
         return n
 

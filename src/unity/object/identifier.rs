@@ -1,4 +1,4 @@
-use bytes::Bytes;
+use bytes::{Bytes, Buf};
 use crate::utils::buf::BufExt;
 
 #[derive(Debug)]

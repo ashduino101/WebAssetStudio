@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-bytes = "1.5.0"
+bytes = { git = "https://github.com/ashduino101/bytes" }
 wasm-bindgen = "0.2.84"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
@@ -37,9 +37,11 @@ num = "0.4.1"
 num-derive = "0.4.2"
 num-traits = "0.2.18"
 bitstream-io = "2.2.0"
-zerocopy = "0.7.32"
 rand = "0.8.5"
 byteorder = "1.5.0"
+crc32fast = "1.4.0"
+qoi = "0.4.1"
+zerocopy = "0.7.32"
 #wgpu = "0.19.1"
 
 [dependencies.ogg]

@@ -9,6 +9,8 @@ pub mod logger;
 pub mod base;
 pub mod alert_hook;
 pub mod fsb;
+pub mod gamemaker;
+pub mod binary;
 
 use std::{panic, thread};
 use std::mem::size_of_val;
@@ -18,11 +20,15 @@ use three_d::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::console_log;
 use crate::fsb::bank::SoundBank;
+use crate::gamemaker::file::GameMakerFile;
+use crate::gamemaker::audiogroup::AudioGroup;
 
 use crate::logger::splash;
 use crate::unity::assets::file::AssetFile;
 use crate::unity::bundle::file::BundleFile;
+use crate::utils::debug::load_audio;
 use crate::utils::dom::create_img;
+use crate::utils::tex::qoi::decode_qoi_gm;
 use crate::xna::xnb::XNBFile;
 
 #[wasm_bindgen(start)]
@@ -48,14 +54,22 @@ async fn main() {
     //
     // console_log!("{:?}", xnb);
 
-    let mut d = Bytes::from_static(include_bytes!("../test.fsb"));
+    // let mut d = Bytes::from_static(include_bytes!("../test.fsb"));
 
     // let mut i = 0;
-    while d.remaining() > 0 {
-        console_log!("{:?}", SoundBank::new(&mut d));
-        // i += 1;
-        // if i > 10 {break}
-    }
+    // while d.remaining() > 0 {
+    //     console_log!("{:?}", SoundBank::new(&mut d));
+    //     i += 1;
+    //     if i > 10 {break}
+    // }
+
+    // decode_qoi_gm(&mut Bytes::from_static(include_bytes!("../qoif2"))).expect("error");
+
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../data.win")));
+    let mut f = GameMakerFile::new(&mut dat);
+    // for audio in f.samples {
+    //     load_audio(audio);
+    // }
 
     return;
     let mut dat = Bytes::from(Vec::from(include_bytes!("../test2.unity3d")));

@@ -6,3 +6,4 @@ pub mod fp16;
 pub mod dom;
 pub mod vorbis;
 pub mod pcm;
+pub mod debug;

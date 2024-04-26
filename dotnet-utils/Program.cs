@@ -18,12 +18,14 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 
 Console.WriteLine("Decompiler loaded.");
 
 
-public partial class MyClass
-{
+public partial class Decompiler
+{    
     static DecompilerSettings GetSettings(PEFile module)
     {
         return new DecompilerSettings(LanguageVersion.Latest) {
@@ -58,7 +60,7 @@ public partial class MyClass
     }
 
     [JSExport]
-    internal static string Decompile(byte[] data, string assemblyFileName, string typeName = null)
+    internal static string Load(byte[] data, string assemblyFileName, string typeName = null)
     {
         try
         {
@@ -72,6 +74,21 @@ public partial class MyClass
             Console.WriteLine("Exception caught in process: {0}", ex);
             return "ERROR";
         }
-        return DecompileInternal(assemblyFileName, typeName);
+        return null;
+        // return DecompileInternal(assemblyFileName, typeName);
+    }
+
+    [JSExport]
+    internal static string[] ListTypes(string assemblyFileName)
+    {
+        CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+        var classes = new List<string>();
+        foreach (ITypeDefinition i in decompiler.TypeSystem.MainModule.TopLevelTypeDefinitions) {
+            // Console.WriteLine(i.Name);
+            if (i.Name == "SandboxLayoutData") {
+                classes.Add(decompiler.DecompileTypeAsString(i.FullTypeName));
+            }
+        }
+        return classes.ToArray();
     }
 }

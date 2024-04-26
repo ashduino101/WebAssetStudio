@@ -100,7 +100,7 @@ impl XNBType for Texture2D {
         let height = data.get_u32_le();
         let num_mips = data.get_u32_le();
         let data_size = data.get_u32_le() as usize;
-        let mut texture_data = data.get_raw(data_size);
+        let mut texture_data = data.copy_to_bytes(data_size);
         let mut textures = Vec::new();
         for i in 0..num_mips {
             textures.push(Mip::decode(&mut texture_data.slice(0..(texture_data.len() / num_mips as usize))))

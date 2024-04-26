@@ -17,8 +17,11 @@ input.addEventListener('change', e => {
   let reader = new FileReader();
   reader.onloadend = async b => {
     let arr = new Uint8Array(reader.result);
-    const text = exports.MyClass.Decompile(arr, f.name);
-    document.getElementById('out').textContent = text;
+    exports.Decompiler.Load(arr, f.name);
+    let modules = exports.Decompiler.ListTypes(f.name);
+    console.log(modules);
+    console.log('done');
+    // document.getElementById('out').textContent = text;
   }
   reader.readAsArrayBuffer(f);
 });
