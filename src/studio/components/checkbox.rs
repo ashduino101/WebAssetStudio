@@ -7,13 +7,16 @@ pub struct Checkbox {
 }
 
 impl Checkbox {
-    pub fn new(parent: &Element) {
-        let checkbox = create_element("checkbox");
-        // checkbox.class_list().add("ui-checkbox");
-        parent.append_child(&checkbox);
+    pub fn new() -> Checkbox {
+        Checkbox {}
     }
 }
 
 impl WidgetComponent for Checkbox {
-
+    fn render(&self, mount: &Element) {
+        let checkbox = create_element("input");
+        checkbox.set_attribute("type", "checkbox");
+        // checkbox.class_list().add("ui-checkbox");
+        mount.append_child(&checkbox);
+    }
 }

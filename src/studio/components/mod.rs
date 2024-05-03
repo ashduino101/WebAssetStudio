@@ -1,2 +1,2 @@
-mod base;
-mod checkbox;
+pub(crate) mod base;
+pub(crate) mod checkbox;

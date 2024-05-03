@@ -24,10 +24,12 @@ use crate::fsb::bank::SoundBank;
 use crate::gamemaker::file::GameMakerFile;
 
 use crate::logger::splash;
+use crate::studio::components::checkbox::Checkbox;
+use crate::studio::dock::widget::WidgetContainer;
 use crate::unity::assets::file::AssetFile;
 use crate::unity::bundle::file::BundleFile;
 use crate::utils::debug::load_audio;
-use crate::utils::dom::create_img;
+use crate::utils::dom::{create_element, create_img};
 use crate::utils::tex::qoi::decode_qoi_gm;
 use crate::xna::xnb::XNBFile;
 
@@ -45,9 +47,9 @@ async fn main() {
     // let mut dat = Bytes::from(Vec::from(include_bytes!("../tests/data/xnb/Background.xnb")));
     // let mut xnb = XNBFile::new(&mut dat);
     //
-    // let window = web_sys::window().expect("no global `window` exists");
-    // let document = window.document().expect("should have a document on window");
-    // let body = document.body().expect("document should have a body");
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
+    let body = document.body().expect("document should have a body");
     //
     // let elem = xnb.primary_asset.make_html(&document);
     // body.append_child(&elem);
@@ -70,6 +72,12 @@ async fn main() {
     // for audio in f.samples {
     //     load_audio(audio);
     // }
+
+    let mut widget = WidgetContainer::new();
+    widget.add_component(Box::new(Checkbox::new()));
+    widget.render(&body);
+
+    return;
 
     let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
     let mut f = BundleFile::new(&mut dat);
