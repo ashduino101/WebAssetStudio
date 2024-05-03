@@ -1,9 +1,11 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::io;
 use std::io::Cursor;
 use std::sync::{Mutex, OnceLock};
 use bitstream_io::{BitRead, BitReader, Endianness, LittleEndian};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bzip2_rs::DecoderReader;
 use js_sys::{Function, Uint8Array};
 use ogg::{PacketWriteEndInfo, PacketWriter};
 use zerocopy::AsBytes;
@@ -15,7 +17,7 @@ use crate::utils::compress::lz4_decompress;
 use crate::utils::dom::create_data_url;
 use crate::utils::vorbis::ilog;
 
-const HEADER_LOOKUP: &[u8] = include_bytes!("vorbis_headers.dat");
+const HEADER_LOOKUP: &[u8] = include_bytes!("vorbis_headers.bz2");
 
 const BLOCKSIZE_SMALL: usize = 0x100;
 const BLOCKSIZE_LARGE: usize = 0x800;
@@ -29,7 +31,10 @@ fn get_lookup_table() -> &'static Mutex<HeaderLookup> {
     LOOKUP.get_or_init(|| {
         let mut v = HashMap::new();
         // let mut data = lz4_decompress(HEADER_LOOKUP, LOOKUP_RAW_SIZE).expect("lookup table corrupt");
-        let mut data = Bytes::from(HEADER_LOOKUP);
+        let mut decoder = DecoderReader::new(HEADER_LOOKUP);
+        let mut buf = Vec::new();
+        io::copy(&mut decoder, &mut buf).expect("failed to copy data");
+        let mut data = Bytes::from(buf);
         let num_entries = data.get_u32_le();
         for _ in 0..num_entries {
             let crc = data.get_u32_le();

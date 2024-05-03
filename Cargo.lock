@@ -216,6 +216,16 @@ version = "1.6.0"
 source = "git+https://github.com/ashduino101/bytes#d4dce21bd6dfa0ca88d1d5385b8be87adf1b9d49"
 
 [[package]]
+name = "bzip2-rs"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "beeb59e7e4c811ab37cc73680c798c7a5da77fc9989c62b09138e31ee740f735"
+dependencies = [
+ "crc32fast",
+ "tinyvec",
+]
+
+[[package]]
 name = "calloop"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2348,6 +2358,7 @@ dependencies = [
  "bitstream-io",
  "byteorder",
  "bytes 1.6.0 (git+https://github.com/ashduino101/bytes)",
+ "bzip2-rs",
  "console_error_panic_hook",
  "crc32fast",
  "include_dir",

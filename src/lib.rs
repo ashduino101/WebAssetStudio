@@ -2,15 +2,16 @@ extern crate core;
 #[macro_use]
 extern crate num_derive;
 
-pub mod unity;
-pub mod utils;
-pub mod xna;
-pub mod logger;
-pub mod base;
-pub mod alert_hook;
-pub mod fsb;
-pub mod gamemaker;
-pub mod binary;
+mod unity;
+mod utils;
+mod xna;
+mod logger;
+mod base;
+mod alert_hook;
+mod fsb;
+mod gamemaker;
+mod binary;
+mod studio;
 
 use std::{panic, thread};
 use std::mem::size_of_val;
@@ -21,7 +22,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::console_log;
 use crate::fsb::bank::SoundBank;
 use crate::gamemaker::file::GameMakerFile;
-use crate::gamemaker::audiogroup::AudioGroup;
 
 use crate::logger::splash;
 use crate::unity::assets::file::AssetFile;
@@ -54,19 +54,19 @@ async fn main() {
     //
     // console_log!("{:?}", xnb);
 
-    // let mut d = Bytes::from_static(include_bytes!("../test.fsb"));
+    let mut d = Bytes::from_static(include_bytes!("../test.fsb"));
 
-    // let mut i = 0;
-    // while d.remaining() > 0 {
-    //     console_log!("{:?}", SoundBank::new(&mut d));
-    //     i += 1;
-    //     if i > 10 {break}
-    // }
+    let mut i = 0;
+    while d.remaining() > 0 {
+        console_log!("{:?}", SoundBank::new(&mut d));
+        i += 1;
+        if i > 10 {break}
+    }
 
     // decode_qoi_gm(&mut Bytes::from_static(include_bytes!("../qoif2"))).expect("error");
 
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../data.win")));
-    let mut f = GameMakerFile::new(&mut dat);
+    // let mut dat = Bytes::from(Vec::from(include_bytes!("../data.win")));
+    // let mut f = GameMakerFile::new(&mut dat);
     // for audio in f.samples {
     //     load_audio(audio);
     // }
