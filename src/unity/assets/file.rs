@@ -87,19 +87,20 @@ impl AssetFile {
             // console_log!("{}", typ.string_repr);
             // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
             let parsed = TypeParser::parse_object_from_info(typ, data);
-            if typ.class_id == 28 {
-                // console_log!("{:?}", parsed);
-                let mut w = Texture2DWrapper::from_value(parsed).expect("failed to wrap object");
-                // console_log!("{:?}", w);
+            console_log!("{:?}", parsed.get("m_Name"));
+            // if false && typ.class_id == 28 {
+            //     // console_log!("{:?}", parsed);
+            //     let mut w = Texture2DWrapper::from_value(parsed).expect("failed to wrap object");
+            //     // console_log!("{:?}", w);
 
-                let window = web_sys::window().expect("no global `window` exists");
-                let document = window.document().expect("should have a document on window");
-                let body = document.body().expect("document should have a body");
+            //     let window = web_sys::window().expect("no global `window` exists");
+            //     let document = window.document().expect("should have a document on window");
+            //     let body = document.body().expect("document should have a body");
 
-                let elem = document.create_element("img").expect("failed to create element");
-                elem.set_attribute("src", &create_img(w.get_image(w.num_images - 1).as_ref(), w.width as usize, w.height as usize));
-                body.append_child(&elem);
-            }
+            //     let elem = document.create_element("img").expect("failed to create element");
+            //     elem.set_attribute("src", &create_img(w.get_image(w.num_images - 1).as_ref(), w.width as usize, w.height as usize));
+            //     body.append_child(&elem);
+            // }
             // console_log!("{:?}", parsed);
         }
 

@@ -54,14 +54,14 @@ async fn main() {
     //
     // console_log!("{:?}", xnb);
 
-    let mut d = Bytes::from_static(include_bytes!("../test.fsb"));
+    // let mut d = Bytes::from_static(include_bytes!("../test.fsb"));
 
-    let mut i = 0;
-    while d.remaining() > 0 {
-        console_log!("{:?}", SoundBank::new(&mut d));
-        i += 1;
-        if i > 10 {break}
-    }
+    // let mut i = 0;
+    // while d.remaining() > 0 {
+    //     console_log!("{:?}", SoundBank::new(&mut d));
+    //     i += 1;
+    //     if i > 10 {break}
+    // }
 
     // decode_qoi_gm(&mut Bytes::from_static(include_bytes!("../qoif2"))).expect("error");
 
@@ -71,8 +71,7 @@ async fn main() {
     //     load_audio(audio);
     // }
 
-    return;
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../test2.unity3d")));
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 
     console_log!("start decompress");
@@ -81,7 +80,8 @@ async fn main() {
 
     console_log!("start asset file parse");
     let asset = AssetFile::new(&mut file);
-    console_log!("{:?}", asset);
+    // console_log!("{:?}", asset);
+    console_log!("done");
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
     // run().await;
 }

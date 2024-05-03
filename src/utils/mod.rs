@@ -7,3 +7,4 @@ pub mod dom;
 pub mod vorbis;
 pub mod pcm;
 pub mod debug;
+pub mod time;

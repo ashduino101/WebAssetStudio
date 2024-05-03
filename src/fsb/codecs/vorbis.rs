@@ -16,6 +16,8 @@ use crate::utils::buf::BufMutExt;
 use crate::utils::compress::lz4_decompress;
 use crate::utils::dom::create_data_url;
 use crate::utils::vorbis::ilog;
+use crate::utils::time::now;
+use crate::logger::info;
 
 const HEADER_LOOKUP: &[u8] = include_bytes!("vorbis_headers.bz2");
 
@@ -29,6 +31,7 @@ type HeaderLookup = HashMap<u32, Bytes>;
 fn get_lookup_table() -> &'static Mutex<HeaderLookup> {
     static LOOKUP: OnceLock<Mutex<HeaderLookup>> = OnceLock::new();
     LOOKUP.get_or_init(|| {
+        let start = now();
         let mut v = HashMap::new();
         // let mut data = lz4_decompress(HEADER_LOOKUP, LOOKUP_RAW_SIZE).expect("lookup table corrupt");
         let mut decoder = DecoderReader::new(HEADER_LOOKUP);
@@ -43,6 +46,8 @@ fn get_lookup_table() -> &'static Mutex<HeaderLookup> {
             data.advance(header_len);
             v.insert(crc, header);
         }
+        let elapsed = now() - start;
+        info!("Loaded Vorbis header lookups in {} ms", elapsed);
         Mutex::new(v)
     })
 }

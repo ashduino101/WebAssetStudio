@@ -2,7 +2,7 @@ use wasm_bindgen::JsValue;
 use web_sys;
 use js_sys;
 use js_sys::{Array, Uint8Array};
-use web_sys::Url;
+use web_sys::{Element, Url};
 use crate::utils::tex::pngenc::encode_png;
 
 pub fn create_data_url(data: &[u8]) -> String {
@@ -17,4 +17,10 @@ pub fn create_data_url(data: &[u8]) -> String {
 pub fn create_img(rgba: &[u8], width: usize, height: usize) -> String {
     let png = encode_png(width as u32, height as u32, rgba, false);
     create_data_url(&png)
+}
+
+pub fn create_element(tag: &str) -> Element {
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("no document available");
+    document.create_element(tag).expect(&format!("failed to create element \"{}\"", tag))
 }
