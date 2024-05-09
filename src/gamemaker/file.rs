@@ -1,6 +1,6 @@
 use std::io::{Cursor, Seek, SeekFrom};
 use bytes::{Buf, Bytes};
-use wasm_bindgen_test::console_log;
+
 use crate::gamemaker::iff::IFFReader;
 use crate::load_audio;
 use crate::logger::warning;

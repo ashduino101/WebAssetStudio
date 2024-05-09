@@ -1,13 +1,13 @@
 extern crate num;
 
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug};
 use bytes::Bytes;
 use web_sys::{Document, Element};
 use crate::base::asset::Asset;
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
-use crate::utils::tex::pngenc::encode_png;
-use crate::utils::tex::texdec::{decode, get_mipmap_byte_size, get_mipmap_offset_and_size, TextureFormat};
+
+use crate::utils::tex::texdec::{decode, get_mipmap_offset_and_size, TextureFormat};
 
 
 #[derive(Debug)]

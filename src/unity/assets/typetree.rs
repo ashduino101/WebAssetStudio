@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::error::Error;
+
 use std::ops::Index;
 use bytes::{Buf, Bytes};
-use wasm_bindgen_test::console_log;
-use crate::base::asset::Void;
+
+
 use crate::utils::buf::{BufExt, FromBytes};
 
 const SHARED_STRINGS: Bytes = Bytes::from_static(include_bytes!("strings.dat"));
@@ -82,10 +82,10 @@ impl ValueType {
         if let ValueType::Data(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
     }
     pub fn as_array(&self) -> Result<&Vec<ValueType>, ObjectError> {
-        if let ValueType::Array(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+        if let ValueType::Array(v) = self { Ok(v) } else { Err(ObjectError {}) }
     }
     pub fn as_object(&self) -> Result<&HashMap<String, ValueType>, ObjectError> {
-        if let ValueType::Object(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+        if let ValueType::Object(v) = self { Ok(v) } else { Err(ObjectError {}) }
     }
     pub fn get(&self, key: &str) -> Result<&ValueType, ObjectError> {
         Ok(self.as_object()?.get(key).ok_or(ObjectError {})?)

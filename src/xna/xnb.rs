@@ -1,12 +1,12 @@
 use bytes::{Buf, Bytes};
-use wasm_bindgen::prelude::*;
+
 use crate::base::asset::Void;
 use crate::base::types::{Matrix4x4, Quaternion, Vector2, Vector3, Vector4};
-use crate::logger::Logger;
+
 use crate::utils::buf::{BufExt, FromBytes};
 use crate::xna::type_base::XNBType;
 use crate::xna::types::graphics::Texture2D;
-use crate::xna::types::math::*;
+
 use crate::xna::types::system::*;
 
 const XNB_MAGIC: &str = "XNB";

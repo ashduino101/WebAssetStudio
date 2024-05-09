@@ -1,7 +1,7 @@
-use std::io::{Cursor, Read, Write};
+use std::io::{Read, Write};
 use std::panic;
-use png::Decoder;
-use wasm_bindgen::prelude::*;
+
+
 
 fn flip_v(width: usize, height: usize, data: &[u8]) -> Box<[u8]> {
     let mut out = Vec::new();

@@ -1,5 +1,5 @@
 use std::fmt::Write;
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{BufMut, Bytes, BytesMut};
 
 pub trait BufExt {
     fn get_string(&mut self) -> String;

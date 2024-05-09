@@ -1,9 +1,9 @@
 // Used for MojoShader and Crunch bindings.
-use bytes::{Bytes, Buf};
-use js_sys::{ArrayBuffer, DataView, Float32Array, Float64Array, Function, Int16Array, Int32Array, Int8Array, Object, Reflect, Uint16Array, Uint32Array, Uint8Array, WebAssembly};
+
+use js_sys::{ArrayBuffer, Function, Object, Reflect, Uint8Array, WebAssembly};
 // use wasm_bindgen::__rt::IntoJsResult;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::{spawn_local, JsFuture};
+use wasm_bindgen_futures::{JsFuture};
 
 pub struct EmscriptenModule {
     env: Object,
@@ -16,8 +16,8 @@ pub struct EmscriptenModule {
 
 impl EmscriptenModule {
     pub async fn from_raw(data: &[u8]) -> Result<EmscriptenModule, JsValue> {
-        let mut imports = Object::new();
-        let mut env = Object::new();
+        let imports = Object::new();
+        let env = Object::new();
 
         Reflect::set(&env, &"__assert_fail".into(), &Function::new_with_args(&"val", "")).unwrap();
         Reflect::set(&env, &"emscripten_asm_const_int".into(), &Function::new_with_args(&"code, sig, args", "")).unwrap();

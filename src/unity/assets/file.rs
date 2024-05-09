@@ -1,13 +1,13 @@
-use std::collections::HashMap;
-use bytes::{Bytes, Buf, BytesMut, BufMut};
+
+use bytes::{Bytes, Buf};
 use wasm_bindgen_test::console_log;
-use crate::create_img;
+
 use crate::unity::assets::external::External;
 use crate::unity::assets::typetree::TypeInfo;
 use crate::unity::object::identifier::LocalObjectIdentifier;
 use crate::unity::object::info::ObjectInfo;
 use crate::unity::assets::typetree::TypeParser;
-use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
+
 use crate::utils::buf::{BufExt, FromBytes};
 
 #[derive(Debug)]

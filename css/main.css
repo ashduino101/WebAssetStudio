@@ -406,6 +406,63 @@ html, body {
   font-weight: normal;
 }
 
-.dock-widget {
+:root {
+  overflow: hidden;
+  --theme-widget-bg: #3b3b3b;
+  --theme-base: #212121;
+}
 
+body {
+  background-color: var(--theme-base);
+}
+
+#app-container {
+  width: 100%;
+  height: 100%;
+}
+
+.dock-widget {
+  position: relative;
+  background-color: var(--theme-widget-bg);
+  border-radius: 10px;
+  margin: 5px;
+  box-sizing: border-box;
+}
+
+#dock-left {
+  display: inline-block;
+  width: calc(20% - 10px);
+  height: 100%;
+}
+
+#file-selector {
+  width: 100%;
+  height: calc(25% - 10px);
+}
+
+#file-browser {
+  width: 100%;
+  height: calc(75% - 5px);
+}
+
+#dock-middle {
+  display: inline-block;
+  width: calc(60% - 5px);
+  height: 100%;
+}
+
+#viewport {
+  width: 100%;
+  height: calc(100% - 10px);
+}
+
+#dock-right {
+  display: inline-block;
+  width: calc(20% - 5px);
+  height: 100%;
+}
+
+#element-inspector {
+  width: 100%;
+  height: calc(100% - 10px);
 }

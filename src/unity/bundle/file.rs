@@ -1,12 +1,12 @@
 use std::iter::FromIterator;
 use bytes::{Bytes, Buf, BytesMut, BufMut};
-use wasm_bindgen_test::console_log;
-use crate::unity::bundle::block::{BlockFlags, BlockInfo};
-use crate::unity::bundle::node::{Node, NodeFlags};
+
+use crate::unity::bundle::block::{BlockInfo};
+use crate::unity::bundle::node::{Node};
 use crate::unity::bundle::storage::StorageInfo;
 use crate::unity::compression::decompress;
 use crate::utils::buf::{BufExt, FromBytes};
-use crate::utils::compress::lz4_decompress;
+
 
 #[derive(Debug)]
 pub struct BundleFileHeader {
@@ -100,7 +100,7 @@ impl BundleFile {
                 uncompressed_block_info_size as usize
             )
         } else {
-            let mut d = decompress(
+            let d = decompress(
                 data,
                 flags.compression_type,
                 compressed_block_info_size as usize,

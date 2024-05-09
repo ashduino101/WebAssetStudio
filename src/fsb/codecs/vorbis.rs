@@ -1,20 +1,20 @@
-use std::borrow::Cow;
+
 use std::collections::HashMap;
 use std::io;
 use std::io::Cursor;
 use std::sync::{Mutex, OnceLock};
-use bitstream_io::{BitRead, BitReader, Endianness, LittleEndian};
+use bitstream_io::{BitRead, BitReader, LittleEndian};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use bzip2_rs::DecoderReader;
-use js_sys::{Function, Uint8Array};
+
 use ogg::{PacketWriteEndInfo, PacketWriter};
-use zerocopy::AsBytes;
-use wasm_bindgen::prelude::*;
+
+
 use wasm_bindgen::JsValue;
-use wasm_bindgen_test::console_log;
+
 use crate::utils::buf::BufMutExt;
-use crate::utils::compress::lz4_decompress;
-use crate::utils::dom::create_data_url;
+
+
 use crate::utils::vorbis::ilog;
 use crate::utils::time::now;
 use crate::logger::info;
@@ -87,7 +87,7 @@ fn create_comment_header(vendor: String, user_comments: Vec<String>) -> Bytes {
     data.into()
 }
 
-fn get_packet_blocksize(packet: &mut Bytes) -> Result<usize, std::io::Error> {
+fn get_packet_blocksize(packet: &mut Bytes) -> Result<usize, io::Error> {
     let mut bitstream = BitReader::endian(Cursor::new(&packet[..]), LittleEndian);
     if bitstream.read::<u8>(1)? != 0 {
         panic!("tried to calculate packet block size on a non-audio packet");
@@ -98,7 +98,7 @@ fn get_packet_blocksize(packet: &mut Bytes) -> Result<usize, std::io::Error> {
 
 
 pub fn fix_vorbis_container(data: &mut Bytes, channels: i32, sample_rate: u32, setup_crc: u32, bitrate: u32) -> Result<Bytes, JsValue> {
-    let mut setup_data = get_lookup_table().lock().expect("failed to lock").get(&setup_crc).expect("no header available for crc").clone();
+    let setup_data = get_lookup_table().lock().expect("failed to lock").get(&setup_crc).expect("no header available for crc").clone();
     let mut ogg_out = Vec::new();
     let mut packet_writer = PacketWriter::new(Cursor::new(&mut ogg_out));
 

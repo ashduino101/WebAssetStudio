@@ -2,13 +2,13 @@
 // https://qoiformat.org/
 
 
-use std::fmt::Write;
+
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use wasm_bindgen_test::console_log;
 use crate::create_img;
-use crate::logger::{info, warning, error};
+use crate::logger::{error};
 use crate::utils::buf::BufMutExt;
-use crate::utils::dom::create_data_url;
+
 
 static MODULE: &str = file!();
 
@@ -39,11 +39,11 @@ static QOI_MASK_4: u8 = 0xf0;
 
 fn decode_qoi_data(data: &mut Bytes) {
     let mut run = 0;
-    let mut r = 0u8;
-    let mut g = 0u8;
-    let mut b = 0u8;
-    let mut a = 0u8;
-    let mut index = vec![Pixel {r: 0, g: 0, b: 0, a: 255}; 64];
+    let r = 0u8;
+    let g = 0u8;
+    let b = 0u8;
+    let a = 0u8;
+    let index = vec![Pixel {r: 0, g: 0, b: 0, a: 255}; 64];
     while data.remaining() > 0 {
         if run > 0 {
             run -= 1;
@@ -81,7 +81,7 @@ pub fn decode_qoi_gm(data: &mut Bytes) -> Result<(), anyhow::Error>{
     intermediate.put_u8(0);  // sRGB
     intermediate.put(data.slice(0..data_size as usize));
     intermediate.put_slice(&[0u8, 0, 0, 0, 0, 0, 0, 1]);
-    let mut decoded = qoi::decode_to_vec(&intermediate[..])?;
+    let decoded = qoi::decode_to_vec(&intermediate[..])?;
     console_log!("{:?}", create_img(&decoded.1[..], width as usize, height as usize));
 
 

@@ -1,14 +1,14 @@
-use std::cmp::{max, min};
+use std::cmp::{max};
 use std::io::Write;
-use std::mem::swap;
-use wasm_bindgen::prelude::*;
+
+
 extern crate console_error_panic_hook;
-use std::panic;
+
 use bytes::Bytes;
 use crate::utils::fp16::fp16_ieee_to_fp32_value;
 use texture2ddecoder;
-use texture2ddecoder::{decode_astc as decode_astc_, decode_atc_rgb4_block, decode_atc_rgba8_block, decode_bc1_block, decode_bc3_block, decode_bc4_block, decode_bc5_block, decode_bc6_block, decode_bc7_block, decode_eacr_block, decode_eacr_signed_block, decode_eacrg_block, decode_eacrg_signed_block, decode_etc1_block, decode_etc2_a8_block, decode_etc2_rgb_block, decode_etc2_rgba1_block, decode_etc2_rgba8_block, decode_pvrtc as decode_pvrtc_};
-use wasm_bindgen_test::console_log;
+use texture2ddecoder::{decode_astc as decode_astc_, decode_atc_rgb4_block, decode_atc_rgba8_block, decode_bc1_block, decode_bc3_block, decode_bc4_block, decode_bc5_block, decode_bc6_block, decode_bc7_block, decode_eacr_block, decode_eacr_signed_block, decode_eacrg_block, decode_eacrg_signed_block, decode_etc1_block, decode_etc2_rgb_block, decode_etc2_rgba1_block, decode_etc2_rgba8_block, decode_pvrtc as decode_pvrtc_};
+
 
 // For Unity by default, but can also be used with match/case for other formats
 #[derive(FromPrimitive, Debug, Copy, Clone)]

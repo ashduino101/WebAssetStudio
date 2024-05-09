@@ -1,5 +1,5 @@
 use web_sys::Element;
-use crate::studio::widgets::base::Widget;
+
 use crate::studio::components::base::WidgetComponent;
 use crate::utils::dom::create_element;
 
@@ -19,7 +19,7 @@ impl WidgetContainer {
     }
 
     pub fn render(&self, mount: &Element) {
-        let mut container = create_element("div");
+        let container = create_element("div");
         for child in &self.children {
             child.render(&container);
         }

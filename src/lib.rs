@@ -13,15 +13,15 @@ mod gamemaker;
 mod binary;
 mod studio;
 
-use std::{panic, thread};
-use std::mem::size_of_val;
+use std::{panic};
+
 use std::panic::PanicInfo;
-use bytes::{Buf, Bytes};
+use bytes::{Bytes};
 use three_d::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::console_log;
-use crate::fsb::bank::SoundBank;
-use crate::gamemaker::file::GameMakerFile;
+
+
 
 use crate::logger::splash;
 use crate::studio::components::checkbox::Checkbox;
@@ -29,9 +29,9 @@ use crate::studio::dock::widget::WidgetContainer;
 use crate::unity::assets::file::AssetFile;
 use crate::unity::bundle::file::BundleFile;
 use crate::utils::debug::load_audio;
-use crate::utils::dom::{create_element, create_img};
-use crate::utils::tex::qoi::decode_qoi_gm;
-use crate::xna::xnb::XNBFile;
+use crate::utils::dom::{create_img};
+
+
 
 #[wasm_bindgen(start)]
 async fn main() {
@@ -73,9 +73,9 @@ async fn main() {
     //     load_audio(audio);
     // }
 
-    let mut widget = WidgetContainer::new();
-    widget.add_component(Box::new(Checkbox::new()));
-    widget.render(&body);
+    // let mut widget = WidgetContainer::new();
+    // widget.add_component(Box::new(Checkbox::new()));
+    // widget.render(&body);
 
     return;
 
@@ -146,11 +146,11 @@ pub async fn run() {
     let light = AmbientLight::new_with_environment(&context, 1.0, Srgba::WHITE, skybox.texture());
 
     // main loop
-    let mut normal_map_enabled = true;
-    let mut occlusion_map_enabled = true;
-    let mut metallic_roughness_enabled = true;
-    let mut albedo_map_enabled = true;
-    let mut emissive_map_enabled = true;
+    let normal_map_enabled = true;
+    let occlusion_map_enabled = true;
+    let metallic_roughness_enabled = true;
+    let albedo_map_enabled = true;
+    let emissive_map_enabled = true;
     window.render_loop(move |mut frame_input| {
         let viewport = Viewport {
             x: 0,

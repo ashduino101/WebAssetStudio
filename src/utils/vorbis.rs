@@ -1,6 +1,6 @@
 use std::io::Cursor;
 use bitstream_io::{BitRead, BitReader, Endianness, LittleEndian};
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+
 
 pub fn ilog(val: u32) -> u32 {
     let mut v = val;
@@ -76,7 +76,7 @@ fn read_floor1<T: std::io::Read, E: Endianness>(stream: &mut BitReader<T, E>) ->
     let mut count = 0;
     let mut k = 0;
     for i in 0..partitions {
-        let mut current_class = partition_class_list[i as usize];
+        let current_class = partition_class_list[i as usize];
         let dim = class_dimensions[current_class as usize];
         count += dim;
         while k < count {
@@ -126,7 +126,7 @@ fn read_residue<T: std::io::Read, E: Endianness>(stream: &mut BitReader<T, E>) -
         let cflag = stream.read::<u8>(1)? != 0;
         if cflag {
             let c = stream.read::<u8>(5)?;
-            cascade |= (c << 3);
+            cascade |= c << 3;
         }
         second_stages.push(cascade);
         acc += icount(cascade as u32);
@@ -338,11 +338,11 @@ fn parse_setup_header(header: &[u8], channels: u8) -> Result<SetupHeader, std::i
                                 if (((num_entries as i64) / vals) as i64) < acc {
                                     break;
                                 }
-                                acc *= (vals as i64);
+                                acc *= vals as i64;
                                 if (i64::MAX / (vals + 1)) < acc1 {
                                     acc1 = i64::MAX;
                                 } else {
-                                    acc1 *= (vals + 1);
+                                    acc1 *= vals + 1;
                                 }
                                 i += 1;
                             }

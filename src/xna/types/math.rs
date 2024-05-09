@@ -1,5 +1,5 @@
 use bytes::{Buf, Bytes};
-use crate::base::asset::{Asset, Void};
+use crate::base::asset::{Void};
 use crate::base::types::{Matrix4x4, MatrixRow, Quaternion, Vector2, Vector3, Vector4};
 use crate::xna::type_base::XNBType;
 

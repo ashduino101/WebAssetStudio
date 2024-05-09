@@ -1,9 +1,9 @@
-use bytes::{Buf, Bytes};
+use bytes::{Bytes};
 use lz4_flex::{compress as _lz4_compress, decompress as _lz4_decompress};
-use lz4_flex::block::DecompressError;
-use std::io::{BufReader, Cursor};
-use std::panic;
-use wasm_bindgen::prelude::*;
+
+
+
+
 use lzxd::{Lzxd, WindowSize};
 
 
