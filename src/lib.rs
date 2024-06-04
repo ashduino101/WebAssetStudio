@@ -2,9 +2,9 @@ extern crate core;
 #[macro_use]
 extern crate num_derive;
 
-mod unity;
-mod utils;
-mod xna;
+pub mod unity;
+pub mod utils;
+pub mod xna;
 mod logger;
 mod base;
 mod alert_hook;
@@ -12,15 +12,22 @@ mod fsb;
 mod gamemaker;
 mod binary;
 mod studio;
+mod directx;
+mod errors;
 
 use std::{panic};
+use std::io::{Cursor, Write};
 
 use std::panic::PanicInfo;
-use bytes::{Bytes};
+use bytes::{Bytes, BytesMut};
 use three_d::*;
+use lzma_rs;
+use lzma_rs::decompress::Options;
+use tar::Archive;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_test::console_log;
-
+use crate::directx::shader::FXShader;
 
 
 use crate::logger::splash;
@@ -30,7 +37,31 @@ use crate::unity::assets::file::AssetFile;
 use crate::unity::bundle::file::BundleFile;
 use crate::utils::debug::load_audio;
 use crate::utils::dom::{create_img};
+use crate::utils::time::now;
 
+
+// async fn dectest() {
+//     let start = now();
+//     let lzma_data = include_bytes!("../AppBundle.tar.lzma");
+//     let mut offset = 0;
+//     let mut stream = lzma_rs::decompress::Stream::new_with_options(&Options {
+//         unpacked_size: Default::default(),
+//         memlimit: None,
+//         allow_incomplete: true
+//     }, Vec::new());
+//     while offset < lzma_data.len() {
+//         stream.write_all(&lzma_data[offset..(offset+4096).min(lzma_data.len())]).expect("failed to write to decoder");
+//         offset += 4096;
+//         console_log!("{}", (offset as f64) / (lzma_data.len() as f64));
+//     }
+//     let mut res = stream.finish().expect("failed to finish");
+//     let mut ar = Archive::new(Cursor::new(&mut res));
+//     for entry in ar.entries().expect("no entries") {
+//         console_log!("{}", entry.expect("no entry").path().expect("path").to_str().expect("no string"));
+//     }
+//     let end = now();
+//     console_log!("decompress took {}ms", end - start);
+// }
 
 
 #[wasm_bindgen(start)]
@@ -77,7 +108,11 @@ async fn main() {
     // widget.add_component(Box::new(Checkbox::new()));
     // widget.render(&body);
 
-    return;
+    // spawn_local(dectest());
+
+    // console_log!("{:?}", FXShader::from_bytes(&mut Bytes::from_static(include_bytes!("../lighting.fxc"))));
+
+    // return;
 
     let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
     let mut f = BundleFile::new(&mut dat);

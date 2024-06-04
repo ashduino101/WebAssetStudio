@@ -424,14 +424,14 @@ body {
 .dock-widget {
   position: relative;
   background-color: var(--theme-widget-bg);
-  border-radius: 10px;
+  border-radius: 3px;
   margin: 5px;
   box-sizing: border-box;
 }
 
 #dock-left {
   display: inline-block;
-  width: calc(20% - 10px);
+  width: calc(15% - 10px);
   height: 100%;
 }
 
@@ -447,7 +447,7 @@ body {
 
 #dock-middle {
   display: inline-block;
-  width: calc(60% - 5px);
+  width: calc(65% - 5px);
   height: 100%;
 }
 

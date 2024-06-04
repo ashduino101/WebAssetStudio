@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import collections
+import dataclasses
 import datetime
 import io
 import os
@@ -84,6 +87,12 @@ ABSTRACT_BASES = {
 }
 
 
+@dataclasses.dataclass
+class VersionRange:
+    start: int | None
+    end: int | None
+
+
 class Node:
     def __init__(self):
         self.version = 0
@@ -94,12 +103,10 @@ class Node:
         self.size = 0
         self.index = 0
         self.meta_flags = 0
-        self.added_in = 0
-        self.removed_in = None
-        self.align_added_in = 0
-        self.align_removed_in = None
+        self.version_ranges = []
+        self.align_version_ranges = []
         self.children = []
-        self.child_map = collections.OrderedDict()
+        self.child_map: collections.OrderedDict[str, Node] = collections.OrderedDict()
 
     def parse(self, f, strings):
         num_nodes, string_table_size = struct.unpack('<II', f.read(8))
@@ -134,45 +141,45 @@ class Node:
             if level > 0:
                 parents[len(parents) - 2].child_map[curr.name] = curr
 
-    def get(self, name):
+    def get(self, name: str):
         return self.child_map.get(name)
 
-    def diff(self, other, version):  # other must be older
+    def diff(self, other: Node, version):  # other must be older
         all_names = list(set([c.name for c in (self.children + other.children)]))
         for name in all_names:
-            child = self.get(name)
-            other_child = other.get(name)
-            if child and other_child:
-                child.added_in = other_child.added_in
-                child.align_added_in = other_child.align_added_in
-                child.align_removed_in = other_child.align_removed_in
+            child = self.get(name)  # Node on our newer node
+            older_child = other.get(name)  # Node on our older node
+            if child and older_child:  # If it is present in both...
+                child.version_ranges += older_child.version_ranges  # ...make sure to persist the version
+                child.align_version_ranges += older_child.align_version_ranges  # ...and the alignment version ranges
 
-            if not other.get(name):
-                i = self.get(name)
-                if i:
-                    i.added_in = version
-                    if i.meta_flags & 16384:
-                        i.align_added_in = version
-            elif not self.get(name):
-                i = other.get(name)
-                if i:
-                    if i.removed_in is None:
-                        i.removed_in = version
-                    # copy to self -- we want to keep all properties even if they have been removed
-                    prev_idx = list(other.child_map.keys()).index(name) - 1
-                    self.children.insert(prev_idx, i)
-                    self.child_map[name] = i
+            if not other.get(name):  # Since it isn't present in the older version, we can assume it was added in this one
+                i = self.get(name)  # Get our newer one
+                i.align_version_ranges.append(VersionRange(version, None))
+                if i.meta_flags & 16384:
+                    i.align_version_ranges.append(VersionRange(version, None))
+            elif not self.get(name):  # Removed in this version -- present in the older node but not the newer one
+                i = other.get(name)  # Get the older one
+                if len(i.version_ranges) == 0:
+                    i.version_ranges.append(VersionRange(None, 0))
+                i.version_ranges[-1].end = version
+                # copy to self -- we want to keep all properties even if they have been removed
+                prev_idx = list(other.child_map.keys()).index(name) - 1
+                self.children.insert(prev_idx, i)
+                self.child_map[name] = i
             else:
                 item = other.get(name)
                 if len(item.children) > 0:
                     child.diff(item, version)
 
-                if (child.meta_flags & 16384) and not (other_child.meta_flags & 16384):
+                if (child.meta_flags & 16384) and not (older_child.meta_flags & 16384):
                     # now aligned, previously not
-                    child.align_added_in = version
-                elif (other_child.meta_flags & 16384) and not (child.meta_flags & 18364):
+                    child.align_version_ranges.append(VersionRange(version, None))
+                elif (older_child.meta_flags & 16384) and not (child.meta_flags & 16384):
                     # no longer aligned
-                    child.align_removed_in = version
+                    if len(child.align_version_ranges) == 0:
+                        child.align_version_ranges.append(VersionRange(None, 0))
+                    child.align_version_ranges[-1].end = version
 
     @staticmethod
     def rustify_prop(name):
@@ -208,44 +215,47 @@ class Node:
             n = 'a' + n
 
         # Replace keywords
-        n = n.replace('type', 'r#type')
-        n = n.replace('struct', 'r#struct')
-        n = n.replace('override', 'r#override')
-        n = n.replace('loop', 'r#loop')
+        n = re.sub('^type$', 'r#type', n)
+        n = re.sub('^struct$', 'r#struct', n)
+        n = re.sub('^override$', 'r#override', n)
+        n = re.sub('^loop$', 'r#loop', n)
 
         return n
 
     def wrap_comparator(self, if_true, if_false):
         c = f'{{{if_true};v}}'
-        if self.added_in > 0 or (self.removed_in is not None):
+        if len(self.version_ranges) > 0 or len(self.align_version_ranges) > 0:
             c = 'if '
-            if self.added_in > 0:
-                c += f'ver >= {self.added_in}'
-            if self.removed_in and (self.added_in > 0):
-                c += ' && '
-            if self.removed_in:
-                c += f'ver < {self.removed_in}'
-            c += '{'
-            c += if_true
+            for r in self.version_ranges:
+                c += '('
+                if r.start is not None:
+                    c += f'{r.start} <= ver'
+                if r.start is not None and r.end is not None:
+                    c += f' && '
+                if r.end is not None:
+                    c += f'ver < {r.end}'
+                c += ') || '
+            c = c[:-4]
+            if len(self.version_ranges) == 0:
+                c = 'if true '  # TODO better logic
+            c += '{' + if_true
 
-            if self.align_added_in > 0 or (self.align_removed_in is not None):
-                ac = 'if '
-                if self.align_added_in > 0:
-                    ac += f'ver >= {self.align_added_in}'
-                if self.align_removed_in and (self.align_added_in > 0):
-                    ac += ' && '
-                if self.align_removed_in:
-                    ac += f'ver < {self.align_removed_in}'
-                ac += '{'
-                ac += 'data.align(init_length, 4);'
-                ac += '};v'
-                c += ac
-            else:
-                c += ';v'
+            ac = ';if '
+            for r in self.align_version_ranges:
+                ac += '('
+                if r.start is not None:
+                    ac += f'{r.start} <= ver'
+                if r.start is not None and r.end is not None:
+                    ac += f' && '
+                if r.end is not None:
+                    ac += f'ver < {r.end}'
+                ac += ') || '
+            ac = ac[:-4]
+            ac += '{data.align(init_length, 4);};v'
 
-            c += '} else {'
-            c += if_false
-            c += '}'
+            c += ac
+
+            c += '} else {' + if_false + '}'
         return c
 
     @staticmethod
@@ -303,8 +313,7 @@ class Node:
                 #     s += '    #[wasm_bindgen(skip)]\n'
                 s += f'    pub {prop}: {typ},\n'
                 added.add(prop)
-            s += f'}}\n\nimpl TypeDefFromBytes for {struct_name} {{\n' \
-
+            s += f'}}\n\nimpl TypeDefFromBytes for {struct_name} {{\n'
             s += f'    fn from_bytes(data: &mut Bytes, ver: u32) -> {struct_name} {{\n'
             s += f'        let init_length = data.len();\n'
             s += f'        {struct_name} {{\n'
@@ -353,11 +362,11 @@ class Node:
                 val.children[1].generate_struct(hist)
 
     def __repr__(self, level=0):
-        s = f'{"  " * level}{self.type_name} {self.name} {{v{self.version}}} {{{self.added_in}..{self.removed_in}}}\n'
+        s = f'{"  " * level}{self.type_name} {self.name} {{v{self.version}}} {{{self.version_ranges}}}\n'
         for c in self.children:
-            s += c.__repr__(level=level+1)
+            s += c.__repr__(level=level + 1)
         if (self.meta_flags & 16384) == 16384:
-            s += f'{"  " * level}(align {self.align_added_in}..{self.align_removed_in})\n'
+            s += f'{"  " * level}(align {self.align_version_ranges})\n'
         return s
 
     __str__ = __repr__
@@ -415,6 +424,8 @@ def main():
 
     versions = sorted(versions, key=lambda i: i[0])
 
+    versions = [[version2int('3.4.0'), '3.4.0'], [version2int('2023.2.8f1'), '2023.2.8f1']]
+
     print('Comparing trees')
 
     old = None
@@ -430,6 +441,8 @@ def main():
             elem1 = elem1[0]
             elem2.diff(elem1, v[0])
             trees[elem2.type_name] = elem2
+
+            break
         old = new
 
     print('Generating code')
@@ -460,7 +473,7 @@ def main():
     with open('classes.gen.rs', 'w') as of:
         of.write(code)
 
-    print(trees.get('Animator'))
+    print(trees)
 
 
 if __name__ == '__main__':

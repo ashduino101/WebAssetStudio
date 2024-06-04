@@ -9,7 +9,7 @@ const { setModuleImports, getAssemblyExports, getConfig } = await dotnet
     .create();
 
 const config = getConfig();
-const exports = await getAssemblyExports(config.mainAssemblyName);
+const exports = window.exports = await getAssemblyExports(config.mainAssemblyName);
 
 const input = document.getElementById('file-input');
 input.addEventListener('change', e => {
@@ -17,9 +17,11 @@ input.addEventListener('change', e => {
   let reader = new FileReader();
   reader.onloadend = async b => {
     let arr = new Uint8Array(reader.result);
-    exports.Decompiler.Load(arr, f.name);
-    let modules = exports.Decompiler.ListTypes(f.name);
+    const decompiler = window.decompiler = exports.Decompiler.New(f.name, arr);
+    let modules = JSON.parse(exports.Decompiler.ListNamespaces(decompiler));
     console.log(modules);
+    // let types = JSON.parse(exports.Decompiler.GetTopLevelTypes(decompiler, modules[0].assemblyName));
+    // console.log(types);
     console.log('done');
     // document.getElementById('out').textContent = text;
   }

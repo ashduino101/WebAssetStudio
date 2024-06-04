@@ -15,13 +15,15 @@ const XNB_DATA: Dir = include_dir!("tests/data/xnb");
 
 #[cfg(test)]
 mod tests {
+    use std::convert::TryInto;
     use std::fs::File;
-    use std::io::{Read};
-    use webassetstudio::unity::asset_file::AssetFile;
-    use bytes::{Bytes};
+    use std::io::{Read, Write};
+    use webassetstudio::unity::assets::file::AssetFile;
+    use bytes::{Buf, BufMut, Bytes, BytesMut};
     use webassetstudio::unity::bundle::file::BundleFile;
     // use webassetstudio::unity::classes::{Animator, MonoBehaviour, SkinnedMeshRenderer, TypeDefFromBytes};
     use include_dir::{include_dir, Dir};
+    use lzxd::{Lzxd, WindowSize};
     use webassetstudio::utils::compress::lzx_decompress;
     // use webassetstudio::utils::lzx_decompress;
     use webassetstudio::xna::xnb::XNBFile;
@@ -56,7 +58,8 @@ mod tests {
 
     #[test]
     fn test_lzx() {
-        // let mut data = include_bytes!("data/misc/compression.lzx");
-        // lzx_decompress(&data[..]);
+        let mut data = Bytes::from_static(include_bytes!("data/misc/Bed.lzx"));
+
+
     }
 }

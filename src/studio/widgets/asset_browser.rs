@@ -5,7 +5,7 @@ pub struct AssetBrowser {
 }
 
 impl AssetBrowser {
-    fn add_item(parent: &str, name: &str, icon: ) {
+    fn add_item(parent: &str, name: &str, /*icon: &Icon*/) {
 
     }
 }
