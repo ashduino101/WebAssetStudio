@@ -14,8 +14,8 @@ pub fn create_data_url(data: &[u8]) -> String {
     Url::create_object_url_with_blob(&blob).expect("failed to create object url")
 }
 
-pub fn create_img(rgba: &[u8], width: usize, height: usize) -> String {
-    let png = encode_png(width as u32, height as u32, rgba, false);
+pub fn create_img(rgba: &[u8], width: usize, height: usize, flip: bool) -> String {
+    let png = encode_png(width as u32, height as u32, rgba, flip);
     create_data_url(&png)
 }
 

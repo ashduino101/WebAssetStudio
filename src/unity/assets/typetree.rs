@@ -21,7 +21,23 @@ fn get_string(table: &Bytes, offset: usize) -> String {
 #[derive(Debug, Copy, Clone)]
 pub struct ObjectError;
 
-#[derive(Debug)]
+// #[derive(Debug)]
+// pub struct ObjectType {
+//     children: HashMap<String, ValueType>,
+//     typename: String
+// }
+//
+// impl ObjectType {
+//     pub fn get<T>(&self, key: T) -> Option<&ValueType> {
+//         self.children.get(key)
+//     }
+//
+//     pub fn get_typename(&self) -> String {
+//         self.typename.clone()
+//     }
+// }
+
+#[derive(Debug, Clone)]
 pub enum ValueType {
     Void,
     Bool(bool),
@@ -68,6 +84,9 @@ impl ValueType {
     }
     pub fn as_i64(&self) -> Result<i64, ObjectError> {
         if let ValueType::Int64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_offset(&self) -> Result<usize, ObjectError> {  // exists due to migrations from u32 to u64
+        Ok(if let Ok(i) = self.as_u64() { i as usize } else { self.as_u32()? as usize })
     }
     pub fn as_u64(&self) -> Result<u64, ObjectError> {
         if let ValueType::UInt64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
@@ -180,7 +199,6 @@ pub struct TypeInfo {
     pub script_id: u128,
     pub old_type_hash: u128,
     pub nodes: Vec<TypeNode>,
-    pub string_repr: String,
     pub type_deps: Vec<u32>
 }
 
@@ -199,7 +217,6 @@ impl TypeInfo {
         let old_type_hash = if version >= 13 { data.get_u128() } else { 0u128 };
 
         let mut nodes = Vec::new();
-        let mut repr = "".to_string();
         if enable_type_trees {
             if version == 10 || version >= 12 {
                 let num_nodes = data.get_u32_ordered(little_endian);
@@ -211,7 +228,6 @@ impl TypeInfo {
                 data.advance(string_table_size as usize);
                 for _ in 0..num_nodes {
                     let node = TypeNode::from_bytes(&mut node_data, version, little_endian, &string_table);
-                    repr += &format!("{}{} {}\n", "  ".to_owned().repeat(node.level as usize), node.type_name, node.name);
                     nodes.push(node);
                 }
             } else {
@@ -234,7 +250,6 @@ impl TypeInfo {
             script_id,
             old_type_hash,
             nodes,
-            string_repr: repr,
             type_deps
         }
     }

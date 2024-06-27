@@ -61,7 +61,7 @@ impl EmscriptenModule {
             .dyn_into::<Function>()
             .expect("cannot load free");
 
-        on_init.call1(&JsValue::undefined(), &module);
+        on_init.call1(&JsValue::undefined(), &module).expect("on_init");
 
         Ok(Self {
             env,
@@ -83,7 +83,8 @@ impl EmscriptenModule {
         Ok(addr.as_f64().unwrap() as u32)
     }
 
-    pub fn free(&mut self, ptr: u32) {
-        self._malloc.call1(&JsValue::undefined(), &JsValue::from(ptr));
+    pub fn free(&mut self, ptr: u32) -> Result<(), JsValue> {
+        self._malloc.call1(&JsValue::undefined(), &JsValue::from(ptr))?;
+        Ok(())
     }
 }

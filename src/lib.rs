@@ -34,10 +34,56 @@ use crate::logger::splash;
 use crate::studio::components::checkbox::Checkbox;
 use crate::studio::dock::widget::WidgetContainer;
 use crate::unity::assets::file::AssetFile;
+use crate::unity::assets::typetree::TypeParser;
+use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
+use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::unity::bundle::file::BundleFile;
 use crate::utils::debug::load_audio;
 use crate::utils::dom::{create_img};
 use crate::utils::time::now;
+
+async fn unity_test() {
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
+    let mut f = BundleFile::new(&mut dat);
+
+    console_log!("start decompress");
+    let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
+    console_log!("end decompress: {} bytes", file.len());
+
+    console_log!("start asset file parse");
+    let asset = AssetFile::new(&mut file);
+
+    for object in &asset.objects {
+        let typ = &asset.types[object.type_id as usize];
+        let data = &mut asset.object_data.slice(object.offset..object.offset + object.size);
+        // console_log!("{}", typ.string_repr);
+        // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
+        let parsed = TypeParser::parse_object_from_info(typ, data);
+        console_log!("{:?}", parsed.get("m_Name"));
+        if typ.class_id == 28 {
+            //     // console_log!("{:?}", parsed);
+            let w = Texture2DWrapper::from_value(&parsed).expect("failed to wrap object");
+            //     // console_log!("{:?}", w);
+
+            let window = web_sys::window().expect("no global `window` exists");
+            let document = window.document().expect("should have a document on window");
+            let body = document.body().expect("document should have a body");
+
+            let elem = document.create_element("img").expect("failed to create element");
+            elem.set_attribute("src", &create_img(w.get_image(w.num_images - 1).as_ref(), w.width as usize, w.height as usize, true)).expect("set_attribute");
+            body.append_child(&elem).expect("append_child");
+        }
+        if typ.class_id == 83 {
+            let w = AudioClipWrapper::from_value(&parsed).expect("failed to wrap object");
+            console_log!("{:?}", w.get_audio(&f).expect("failed to get audio"));
+        }
+        // console_log!("{:?}", parsed);
+    }
+
+    console_log!("{:?}", asset);
+    console_log!("{:?}", f);
+    console_log!("done");
+}
 
 
 // async fn dectest() {
@@ -114,17 +160,8 @@ async fn main() {
 
     // return;
 
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
-    let mut f = BundleFile::new(&mut dat);
+    spawn_local(unity_test());
 
-    console_log!("start decompress");
-    let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
-    console_log!("end decompress: {} bytes", file.len());
-
-    console_log!("start asset file parse");
-    let asset = AssetFile::new(&mut file);
-    // console_log!("{:?}", asset);
-    console_log!("done");
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
     // run().await;
 }

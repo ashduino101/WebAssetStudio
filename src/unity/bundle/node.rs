@@ -1,16 +1,11 @@
 use bytes::{Buf, Bytes};
 use crate::utils::buf::{BufExt, FromBytes};
+use bitflags::{bitflags, Flags};
 
-#[derive(Debug)]
-pub struct NodeFlags {
-    // TODO
-}
-
-impl NodeFlags {
-    pub fn from_bits(i: u32) -> NodeFlags {
-        NodeFlags {
-            // TODO
-        }
+bitflags! {
+    #[derive(Debug, Copy, Clone)]
+    pub struct NodeFlags: u32 {
+        const IsAsset = 0b00000100;
     }
 }
 
@@ -27,7 +22,7 @@ impl FromBytes for Node {
         Node {
             offset: data.get_u64() as usize,
             size: data.get_u64() as usize,
-            flags: NodeFlags::from_bits(data.get_u32()),
+            flags: NodeFlags::from_bits_retain(data.get_u32()),
             path: data.get_cstring()
         }
     }

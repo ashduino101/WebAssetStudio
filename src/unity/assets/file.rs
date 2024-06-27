@@ -1,16 +1,18 @@
-
+use std::fmt;
+use std::fmt::Debug;
 use bytes::{Bytes, Buf};
 use wasm_bindgen_test::console_log;
+use crate::create_img;
 
 use crate::unity::assets::external::External;
 use crate::unity::assets::typetree::TypeInfo;
 use crate::unity::object::identifier::LocalObjectIdentifier;
 use crate::unity::object::info::ObjectInfo;
 use crate::unity::assets::typetree::TypeParser;
+use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 
 use crate::utils::buf::{BufExt, FromBytes};
 
-#[derive(Debug)]
 pub struct AssetFile {
     pub metadata_size: usize,
     pub file_size: usize,
@@ -24,6 +26,26 @@ pub struct AssetFile {
     pub objects: Vec<ObjectInfo>,
     pub script_types: Vec<LocalObjectIdentifier>,
     pub externals: Vec<External>,
+    pub object_data: Bytes
+}
+
+impl Debug for AssetFile {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("AssetFile")
+            .field("metadata_size", &self.metadata_size)
+            .field("file_size", &self.file_size)
+            .field("version", &self.version)
+            .field("data_offset", &self.data_offset)
+            .field("little_endian", &self.little_endian)
+            .field("unity_version", &self.unity_version)
+            .field("platform", &self.platform)
+            .field("enable_type_trees", &self.enable_type_trees)
+            .field("types", &self.types)
+            .field("objects", &self.objects)
+            .field("script_types", &self.script_types)
+            .field("externals", &self.externals)
+            .finish()
+    }
 }
 
 impl AssetFile {
@@ -81,29 +103,6 @@ impl AssetFile {
             externals.push(External::from_bytes(data, version, little_endian));
         }
 
-        for object in &objects {
-            let typ = &types[object.type_id as usize];
-            let data = &mut object_data.slice(object.offset..object.offset + object.size);
-            // console_log!("{}", typ.string_repr);
-            // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
-            let parsed = TypeParser::parse_object_from_info(typ, data);
-            console_log!("{:?}", parsed.get("m_Name"));
-            // if false && typ.class_id == 28 {
-            //     // console_log!("{:?}", parsed);
-            //     let mut w = Texture2DWrapper::from_value(parsed).expect("failed to wrap object");
-            //     // console_log!("{:?}", w);
-
-            //     let window = web_sys::window().expect("no global `window` exists");
-            //     let document = window.document().expect("should have a document on window");
-            //     let body = document.body().expect("document should have a body");
-
-            //     let elem = document.create_element("img").expect("failed to create element");
-            //     elem.set_attribute("src", &create_img(w.get_image(w.num_images - 1).as_ref(), w.width as usize, w.height as usize));
-            //     body.append_child(&elem);
-            // }
-            // console_log!("{:?}", parsed);
-        }
-
         AssetFile {
             metadata_size,
             file_size,
@@ -116,7 +115,8 @@ impl AssetFile {
             types,
             objects,
             script_types,
-            externals
+            externals,
+            object_data
         }
     }
 }

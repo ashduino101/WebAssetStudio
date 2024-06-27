@@ -194,9 +194,9 @@ impl SoundBank {
             let document = window.document().expect("should have a document on window");
             let body = document.body().expect("document should have a body");
             let elem = document.create_element("audio").expect("failed to create element");
-            elem.set_attribute("src", &create_data_url(&data[..]));
-            elem.set_attribute("controls", "");
-            body.append_child(&elem);
+            elem.set_attribute("src", &create_data_url(&data[..])).expect("set_attribute");
+            elem.set_attribute("controls", "").expect("set_attribute");
+            body.append_child(&elem).expect("append_child");
         }
 
         data.advance(total_size as usize);

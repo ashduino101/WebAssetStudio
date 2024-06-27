@@ -1,5 +1,10 @@
+use std::fmt;
+use std::fmt::Debug;
 use std::iter::FromIterator;
 use bytes::{Bytes, Buf, BytesMut, BufMut};
+use regex::Regex;
+use wasm_bindgen_test::console_log;
+use crate::unity::assets::typetree::{ObjectError, ValueType};
 
 use crate::unity::bundle::block::{BlockInfo};
 use crate::unity::bundle::node::{Node};
@@ -60,11 +65,19 @@ impl BundleFlags {
     }
 }
 
-#[derive(Debug)]
 pub struct BundleFile {
     pub header: BundleFileHeader,
     pub storage: StorageInfo,
     block_data: Bytes
+}
+
+impl Debug for BundleFile {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("BundleFile")
+            .field("header", &self.header)
+            .field("storage", &self.storage)
+            .finish()
+    }
 }
 
 impl BundleFile {
@@ -130,7 +143,7 @@ impl BundleFile {
 
     pub fn get_file(&self, path: &str) -> Option<Bytes> {
         let node = self.storage.get_node_by_path(path)?;
-        let (blocks, first_offset) = self.storage.get_blocks_for_node(node);
+        let (blocks, first_offset, raw_offset) = self.storage.get_blocks_for_node(node);
         let mut buf = BytesMut::new();
         let mut offset = first_offset;
         for block in &blocks {
@@ -142,6 +155,27 @@ impl BundleFile {
             ));
             offset += block.compressed_size;
         };
-        Some(Bytes::from(buf))
+        let over = node.offset - raw_offset;
+        Some(Bytes::from(buf).slice(over..))
+    }
+
+    pub fn get_resource_data(&self, resource: &ValueType) -> Result<Bytes, ObjectError> {
+        let mut source = resource.get("m_Source")?.as_string()?;
+        let offset = resource.get("m_Offset")?.as_offset()?;
+        let size = resource.get("m_Size")?.as_offset()?;
+
+        if source.starts_with("archive:/") {
+            let pat = Regex::new(
+                r#"archive:/[\w\d\-_.'"\[\]{}()]+/(.*)"#
+            ).expect("compile error");
+
+
+            let (_, [s]) = pat.captures_iter(&source).map(|c| c.extract()).last().expect("no matches");
+            source = s.into();
+        }
+
+        let file = self.get_file(&source).expect("resource points to non-existent file");
+        let data = file.slice(offset..offset + size);
+        Ok(data)
     }
 }

@@ -23,6 +23,6 @@ impl WidgetContainer {
         for child in &self.children {
             child.render(&container);
         }
-        mount.append_child(&container);
+        mount.append_child(&container).expect("append_child");
     }
 }

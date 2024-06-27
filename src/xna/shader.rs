@@ -63,14 +63,14 @@ async fn load() -> Result<(), JsValue> {
     let heap_i32 = Int32Array::new(&membuf);
     let heap_f32 = Float32Array::new(&membuf);
     let heap_f64 = Float64Array::new(&membuf);
-    Function::new_with_args("data", "window.HEAPU8 = data;").call1(&JsValue::undefined(), &heap_u8);
-    Function::new_with_args("data", "window.HEAP8 = data;").call1(&JsValue::undefined(), &heap_i8);
-    Function::new_with_args("data", "window.HEAPU16 = data;").call1(&JsValue::undefined(), &heap_u16);
-    Function::new_with_args("data", "window.HEAP16 = data;").call1(&JsValue::undefined(), &heap_i16);
-    Function::new_with_args("data", "window.HEAPU32 = data;").call1(&JsValue::undefined(), &heap_u32);
-    Function::new_with_args("data", "window.HEAP32 = data;").call1(&JsValue::undefined(), &heap_i32);
-    Function::new_with_args("data", "window.HEAPF32 = data;").call1(&JsValue::undefined(), &heap_f32);
-    Function::new_with_args("data", "window.HEAPF64 = data;").call1(&JsValue::undefined(), &heap_f64);
+    Function::new_with_args("data", "window.HEAPU8 = data;").call1(&JsValue::undefined(), &heap_u8).expect("heap constructor");
+    Function::new_with_args("data", "window.HEAP8 = data;").call1(&JsValue::undefined(), &heap_i8).expect("heap constructor");
+    Function::new_with_args("data", "window.HEAPU16 = data;").call1(&JsValue::undefined(), &heap_u16).expect("heap constructor");
+    Function::new_with_args("data", "window.HEAP16 = data;").call1(&JsValue::undefined(), &heap_i16).expect("heap constructor");
+    Function::new_with_args("data", "window.HEAPU32 = data;").call1(&JsValue::undefined(), &heap_u32).expect("heap constructor");
+    Function::new_with_args("data", "window.HEAP32 = data;").call1(&JsValue::undefined(), &heap_i32).expect("heap constructor");
+    Function::new_with_args("data", "window.HEAPF32 = data;").call1(&JsValue::undefined(), &heap_f32).expect("heap constructor");
+    Function::new_with_args("data", "window.HEAPF64 = data;").call1(&JsValue::undefined(), &heap_f64).expect("heap constructor");
 
     let wasm_table = Reflect::get(exports.as_ref(), &"__indirect_function_table".into())?
         .dyn_into::<JsValue>()
@@ -88,7 +88,7 @@ async fn load() -> Result<(), JsValue> {
         .dyn_into::<Function>()
         .expect("cannot load free");
 
-    on_init.call1(&JsValue::undefined(), &module);
+    on_init.call1(&JsValue::undefined(), &module).expect("init call");
 
     let prof = malloc.call1(&JsValue::undefined(), &JsValue::from(5)).unwrap();
     heap_u8.set(&Uint8Array::from(&[104u8, 108, 115, 108, 0][..]), unsafe {prof.as_f64().unwrap().to_int_unchecked()});

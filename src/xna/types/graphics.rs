@@ -88,7 +88,7 @@ pub struct Texture2D {
 impl Asset for Texture2D {
     fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
         let elem = doc.create_element("img").expect("failed to create element");
-        elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize));
+        elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize, false)).expect("set_attribute");
         elem
     }
 }

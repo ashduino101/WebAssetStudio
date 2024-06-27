@@ -82,7 +82,7 @@ pub fn decode_qoi_gm(data: &mut Bytes) -> Result<(), anyhow::Error>{
     intermediate.put(data.slice(0..data_size as usize));
     intermediate.put_slice(&[0u8, 0, 0, 0, 0, 0, 0, 1]);
     let decoded = qoi::decode_to_vec(&intermediate[..])?;
-    console_log!("{:?}", create_img(&decoded.1[..], width as usize, height as usize));
+    console_log!("{:?}", create_img(&decoded.1[..], width as usize, height as usize, false));
 
 
     // let mut index = vec![0u32; 64];

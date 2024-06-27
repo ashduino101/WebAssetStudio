@@ -7,9 +7,9 @@ pub(crate) struct ParseError {
 
 impl Error for ParseError {}
 
+#[allow(dead_code)]
 impl ParseError {
     pub fn new(msg: &str) -> ParseError {
-
         ParseError {
             msg: msg.to_owned()
         }

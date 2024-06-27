@@ -31,7 +31,7 @@ impl ClassWrapper for Texture2DWrapper {
 }
 
 impl Texture2DWrapper {
-    pub fn from_value(value: ValueType) -> Result<Self, ObjectError> {
+    pub fn from_value(value: &ValueType) -> Result<Self, ObjectError> {
         Ok(Texture2DWrapper {
             width: value.get("m_Width")?.as_i32()?,
             height: value.get("m_Height")?.as_i32()?,
