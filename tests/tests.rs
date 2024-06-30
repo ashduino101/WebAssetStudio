@@ -58,7 +58,7 @@ mod tests {
 
     #[test]
     fn test_lzx() {
-        let mut data = Bytes::from_static(include_bytes!("data/misc/Bed.lzx"));
+        // let mut data = Bytes::from_static(include_bytes!("data/misc/Bed.lzx"));
 
 
     }

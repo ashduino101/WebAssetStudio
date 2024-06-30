@@ -159,10 +159,8 @@ impl BundleFile {
         Some(Bytes::from(buf).slice(over..))
     }
 
-    pub fn get_resource_data(&self, resource: &ValueType) -> Result<Bytes, ObjectError> {
-        let mut source = resource.get("m_Source")?.as_string()?;
-        let offset = resource.get("m_Offset")?.as_offset()?;
-        let size = resource.get("m_Size")?.as_offset()?;
+    pub fn get_resource_data(&self, path: &str, offset: usize, size: usize) -> Result<Bytes, ObjectError> {
+        let mut source = path.to_owned();
 
         if source.starts_with("archive:/") {
             let pat = Regex::new(

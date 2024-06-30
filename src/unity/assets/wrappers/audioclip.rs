@@ -33,7 +33,11 @@ impl AudioClipWrapper {
     }
 
     pub fn get_audio(&self, bundle: &BundleFile) -> Result<SoundBank, ObjectError> {
-        let mut res = bundle.get_resource_data(&self.resource)?;
+        let mut res = bundle.get_resource_data(
+            self.resource.get("m_Source")?.as_string()?.as_str(),
+            self.resource.get("m_Offset")?.as_offset()?,
+            self.resource.get("m_Size")?.as_offset()?
+        )?;
         let bank = SoundBank::new(&mut res);
         Ok(bank)
     }

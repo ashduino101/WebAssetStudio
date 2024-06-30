@@ -54,6 +54,16 @@ pub enum ValueType {
     String(String),
     Data(Bytes),
     Array(Vec<ValueType>),
+    Int8Array(Vec<i8>),
+    UInt8Array(Vec<u8>),
+    Int16Array(Vec<i16>),
+    UInt16Array(Vec<u16>),
+    Int32Array(Vec<i32>),
+    UInt32Array(Vec<u32>),
+    Int64Array(Vec<i64>),
+    UInt64Array(Vec<u64>),
+    Float32Array(Vec<f32>),
+    Float64Array(Vec<f64>),
     Object(HashMap<String, ValueType>)
 }
 
@@ -102,6 +112,12 @@ impl ValueType {
     }
     pub fn as_array(&self) -> Result<&Vec<ValueType>, ObjectError> {
         if let ValueType::Array(v) = self { Ok(v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_u8_array(&self) -> Result<&Vec<u8>, ObjectError> {
+        if let ValueType::UInt8Array(v) = self { Ok(v) } else { Err(ObjectError {}) }
+    }
+    pub fn as_f32_array(&self) -> Result<&Vec<f32>, ObjectError> {
+        if let ValueType::Float32Array(v) = self { Ok(v) } else { Err(ObjectError {}) }
     }
     pub fn as_object(&self) -> Result<&HashMap<String, ValueType>, ObjectError> {
         if let ValueType::Object(v) = self { Ok(v) } else { Err(ObjectError {}) }
@@ -277,25 +293,44 @@ impl TypeParser {
             }
             return val;
         } else if node.type_name == "Array" {
-            let mut arr = Vec::new();  // TODO: can't box vecs for some reason, also this creates "Array" on the object
-            let length = data.get_u32_ordered(node.little_endian);  // TODO: this assumes arrays are always u32-prefixed
+            let length = data.get_u32_ordered(node.little_endian) as usize;  // TODO: this assumes arrays are always u32-prefixed
             self.index += 2;
             // console_log!("arr len {length} at {} (in {})", orig_length - data.len(), self.nodes[self.index - 3].name);
             let val_idx = self.index.clone();
-            for i in 0..length {
-                self.index = val_idx;
-                let val_node = &self.nodes[self.index];
-                arr.push(self.parse_node(&val_node.clone(), data, orig_length));
-            }
-            if length == 0 {
-                while (self.index < self.nodes.len() - 1) && (self.nodes[self.index + 1].level > node.level) {
-                    self.index += 1;
+            let val_node = &self.nodes[self.index];
+            let value = match val_node.type_name.as_str() {
+                "UInt8" | "char" => {
+                    let arr = ValueType::UInt8Array(data.slice(0..length).to_vec());
+                    data.advance(length);
+                    arr
+                },
+                "float" => {
+                    let mut vec = Vec::new();
+                    for _ in 0..length {
+                        vec.push(data.get_f32_ordered(node.little_endian));
+                    }
+                    ValueType::Float32Array(vec)
                 }
-            }
+                _ => {
+                    let mut arr = Vec::new();  // TODO: can't box vecs for some reason, also this creates "Array" on the object
+                    for i in 0..length {
+                        self.index = val_idx;
+                        let val_node = &self.nodes[self.index];
+                        arr.push(self.parse_node(&val_node.clone(), data, orig_length));
+                    }
+                    if length == 0 {
+                        while (self.index < self.nodes.len() - 1) && (self.nodes[self.index + 1].level > node.level) {
+                            self.index += 1;
+                        }
+                    }
+                    ValueType::Array(arr)
+                }
+            };
+
             if node.meta_flags & 16384 != 0 {
                 data.align(orig_length, 4);
             }
-            return ValueType::Array(arr);
+            return value;
         } else if self.nodes[self.index + 1].level > node.level {  // a "child" of this node
             let mut child = HashMap::new();
             while (self.index < self.nodes.len() - 1) && (self.nodes[self.index + 1].level > node.level) {

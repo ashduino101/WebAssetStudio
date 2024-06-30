@@ -19,7 +19,7 @@ use std::{panic};
 use std::io::{Cursor, Write};
 
 use std::panic::PanicInfo;
-use bytes::{Bytes, BytesMut};
+use bytes::{Bytes, BytesMut, Buf};
 use three_d::*;
 use lzma_rs;
 use lzma_rs::decompress::Options;
@@ -36,14 +36,16 @@ use crate::studio::dock::widget::WidgetContainer;
 use crate::unity::assets::file::AssetFile;
 use crate::unity::assets::typetree::TypeParser;
 use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
+use crate::unity::assets::wrappers::mesh::MeshWrapper;
 use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::unity::bundle::file::BundleFile;
-use crate::utils::debug::load_audio;
-use crate::utils::dom::{create_img};
+use crate::unity::version::UnityVersion;
+use crate::utils::debug::{load_audio, render_mesh};
+use crate::utils::dom::{create_data_url, create_img};
 use crate::utils::time::now;
 
 async fn unity_test() {
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 
     console_log!("start decompress");
@@ -53,16 +55,19 @@ async fn unity_test() {
     console_log!("start asset file parse");
     let asset = AssetFile::new(&mut file);
 
+    let mut i = 0;
+
     for object in &asset.objects {
         let typ = &asset.types[object.type_id as usize];
         let data = &mut asset.object_data.slice(object.offset..object.offset + object.size);
         // console_log!("{}", typ.string_repr);
         // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
         let parsed = TypeParser::parse_object_from_info(typ, data);
-        console_log!("{:?}", parsed.get("m_Name"));
+        let name = parsed.get("m_Name").ok().map_or("<untitled>".to_owned(), |v| v.as_string().unwrap());
+        console_log!("{:?}", name);
         if typ.class_id == 28 {
             //     // console_log!("{:?}", parsed);
-            let w = Texture2DWrapper::from_value(&parsed).expect("failed to wrap object");
+            let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
             //     // console_log!("{:?}", w);
 
             let window = web_sys::window().expect("no global `window` exists");
@@ -77,11 +82,25 @@ async fn unity_test() {
             let w = AudioClipWrapper::from_value(&parsed).expect("failed to wrap object");
             console_log!("{:?}", w.get_audio(&f).expect("failed to get audio"));
         }
+        if typ.class_id == 43 {
+            let w = MeshWrapper::from_value(&parsed, asset.unity_version.major).unwrap();
+            console_log!("{:?}", w);
+            let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
+            if i == 5 {
+                render_mesh(scene).await;
+            }
+
+            i += 1;
+            // break;
+            // console_log!("{}", create_data_url(&w.vertex_data[..]));
+            // console_log!("{:?}", parsed.get("m_VertexData").unwrap().get("m_DataSize").unwrap().as_bytes().unwrap().len());
+        }
         // console_log!("{:?}", parsed);
     }
 
     console_log!("{:?}", asset);
     console_log!("{:?}", f);
+
     console_log!("done");
 }
 

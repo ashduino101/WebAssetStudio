@@ -24,3 +24,9 @@ pub fn create_element(tag: &str) -> Element {
     let document = window.document().expect("no document available");
     document.create_element(tag).expect(&format!("failed to create element \"{}\"", tag))
 }
+
+pub fn get_element_by_id(id: &str) -> Option<Element> {
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("no document available");
+    document.get_element_by_id(id)
+}

@@ -20,7 +20,6 @@ fn flip_v(width: usize, height: usize, data: &[u8]) -> Box<[u8]> {
 }
 
 pub fn encode_png(width: u32, height: u32, data: &[u8], flip: bool) -> Box<[u8]> {
-    panic::set_hook(Box::new(console_error_panic_hook::hook));
     if width == 0 || height == 0 {
         return [].into();
     }

@@ -884,6 +884,7 @@ pub fn decode(format: TextureFormat, data: &mut Bytes, width: usize, height: usi
         TextureFormat::ETC2RGB => decode_etc2(data, width, height),
         TextureFormat::ETC2RGBA1 => decode_etc2_a1(data, width, height),
         TextureFormat::ETC2RGBA8 | TextureFormat::ETC2RGBA83DS => decode_etc2_a8(data, width, height),
+        // FIXME: crunch
         TextureFormat::ETCRGB4Crunched => decode_etc1(data, width, height),
         TextureFormat::ETC2RGBA8Crunched => decode_etc2_a8(data, width, height),
 

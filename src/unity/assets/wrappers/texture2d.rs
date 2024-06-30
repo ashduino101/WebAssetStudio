@@ -2,8 +2,10 @@ extern crate num;
 
 use std::fmt::{Debug};
 use bytes::Bytes;
+use wasm_bindgen_test::console_log;
 use web_sys::{Document, Element};
 use crate::base::asset::Asset;
+use crate::{BundleFile, create_data_url};
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 
@@ -31,7 +33,7 @@ impl ClassWrapper for Texture2DWrapper {
 }
 
 impl Texture2DWrapper {
-    pub fn from_value(value: &ValueType) -> Result<Self, ObjectError> {
+    pub fn from_value(value: &ValueType, bundle: Option<&BundleFile>) -> Result<Self, ObjectError> {
         Ok(Texture2DWrapper {
             width: value.get("m_Width")?.as_i32()?,
             height: value.get("m_Height")?.as_i32()?,
@@ -39,11 +41,29 @@ impl Texture2DWrapper {
             num_images: value.get("m_ImageCount")?.as_i32()?,
             dimensions: value.get("m_TextureDimension").unwrap_or(&ValueType::Int32(2)).as_i32()?,
             format: num::FromPrimitive::from_i32(value.get("m_TextureFormat")?.as_i32()?).ok_or(ObjectError {})?,
-            data: value.get("image data")?.as_bytes()?
+            data: {
+                let stream = value.get("m_StreamData")?;
+                let data = value.get("image data")?.as_bytes()?;
+                if data.len() > 0 {
+                    data
+                } else {
+                    if let Some(b) = bundle {
+                        b.get_resource_data(
+                            stream.get("path")?.as_string()?.as_str(),
+                            stream.get("offset")?.as_offset()?,
+                            stream.get("size")?.as_offset()?
+                        )?
+                    } else {
+                        // FIXME error handling
+                        panic!("texture contains streaming data but no bundle was provided");
+                    }
+                }
+            }
         })
     }
 
     pub fn get_image(&self, index: i32) -> Box<[u8]> {
+        console_log!("{:?} {}", self.format, create_data_url(&self.data[..]));
         decode(
             self.format.clone(),
             &mut self.data.clone().slice(
