@@ -31,6 +31,7 @@ pub async fn render_mesh(scene: Scene) {
     let window = Window::new(WindowSettings {
         title: "Preview".to_string(),
         max_size: Some((1280, 720)),
+        #[cfg(target_os = "wasm32-unknown-unknown")]
         canvas: Some(canvas.dyn_into::<HtmlCanvasElement>().unwrap()),
         ..Default::default()
     })

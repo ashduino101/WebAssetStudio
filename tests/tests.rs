@@ -27,6 +27,7 @@ mod tests {
     use webassetstudio::utils::compress::lzx_decompress;
     // use webassetstudio::utils::lzx_decompress;
     use webassetstudio::xna::xnb::XNBFile;
+    use webassetstudio::gamemaker::qoi::decode_qoi;
     use crate::{UNITYFS_DATA, XNB_DATA};
 
     #[test]
@@ -51,8 +52,7 @@ mod tests {
         for f in XNB_DATA.files().filter(|f| !f.path().ends_with(".empty")) {
             let mut data = Vec::from(f.contents());
             let mut b = Bytes::from(data);
-            let mut f = XNBFile::new(&mut b);
-            println!("{:?}", f);
+            XNBFile::new(&mut b);
         }
     }
 
@@ -61,5 +61,10 @@ mod tests {
         // let mut data = Bytes::from_static(include_bytes!("data/misc/Bed.lzx"));
 
 
+    }
+
+    #[test]
+    fn test_qoif() {
+        decode_qoi(&mut Bytes::from_static(include_bytes!("data/qoi/small.qoif"))).unwrap();
     }
 }
