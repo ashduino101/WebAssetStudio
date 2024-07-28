@@ -63,7 +63,7 @@ pub async fn render_mesh(scene: Scene) {
     let mut control = FlyControl::new(1.0);
 
     let mut loaded = if let Ok(loaded) = three_d_asset::io::load_async(&[
-        "cobblestone_street_night_4k.hdr",
+        "chinese_garden_4k.hdr",
     ])
         .await
     {
@@ -77,7 +77,7 @@ pub async fn render_mesh(scene: Scene) {
             .expect("failed to download the necessary assets, to enable running this example offline, place the relevant assets in a folder called 'assets' next to the three-d source")
     };
 
-    let environment_map = loaded.deserialize("cobblestone").unwrap();
+    let environment_map = loaded.deserialize("chinese").unwrap();
     let skybox = Skybox::new_from_equirectangular(&context, &environment_map);
 
     let mut cpu_model: CpuModel = scene.into();

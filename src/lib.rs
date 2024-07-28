@@ -46,7 +46,7 @@ use crate::utils::dom::{create_data_url, create_img};
 use crate::utils::time::now;
 
 async fn unity_test() {
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 
     console_log!("start decompress");
@@ -87,9 +87,9 @@ async fn unity_test() {
             let w = MeshWrapper::from_value(&parsed, asset.unity_version.major).unwrap();
             console_log!("{:?}", w);
             let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
-            if i == 5 {
-                render_mesh(scene).await;
-            }
+            // if i == 5 {
+            //     render_mesh(scene).await;
+            // }
 
             i += 1;
             // break;
@@ -164,10 +164,10 @@ async fn main() {
 
     // decode_qoi_gm(&mut Bytes::from_static(include_bytes!("../qoif2"))).expect("error");
 
-    spawn_local(async move {
-        let mut dat = Bytes::from(Vec::from(include_bytes!("../data.win")));
-        let mut f = GameMakerFile::new(&mut dat);
-    });
+    // spawn_local(async move {
+    //     let mut dat = Bytes::from(Vec::from(include_bytes!("../data.win")));
+    //     let mut f = GameMakerFile::new(&mut dat);
+    // });
 
     // for audio in f.samples {
     //     load_audio(audio);
@@ -183,7 +183,7 @@ async fn main() {
 
     // return;
 
-    // spawn_local(unity_test());
+    spawn_local(unity_test());
 
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
     // run().await;

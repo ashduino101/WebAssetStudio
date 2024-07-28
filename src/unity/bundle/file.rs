@@ -146,7 +146,7 @@ impl BundleFile {
         let (blocks, first_offset, raw_offset) = self.storage.get_blocks_for_node(node);
         let mut buf = BytesMut::new();
         let mut offset = first_offset;
-        for block in &blocks {
+        for block in blocks {
             buf.put(decompress(
                 &mut self.block_data.slice(offset..offset + block.compressed_size),
                 block.flags.compression_type,
@@ -155,8 +155,13 @@ impl BundleFile {
             ));
             offset += block.compressed_size;
         };
-        let over = node.offset - raw_offset;
-        Some(Bytes::from(buf).slice(over..))
+        if raw_offset > node.offset {
+            // FIXME: this is reached when there is only one node, could it cause issues?
+            Some(Bytes::from(buf))
+        } else {
+            let over = node.offset - raw_offset;
+            Some(Bytes::from(buf).slice(over..))
+        }
     }
 
     pub fn get_resource_data(&self, path: &str, offset: usize, size: usize) -> Result<Bytes, ObjectError> {
@@ -171,8 +176,10 @@ impl BundleFile {
             let (_, [s]) = pat.captures_iter(&source).map(|c| c.extract()).last().expect("no matches");
             source = s.into();
         }
+        console_log!("get resource {}", source);
 
         let file = self.get_file(&source).expect("resource points to non-existent file");
+        console_log!("got resource: {}, slicing at {} to {}", file.len(), offset, size);
         let data = file.slice(offset..offset + size);
         Ok(data)
     }

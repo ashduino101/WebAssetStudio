@@ -1,4 +1,5 @@
 use bytes::{Bytes};
+use wasm_bindgen_test::console_log;
 
 use crate::utils::compress::lz4_decompress;
 

@@ -36,6 +36,9 @@ impl StorageInfo {
     }
 
     pub fn get_blocks_for_node(&self, node: &Node) -> (Vec<&BlockInfo>, usize, usize) {
+        if self.blocks.len() == 1 {
+            return (vec![&self.blocks[0]], 0, 0)
+        }
         let mut should_add = false;
         let mut blocks = Vec::new();
         let mut offset = 0;
