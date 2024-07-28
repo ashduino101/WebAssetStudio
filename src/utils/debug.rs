@@ -1,4 +1,6 @@
-use bytes::Bytes;
+use std::io::Cursor;
+use bytes::{Bytes};
+use image::{ImageFormat, RgbaImage};
 use rand::distributions::{Alphanumeric, DistString};
 use rand::Rng;
 use three_d::{AmbientLight, Camera, ClearState, CpuModel, FlyControl, FrameOutput, Geometry, Model, OrbitControl, PhysicalMaterial, Skybox, vec3, Window, WindowSettings};
@@ -8,6 +10,17 @@ use wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
 use crate::CpuTexture;
 use crate::utils::dom::{create_data_url, get_element_by_id};
+
+pub fn load_image(image: RgbaImage) {
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
+    let body = document.body().expect("document should have a body");
+    let elem = document.create_element("img").expect("failed to create element");
+    let mut data = Vec::new();
+    image.write_to(&mut Cursor::new(&mut data), ImageFormat::Png).unwrap();
+    elem.set_attribute("src", &create_data_url(&data[..])).expect("set_attribute");
+    body.append_child(&elem).expect("append_child");
+}
 
 pub fn load_audio(data: Bytes) {
     let window = web_sys::window().expect("no global `window` exists");

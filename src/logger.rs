@@ -55,7 +55,7 @@ pub struct Logger {
 pub(crate) static INFO_STYLE: &str = "color: #cccccc; background-color: #222222";
 pub(crate) static WARN_STYLE: &str = "color: #2b2b2b; background-color: #f3da1b; font-weight: bold";
 pub(crate) static ERROR_STYLE: &str = "color: #de0000; background-color: #000000; font-weight: bold";
-pub(crate) static TEXT_STYLE: &str = "color: #000000; background-color: #ffffff";
+pub(crate) static TEXT_STYLE: &str = "color: #444444; background-color: unset";
 
 pub fn splash() {
     log4(

@@ -28,6 +28,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_test::console_log;
 use crate::directx::shader::FXShader;
+use crate::gamemaker::file::GameMakerFile;
 
 
 use crate::logger::splash;
@@ -163,8 +164,11 @@ async fn main() {
 
     // decode_qoi_gm(&mut Bytes::from_static(include_bytes!("../qoif2"))).expect("error");
 
-    // let mut dat = Bytes::from(Vec::from(include_bytes!("../data.win")));
-    // let mut f = GameMakerFile::new(&mut dat);
+    spawn_local(async move {
+        let mut dat = Bytes::from(Vec::from(include_bytes!("../data.win")));
+        let mut f = GameMakerFile::new(&mut dat);
+    });
+
     // for audio in f.samples {
     //     load_audio(audio);
     // }
@@ -179,7 +183,7 @@ async fn main() {
 
     // return;
 
-    spawn_local(unity_test());
+    // spawn_local(unity_test());
 
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
     // run().await;

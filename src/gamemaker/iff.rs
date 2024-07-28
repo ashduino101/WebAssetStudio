@@ -15,10 +15,10 @@ pub trait IFFReader {
             // Keep track of position in order to read
             // anything that was not read by the handler function
             let start_offset = data.position();
-            self.handle_chunk(&chunk_id, data);
+            self.handle_chunk(&chunk_id, data_length, data);
             let end_offset = data.position();
             data.advance(data_length - (end_offset - start_offset) as usize);
         }
     }
-    fn handle_chunk(&mut self, chunk_id: &str, data: &mut Cursor<&mut Bytes>);
+    fn handle_chunk(&mut self, chunk_id: &str, size: usize, data: &mut Cursor<&mut Bytes>);
 }

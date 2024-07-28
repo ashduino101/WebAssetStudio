@@ -65,6 +65,7 @@ mod tests {
 
     #[test]
     fn test_qoif() {
-        decode_qoi(&mut Bytes::from_static(include_bytes!("data/qoi/small.qoif"))).unwrap();
+        let d = decode_qoi(&mut Bytes::from_static(include_bytes!("../test3.qoif"))).unwrap();
+        d.save("test3.png").unwrap();
     }
 }
