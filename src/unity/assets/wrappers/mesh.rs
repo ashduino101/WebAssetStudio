@@ -51,7 +51,7 @@ impl Asset for MeshWrapper {
 
     fn export(&mut self) -> Export {
         let mesh = self.load_mesh(self.major_version, self.little_endian);
-        Export {
+        Export {  // TODO: implement before release
             extension: "gltf".to_string(),
             data: vec![]
         }
