@@ -1,8 +1,9 @@
 use std::fmt::{Debug, Formatter};
 use bytes::{Buf, Bytes};
-use crate::base::asset::Asset;
+use crate::base::asset::{Asset, Export};
 use crate::create_img;
 use crate::utils::buf::{FromBytes};
+use crate::utils::tex::pngenc::encode_png;
 use crate::xna::type_base::XNBType;
 
 #[derive(Debug)]
@@ -90,6 +91,13 @@ impl Asset for Texture2D {
         let elem = doc.create_element("img").expect("failed to create element");
         elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize, false)).expect("set_attribute");
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "png".to_string(),
+            data: encode_png(self.width, self.height, &self.textures[0].data[..], false).into()  // TODO: support exporting multiple mips
+        }
     }
 }
 

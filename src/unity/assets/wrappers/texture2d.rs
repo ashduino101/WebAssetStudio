@@ -4,10 +4,11 @@ use std::fmt::{Debug};
 use bytes::Bytes;
 use wasm_bindgen_test::console_log;
 use web_sys::{Document, Element};
-use crate::base::asset::Asset;
+use crate::base::asset::{Asset, Export};
 use crate::{BundleFile, create_data_url};
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
+use crate::utils::tex::pngenc::encode_png;
 
 use crate::utils::tex::texdec::{decode, get_mipmap_offset_and_size, TextureFormat};
 
@@ -26,6 +27,14 @@ pub struct Texture2DWrapper {
 impl Asset for Texture2DWrapper {
     fn make_html(&mut self, doc: &Document) -> Element {
         doc.create_element("div").expect("dummy")
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: ".png".to_owned(),
+            // TODO: export all mips
+            data: encode_png(self.width as u32, self.height as u32, &self.get_image(0), false).into()
+        }
     }
 }
 
@@ -63,7 +72,6 @@ impl Texture2DWrapper {
     }
 
     pub fn get_image(&self, index: i32) -> Box<[u8]> {
-        console_log!("{:?} {}", self.format, create_data_url(&self.data[..]));
         decode(
             self.format.clone(),
             &mut self.data.clone().slice(

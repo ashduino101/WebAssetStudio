@@ -1,5 +1,5 @@
 use bytes::{Buf, Bytes};
-use crate::base::asset::Asset;
+use crate::base::asset::{Asset, Export};
 use crate::utils::buf::BufExt;
 use crate::xna::type_base::XNBType;
 
@@ -13,6 +13,13 @@ impl Asset for TimeSpan {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("{} ticks", self.ticks)));
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: self.ticks.to_string().into_bytes()
+        }
     }
 }
 
@@ -33,6 +40,13 @@ impl Asset for DateTime {
         elem.set_text_content(Some(&*format!("{}", self.value)));
         elem
     }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: self.value.to_string().into_bytes()
+        }
+    }
 }
 
 impl XNBType for DateTime {
@@ -52,6 +66,13 @@ impl Asset for Decimal {
         elem.set_text_content(Some(&*format!("RAW: {}", self.raw)));  // TODO display properly
         elem
     }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: self.raw.to_string().into_bytes()
+        }
+    }
 }
 
 impl XNBType for Decimal {
@@ -70,6 +91,13 @@ impl Asset for ExternalReference {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Asset: {}", self.asset_name)));
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: self.asset_name.clone().into_bytes()
+        }
     }
 }
 

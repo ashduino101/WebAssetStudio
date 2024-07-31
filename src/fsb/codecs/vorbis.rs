@@ -24,7 +24,7 @@ const HEADER_LOOKUP: &[u8] = include_bytes!("vorbis_headers.bz2");
 const BLOCKSIZE_SMALL: usize = 0x100;
 const BLOCKSIZE_LARGE: usize = 0x800;
 
-const SERIAL: u32 = 0xdeadbeef;
+const SERIAL: u32 = 0x42237000;
 
 type HeaderLookup = HashMap<u32, Bytes>;
 

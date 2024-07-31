@@ -46,7 +46,7 @@ use crate::utils::dom::{create_data_url, create_img};
 use crate::utils::time::now;
 
 async fn unity_test() {
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../uno.unity3d")));
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 
     console_log!("start decompress");
@@ -80,11 +80,11 @@ async fn unity_test() {
             body.append_child(&elem).expect("append_child");
         }
         if typ.class_id == 83 {
-            let w = AudioClipWrapper::from_value(&parsed).expect("failed to wrap object");
-            console_log!("{:?}", w.get_audio(&f).expect("failed to get audio"));
+            let w = AudioClipWrapper::from_value(&parsed, &f).expect("failed to wrap object");
+            console_log!("{:?}", w.bank);
         }
         if typ.class_id == 43 {
-            let w = MeshWrapper::from_value(&parsed, asset.unity_version.major).unwrap();
+            let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
             console_log!("{:?}", w);
             let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
             // if i == 5 {

@@ -1,7 +1,7 @@
 // Common types used in multiple formats
 
 use std::fmt::{Debug, Display, Formatter, Write};
-use crate::base::asset::Asset;
+use crate::base::asset::{Asset, Export};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vector2 {
@@ -14,6 +14,13 @@ impl Asset for Vector2 {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Vector2({}, {})", self.x, self.y)));
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: format!("({}, {})", self.x, self.y).into_bytes()
+        }
     }
 }
 
@@ -30,6 +37,13 @@ impl Asset for Vector3 {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*self.to_string()));
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: format!("({}, {}, {})", self.x, self.y, self.z).into_bytes()
+        }
     }
 }
 
@@ -54,6 +68,13 @@ impl Asset for Vector4 {
         elem.set_text_content(Some(&*format!("Vector4({}, {}, {}, {})", self.x, self.y, self.z, self.w)));
         elem
     }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: format!("({}, {}, {}, {})", self.x, self.y, self.z, self.w).into_bytes()
+        }
+    }
 }
 
 
@@ -70,6 +91,13 @@ impl Asset for MatrixRow {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*self.to_string()));
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: self.to_string().into_bytes()
+        }
     }
 }
 
@@ -92,6 +120,13 @@ impl Asset for Matrix4x4 {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*self.to_string()));
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: self.to_string().into_bytes()
+        }
     }
 }
 
@@ -116,6 +151,13 @@ impl Asset for Quaternion {
         elem.set_text_content(Some(&*format!("Quaternion({}, {}, {}, {})", self.x, self.y, self.z, self.w)));
         elem
     }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: format!("({}, {}, {}, {})", self.x, self.y, self.z, self.w).into_bytes()
+        }
+    }
 }
 
 
@@ -133,6 +175,13 @@ impl Asset for Color32 {
         elem.set_text_content(Some(&*format!("Color({}, {}, {}, {})", self.red, self.green, self.blue, self.alpha)));
         elem
     }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: format!("({}, {}, {}, {})", self.red, self.green, self.blue, self.alpha).into_bytes()
+        }
+    }
 }
 
 
@@ -147,5 +196,12 @@ impl Asset for Plane {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Plane({}, {})", self.normal, self.d)));
         elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: format!("({}, {})", self.normal, self.d).into_bytes()
+        }
     }
 }

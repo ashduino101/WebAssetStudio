@@ -6,7 +6,7 @@ use three_d::{CpuMesh, Matrix4, Mesh, Vector2, Vector3, Vector4};
 use three_d_asset::{Geometry, Indices, Mat4, Node, PbrMaterial, Positions, Scene, Srgba};
 use wasm_bindgen_test::console_log;
 use web_sys::{Document, Element};
-use crate::base::asset::Asset;
+use crate::base::asset::{Asset, Export};
 use crate::CpuGeometry;
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
@@ -39,11 +39,22 @@ pub struct MeshWrapper {
     vertex_count: u32,
     index_format: i32,
     index_buffer: Vec<u8>,
+    mesh: Option<Scene>,  // will be None until loaded
+    major_version: i32,
+    little_endian: bool,
 }
 
 impl Asset for MeshWrapper {
     fn make_html(&mut self, doc: &Document) -> Element {
         doc.create_element("div").expect("dummy")
+    }
+
+    fn export(&mut self) -> Export {
+        let mesh = self.load_mesh(self.major_version, self.little_endian);
+        Export {
+            extension: "gltf".to_string(),
+            data: vec![]
+        }
     }
 }
 
@@ -51,14 +62,17 @@ impl ClassWrapper for MeshWrapper {
 }
 
 impl MeshWrapper {
-    pub fn from_value(value: &ValueType, major_version: i32) -> Result<Self, ObjectError> {
+    pub fn from_value(value: &ValueType, major_version: i32, little_endian: bool) -> Result<Self, ObjectError> {
         Ok(MeshWrapper {
             channels: Self::get_channels(value)?,
             streams: Self::get_streams(value, major_version < 2017)?,
             vertex_data: value.get("m_VertexData")?.get("m_DataSize")?.as_bytes()?,
             vertex_count: value.get("m_VertexData")?.get("m_VertexCount")?.as_u32()?,
             index_format: value.get("m_IndexFormat")?.as_i32()?,
-            index_buffer: value.get("m_IndexBuffer")?.get("Array")?.as_u8_array()?.clone()
+            index_buffer: value.get("m_IndexBuffer")?.get("Array")?.as_u8_array()?.clone(),
+            mesh: None,
+            major_version,
+            little_endian
         })
     }
 
@@ -106,7 +120,11 @@ impl MeshWrapper {
         Ok(streams)
     }
 
-    pub fn load_mesh(&self, major_version: i32, little_endian: bool) -> Scene {
+    pub fn load_mesh(&mut self, major_version: i32, little_endian: bool) -> &Scene {
+        if let Some(ref m) = self.mesh {
+            return m
+        };
+
         let mut mesh = CpuMesh::default();
 
         // Load the index buffer
@@ -272,7 +290,9 @@ impl MeshWrapper {
                 }
             ]
         };
-        scene
+
+        self.mesh = Some(scene);
+        self.mesh.as_ref().unwrap()
     }
 }
 
