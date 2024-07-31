@@ -8,7 +8,7 @@ use crate::fsb::bank::{SoundBank, SoundFormat};
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 
-use crate::utils::tex::texdec::{decode, get_mipmap_offset_and_size, TextureFormat};
+use crate::utils::tex::decoder::{decode, get_mipmap_offset_and_size, TextureFormat};
 
 
 #[derive(Debug)]

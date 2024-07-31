@@ -10,7 +10,7 @@ use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 use crate::utils::tex::pngenc::encode_png;
 
-use crate::utils::tex::texdec::{decode, get_mipmap_offset_and_size, TextureFormat};
+use crate::utils::tex::decoder::{decode, get_mipmap_offset_and_size, TextureFormat};
 
 
 #[derive(Debug)]
@@ -71,7 +71,7 @@ impl Texture2DWrapper {
         })
     }
 
-    pub fn get_image(&self, index: i32) -> Box<[u8]> {
+    pub fn get_image(&self, index: i32) -> Vec<u8> {
         decode(
             self.format.clone(),
             &mut self.data.clone().slice(
