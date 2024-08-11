@@ -14,8 +14,8 @@ use wasm_bindgen_futures::{JsFuture};
 //     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 // }
 
-const WASM: &[u8] = include_bytes!("../../thirdparty/mojoshader/dxdisassemble.wasm");
-const TEST: &[u8] = include_bytes!("../../test.fxc");
+const WASM: &[u8] = include_bytes!("../../thirdparty/mojoshader/mojoshader.wasm");
+const TEST: &[u8] = include_bytes!("../../test.fx");
 
 async fn load() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();

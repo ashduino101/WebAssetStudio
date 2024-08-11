@@ -1,372 +1,424 @@
 use bytes::{Buf, Bytes};
-use wasm_bindgen_test::console_log;
 use crate::directx::types::{SymbolClass, SymbolType};
-use crate::errors::ParseError;
 
-fn get_string(blob: &Bytes, offset: u32) -> String {
-    if offset == 0 {
-        return "".to_owned();
-    }
-    blob.slice(offset as usize..).get_string().trim_matches(char::from(0)).into()
-}
+const MAX_MAJOR: u8 = 3;
+const MAX_MINOR: u8 = 255;
 
+// Modified from MojoShader
+// This is the ID for a D3DXSHADER_CONSTANTTABLE in the bytecode comments.
+const CTAB_ID: u32 = 0x42415443;  // 0x42415443 == 'CTAB'
+const CTAB_SIZE: u32 = 28;  // sizeof (D3DXSHADER_CONSTANTTABLE).
+const CINFO_SIZE: u32 = 20;  // sizeof (D3DXSHADER_CONSTANTINFO).
+const CTYPEINFO_SIZE: u32 = 16;  // sizeof (D3DXSHADER_TYPEINFO).
+const CMEMBERINFO_SIZE: u32 = 8;  // sizeof (D3DXSHADER_STRUCTMEMBERINFO)
 
-#[derive(Debug, Clone)]
-pub(crate) struct EffectState {
-    type_: u32,
-    value: EffectValue
-}
-
-impl EffectState {
-    pub(crate) fn from_bytes(data: &mut Bytes, blob: &Bytes, objects: &mut Vec<EffectValue>) -> EffectState {
-        let state_type = data.get_u32_le();
-        data.get_u32_le();  // unknown
-        let state_type_offset = data.get_u32_le();
-        let state_value_offset = data.get_u32_le();
-
-        let value = EffectValue::from_bytes(state_type_offset, state_value_offset, blob, objects);
-
-        EffectState {
-            type_: state_type,
-            value
-        }
-    }
-}
-
+// Preshader magic values...
+const PRES_ID: u32 = 0x53455250;  // 0x53455250 == 'PRES'
+const PRSI_ID: u32 = 0x49535250;  // 0x49535250 == 'PRSI'
+const CLIT_ID: u32 = 0x54494C43;  // 0x54494C43 == 'CLIT'
+const FXLC_ID: u32 = 0x434C5846;  // 0x434C5846 == 'FXLC'
 
 #[derive(Debug, Clone)]
-pub(crate) struct Sampler {
-    states: Vec<EffectState>
+pub struct PreshaderInstruction {
+    opcode: PreshaderOp,
+    element_count: u32,
+    operands: Vec<PreshaderOperand>
 }
 
+#[derive(Debug, Clone)]
+pub struct PreshaderOperand {
+    r#type: PreshaderOperandType,
+    index: u32,
+    array_registers: Vec<u32>
+}
 
 #[derive(Debug, Clone)]
-pub(crate) enum EffectValueData {
-    Sampler(Sampler),
-    Matrix(Vec<Vec<f32>>),
-    Data(Bytes),
-    None,
+pub enum PreshaderOp {
+    Nop,
+    Mov,
+    Neg,
+    Rcp,
+    Frc,
+    Exp,
+    Log,
+    Rsq,
+    Sin,
+    Cos,
+    Asin,
+    Acos,
+    Atan,
+    Min,
+    Max,
+    Lt,
+    Ge,
+    Add,
+    Mul,
+    Atan2,
+    Div,
+    Cmp,
+    Movc,
+    Dot,
+    Noise,
+    MinScalar,
+    MaxScalar,
+    LtScalar,
+    GeScalar,
+    AddScalar,
+    MulScalar,
+    Atan2Scalar,
+    DivScalar,
+    DotScalar,
+    NoiseScalar
+}
+
+#[derive(Debug, Clone)]
+pub enum PreshaderOperandType {
+    Literal,
+    Input,
+    Output,
+    Temp
+}
+
+#[derive(Debug, Clone)]
+pub enum RegisterSet {
+    Bool,
+    Int4,
+    Float4,
+    Sampler,
     Unknown
 }
 
-/// An effect value, should be read from the blob data
 #[derive(Debug, Clone)]
-pub(crate) struct EffectValue {
-    type_: SymbolType,
-    value_class: SymbolClass,
+pub struct SymbolStructMember {
     name: String,
-    semantic: String,
-    num_elements: u32,
-    data: EffectValueData
+    info: Box<SymbolTypeInfo>
 }
-
-impl EffectValue {
-    pub(crate) fn from_bytes(type_offset: u32, value_offset: u32, blob: &Bytes, objects: &mut Vec<EffectValue>) -> EffectValue {
-        let mut type_data = blob.slice(type_offset as usize..);
-        let mut value_data = blob.slice(value_offset as usize..);
-        let type_ = SymbolType::from_value(type_data.get_u32_le());
-        let value_class = SymbolClass::from_value(type_data.get_u32_le());
-        let name = get_string(blob, type_data.get_u32_le());
-        let semantic = get_string(blob, type_data.get_u32_le());
-        let num_elements = type_data.get_u32_le();
-
-        let data = match value_class {
-            SymbolClass::Scalar | SymbolClass::Vector |
-            SymbolClass::MatrixRows | SymbolClass::MatrixColumns => {
-                let column_count = type_data.get_u32_le();
-                let row_count = type_data.get_u32_le();
-
-                let mut matrix = Vec::new();
-                for _ in 0..column_count {
-                    let mut row = Vec::new();
-                    for _ in 0..row_count {
-                        row.push(value_data.get_f32_le());
-                    }
-                    matrix.push(row);
-                }
-
-                EffectValueData::Matrix(matrix)
-            },
-            SymbolClass::Object => {
-                match type_ {
-                    SymbolType::Sampler | SymbolType::Sampler1D |
-                    SymbolType::Sampler2D | SymbolType::Sampler3D |
-                    SymbolType::SamplerCube => {
-                        let num_states = value_data.get_u32_le();
-
-                        let mut states = Vec::new();
-                        for _ in 0..num_states {
-                            let state = EffectState::from_bytes(&mut value_data, blob, objects);
-                            states.push(state);
-                        }
-
-                        EffectValueData::Sampler(Sampler {
-                            states
-                        })
-                    },
-                    _ => {
-                        let num_objects = if num_elements == 0 { 1 } else { num_elements };
-
-                        for _ in 0..num_objects {
-                            objects[value_data.get_u32_le() as usize].type_ = type_;
-                        }
-
-                        // EffectValueData::Data(dat)
-                        EffectValueData::None
-                    }
-                }
-            },
-            SymbolClass::Struct => {
-                let num_members = type_data.get_u32_le();
-
-                for _ in 0..num_members {
-                    let param_type = type_data.get_u32_le();
-                    let param_class = type_data.get_u32_le();
-                    let member_name = get_string(blob, type_data.get_u32_le());
-
-                    let elements = type_data.get_u32_le();
-                    let columns = type_data.get_u32_le();
-                    let rows = type_data.get_u32_le();
-                }
-
-                todo!()
-            },
-            _ => EffectValueData::Unknown
-        };
-
-        EffectValue {
-            type_,
-            value_class,
-            name,
-            semantic,
-            num_elements,
-            data
-        }
-    }
-}
-
 
 #[derive(Debug, Clone)]
-pub(crate) struct EffectAnnotation {
-    value: EffectValue
+pub struct SymbolTypeInfo {
+    parameter_class: SymbolClass,
+    parameter_type: SymbolType,
+    rows: u16,
+    columns: u16,
+    elements: u16,
+    members: Vec<SymbolStructMember>
 }
-
-impl EffectAnnotation {
-    pub(crate) fn from_bytes(data: &mut Bytes, blob: &Bytes, objects: &mut Vec<EffectValue>) -> EffectAnnotation {
-        let type_offset = data.get_u32_le();
-        let value_offset = data.get_u32_le();
-        EffectAnnotation {
-            value: EffectValue::from_bytes(type_offset, value_offset, blob, objects)
-        }
-    }
-}
-
 
 #[derive(Debug, Clone)]
-pub(crate) struct EffectParam {
-    value: EffectValue,
-    flags: u32,
-    annotations: Vec<EffectAnnotation>
-}
-
-impl EffectParam {
-    pub(crate) fn from_bytes(data: &mut Bytes, blob: &Bytes, objects: &mut Vec<EffectValue>) -> Result<EffectParam, ParseError> {
-        let value = EffectValue::from_bytes(data.get_u32_le(), data.get_u32_le(), blob, objects);
-        let flags = data.get_u32_le();
-        let num_annotations = data.get_u32_le();
-
-        let mut annotations = Vec::new();
-        for _ in 0..num_annotations {
-            annotations.push(EffectAnnotation::from_bytes(data, blob, objects));
-        }
-
-        Ok(EffectParam {
-            value,
-            flags,
-            annotations
-        })
-    }
-}
-
-
-#[derive(Debug, Clone)]
-pub(crate) struct EffectPass {
+pub struct Symbol {
     name: String,
-    annotations: Vec<EffectAnnotation>,
-    states: Vec<EffectState>
+    register_set: RegisterSet,
+    register_index: u16,
+    register_count: u16,
+    info: SymbolTypeInfo
 }
-
-impl EffectPass {
-    pub(crate) fn from_bytes(data: &mut Bytes, blob: &Bytes, objects: &mut Vec<EffectValue>) -> EffectPass {
-        let name = get_string(blob, data.get_u32_le());
-        let num_annotations = data.get_u32_le();
-        let num_states = data.get_u32_le();
-
-        let mut annotations = Vec::new();
-        for _ in 0..num_annotations {
-            annotations.push(EffectAnnotation::from_bytes(data, blob, objects));
-        }
-
-        let mut states = Vec::new();
-        for _ in 0..num_states {
-            states.push(EffectState::from_bytes(data, blob, objects))
-        }
-
-        EffectPass {
-            name,
-            annotations,
-            states
-        }
-    }
-}
-
 
 #[derive(Debug, Clone)]
-pub(crate) struct EffectTechnique {
-    name: String,
-    annotations: Vec<EffectAnnotation>,
-    passes: Vec<EffectPass>
+pub struct ConstantTable {
+    pub creator: String,
+    pub version: u32,
+    pub target: String,
+    pub symbols: Vec<Symbol>
 }
-
-impl EffectTechnique {
-    pub(crate) fn from_bytes(data: &mut Bytes, blob: &Bytes, objects: &mut Vec<EffectValue>) -> EffectTechnique {
-        let name = get_string(blob, data.get_u32_le());
-        let num_annotations = data.get_u32_le();
-        let num_passes = data.get_u32_le();
-
-        let mut annotations = Vec::new();
-        for _ in 0..num_annotations {
-            annotations.push(EffectAnnotation::from_bytes(data, blob, objects));
-        }
-
-        let mut passes = Vec::new();
-        for _ in 0..num_passes {
-            passes.push(EffectPass::from_bytes(data, blob, objects));
-        }
-
-        EffectTechnique {
-            name,
-            annotations,
-            passes
-        }
-    }
-}
-
 
 #[derive(Debug, Clone)]
-pub(crate) struct EffectSmallObject {
-
+pub enum ShaderType {
+    Pixel,
+    Vertex,
+    Unknown
 }
-
-impl EffectSmallObject {
-    pub(crate) fn from_bytes(data: &mut Bytes, objects: &Vec<EffectValue>) -> EffectSmallObject {
-        let index = data.get_u32_le();
-        let length = data.get_u32_le() as usize;
-
-        let dat = data.slice(0..length);
-        data.advance(length);
-
-        console_log!("{} {:?}", index, dat);
-
-        EffectSmallObject {
-
-        }
-    }
-}
-
 
 #[derive(Debug, Clone)]
-pub(crate) struct EffectLargeObject {
-
-}
-
-impl EffectLargeObject {
-    pub(crate) fn from_bytes(data: &mut Bytes, objects: &Vec<EffectValue>) -> EffectLargeObject {
-        let technique = data.get_i32_le();
-        let index = data.get_u32_le();
-        data.get_u32_le();  // FIXME: unknown
-        let state = data.get_u32_le();
-        let type_ = data.get_u32_le();
-        let length = data.get_u32_le() as usize;
-
-        let dat = data.slice(0..length);
-        data.advance(length);
-
-        console_log!("{} {} {} {} {:?}", technique, index, state, type_, dat);
-
-        EffectLargeObject {
-
-        }
-    }
-}
-
-
-#[derive(Debug, Clone)]
-pub(crate) struct FXShader {
-    params: Vec<EffectParam>,
-    techniques: Vec<EffectTechnique>,
+pub struct FXShader {
+    pub r#type: ShaderType,
+    pub major: u8,
+    pub minor: u8,
+    pub constant_table: ConstantTable,
 }
 
 impl FXShader {
-    pub fn from_bytes(data: &mut Bytes) -> Result<FXShader, ParseError> {
-        let mut magic = data.get_u32_le();
-        if magic == 0xbcf00bcf {  // XNA4 shader
-            let xna_header_len = data.get_u32_le() - 8;
-            data.advance(xna_header_len as usize);  // no idea, probably useless
-            magic = data.get_u32_le();
-        }
-        if magic != 0xfeff0901 {  // DX 9.1 shader
-            return Err(ParseError::new("Not a DirectX 9.1 shader"))
-        }
+    pub fn from_bytes(data: &mut Bytes) -> FXShader {
+        // Version token
+        let token = data.get_u32_le();
+        let shadertype = match (token >> 16) & 0xFFFF {
+            0xFFFF => ShaderType::Pixel,
+            0xFFFE => ShaderType::Vertex,
+            _ => ShaderType::Unknown
+        };
+        let major = ((token >> 8) & 0xFF) as u8;
+        let minor = (token & 0xFF) as u8;
 
-        let blob_length = data.get_u32_le() as usize;
-        let blob_data = data.slice(0..blob_length);
-        data.advance(blob_length);
-
-        let num_params = data.get_u32_le();
-        let num_techniques = data.get_u32_le();
-        data.get_u32_le();  // TODO: unknown
-        let num_objects = data.get_u32_le();
-
-        let mut objects = vec![EffectValue {
-            type_: SymbolType::Invalid,
-            value_class: SymbolClass::Invalid,
-            name: "".to_string(),
-            semantic: "".to_string(),
-            num_elements: 0,
-            data: EffectValueData::None
-        }; num_objects as usize];
-
-        // Parameters
-        let mut params = Vec::new();
-        for _ in 0..num_params {
-            params.push(EffectParam::from_bytes(data, &blob_data, &mut objects)?)
+        if major > MAX_MAJOR || (major == MAX_MAJOR && minor > MAX_MINOR) {
+            panic!("invalid shader version");  // FIXME: return error
         }
 
-        // Techniques
-        let mut techniques = Vec::new();
-        for _ in 0..num_techniques {
-            techniques.push(EffectTechnique::from_bytes(data, &blob_data, &mut objects))
+        // Initialize default CTAB - will fail validation if not set
+        let mut constant_table = ConstantTable {
+            creator: "".to_string(),
+            version: 0,
+            target: "INVALID".to_string(),
+            symbols: vec![]
+        };
+
+        while data.remaining() > 0 {
+            let token = data.get_u32_le();
+            // handle comment token
+            if (token & 0xFFFF) == 0xFFFE {
+                if (token & 0x80000000) != 0 {
+                    panic!("high bit set in comment token");
+                }
+
+                let token_count = (token >> 16) & 0xFFFF;
+                let id = data.get_u32_le();
+                let size_bytes = ((token_count - 1) * 4) as usize;
+                let mut chunk = data.slice(0..size_bytes);
+                data.advance(size_bytes);
+                if id == PRES_ID {
+                    // Preshader
+                    let preshader = Self::parse_preshader(&mut chunk);
+                } else if id == CTAB_ID {
+                    // Constant table
+                    constant_table = Self::parse_ctab(&mut chunk);
+                } else {
+                    panic!("unknown chunk {}", id);
+                }
+            } else if token == 0x0000FFFF {
+                println!("end");
+                break;  // end
+            } else if token == 0x0000FFFD {
+                // FIXME phase token
+            } else {  // instruction token
+                let opcode = token & 0xFFFF;
+                let controls = (token >> 16) & 0xFF;
+                let insttoks = (token >> 24) & 0x0F;
+                let coissue = (token & 0x40000000) != 0;
+                let predicated = (token & 0x10000000) != 0;
+                println!("{} {} {} {} {}", opcode, controls, insttoks, coissue, predicated);
+            }
         }
 
-        let num_small_objects = data.get_u32_le();
-        let num_large_objects = data.get_u32_le();
+        FXShader {
+            r#type: shadertype,
+            major,
+            minor,
+            constant_table
+        }
+    }
 
-        let mut small_objects = Vec::new();
-        for _ in 0..num_small_objects {
-            small_objects.push(EffectSmallObject::from_bytes(data, &objects));
+    fn parse_preshader(pres: &mut Bytes) {
+        const VERSION_MAGIC: u32 = 0x46580000;
+        const MIN_VERSION: u32 = 0x00000200 | VERSION_MAGIC;
+        const MAX_VERSION: u32 = 0x00000201 | VERSION_MAGIC;
+
+        let version = pres.get_u32_le();
+        if version < MIN_VERSION || version > MAX_VERSION {
+            panic!("preshader version unsupported");
         }
 
-        let mut large_objects = Vec::new();
-        for _ in 0..num_large_objects {
-            large_objects.push(EffectLargeObject::from_bytes(data, &objects));
+        let mut constant_table = ConstantTable {
+            creator: "".to_string(),
+            version,
+            target: "".to_string(),
+            symbols: vec![]
+        };
+
+        let mut output_map_count = 0;
+        let mut output_map = Vec::new();
+        let mut literals = Vec::new();
+
+        while pres.has_remaining() {
+            let token = pres.get_u32_le();
+            if (token & 0xFFFF) == 0xFFFE {
+                if (token & 0x80000000) != 0 {
+                    panic!("high bit set in comment token");
+                }
+
+                let token_count = (token >> 16) & 0xFFFF;
+                let id = pres.get_u32_le();
+                let size_bytes = ((token_count - 1) * 4) as usize;
+                let mut chunk = pres.slice(0..size_bytes);
+                pres.advance(size_bytes);
+                if id == CTAB_ID {
+                    // Constant table
+                    constant_table = Self::parse_ctab(&mut chunk);
+                    println!("{:?}", constant_table);
+                } else if id == PRSI_ID {
+                    chunk.advance(28);  // FIXME: unknown
+                    output_map_count = chunk.get_u32_le();
+                    while chunk.has_remaining() {
+                        output_map.push(chunk.get_u32_le());
+                    }
+                    println!("{} {:?}", output_map_count, output_map);
+                } else if id == CLIT_ID {
+                    let num_literals = chunk.get_u32_le();
+                    for _ in 0..num_literals {
+                        literals.push(chunk.get_f64_le());
+                    }
+                    println!("{:?}", literals);
+                } else if id == FXLC_ID {
+                    let num_opcodes = chunk.get_u32_le();
+                    let mut instructions = Vec::new();
+                    for _ in 0..num_opcodes {
+                        let opcode_token = chunk.get_u32_le();
+                        let opcode = match (opcode_token >> 16) & 0xFFFF {
+                            0x1000 => PreshaderOp::Mov,
+                            0x1010 => PreshaderOp::Neg,
+                            0x1030 => PreshaderOp::Rcp,
+                            0x1040 => PreshaderOp::Frc,
+                            0x1050 => PreshaderOp::Exp,
+                            0x1060 => PreshaderOp::Log,
+                            0x1070 => PreshaderOp::Rsq,
+                            0x1080 => PreshaderOp::Sin,
+                            0x1090 => PreshaderOp::Cos,
+                            0x10A0 => PreshaderOp::Asin,
+                            0x10B0 => PreshaderOp::Acos,
+                            0x10C0 => PreshaderOp::Atan,
+                            0x2000 => PreshaderOp::Min,
+                            0x2010 => PreshaderOp::Max,
+                            0x2020 => PreshaderOp::Lt,
+                            0x2030 => PreshaderOp::Ge,
+                            0x2040 => PreshaderOp::Add,
+                            0x2050 => PreshaderOp::Mul,
+                            0x2060 => PreshaderOp::Atan2,
+                            0x2080 => PreshaderOp::Div,
+                            0x3000 => PreshaderOp::Cmp,
+                            0x3010 => PreshaderOp::Movc,
+                            0x5000 => PreshaderOp::Dot,
+                            0x5020 => PreshaderOp::Noise,
+                            0xA000 => PreshaderOp::MinScalar,
+                            0xA010 => PreshaderOp::MaxScalar,
+                            0xA020 => PreshaderOp::LtScalar,
+                            0xA030 => PreshaderOp::GeScalar,
+                            0xA040 => PreshaderOp::AddScalar,
+                            0xA050 => PreshaderOp::MulScalar,
+                            0xA060 => PreshaderOp::Atan2Scalar,
+                            0xA080 => PreshaderOp::DivScalar,
+                            0xD000 => PreshaderOp::DotScalar,
+                            0xD020 => PreshaderOp::NoiseScalar,
+                            _ => panic!("unknown preshader opcode")
+                        };
+
+                        let operand_count = chunk.get_u32_le() + 1;
+                        let element_count = opcode_token & 0xff;
+
+                        let mut operands = Vec::new();
+                        for _ in 0..operand_count {
+                            let num_arrays = chunk.get_u32_le();
+                            let mode = chunk.get_u32_le();
+                            let item = chunk.get_u32_le();
+                            let mut array_registers = Vec::new();
+                            let mut operand_type;
+                            match mode {
+                                1 => {
+                                    operand_type = PreshaderOperandType::Literal;
+                                },
+                                2 => {
+                                    operand_type = PreshaderOperandType::Input;
+                                    if num_arrays > 0 {
+                                        for _ in 0..num_arrays {
+                                            chunk.get_u32_le();  // ??
+                                            let jmp = chunk.get_u32_le();
+                                            chunk.get_u32_le();  // ??
+                                            let bigjmp = (jmp >> 4) * 4;
+                                            let ltljmp = (jmp >> 2) & 3;
+                                            let reg_value = bigjmp + ltljmp;
+                                            array_registers.push(reg_value);
+                                        }
+                                    }
+                                },
+                                4 => {
+                                    operand_type = PreshaderOperandType::Output;
+                                },
+                                7 => {
+                                    operand_type = PreshaderOperandType::Temp
+                                }
+                                _ => panic!("unknown operand type")
+                            }
+
+                            operands.push(PreshaderOperand {
+                                r#type: operand_type,
+                                index: item,
+                                array_registers
+                            });
+                        }
+                        instructions.push(PreshaderInstruction {
+                            opcode,
+                            element_count,
+                            operands
+                        });
+                    }
+                    println!("{:?}", instructions);
+                } else {
+                    panic!("unknown chunk in preshader");
+                }
+            }
         }
+    }
 
-        console_log!("{} {:?}", objects.len(), objects);
+    fn parse_ctab(ctab: &mut Bytes) -> ConstantTable {
+        let ctab_blob = ctab.clone();
+        let size = ctab.get_u32_le();
+        let creator = ctab_blob.slice(ctab.get_u32_le() as usize..).get_cstring();
+        let version = ctab.get_u32_le();
+        let constants = ctab.get_u32_le();
+        let constant_info = ctab.get_u32_le();
+        ctab.get_u32_le();  // unknown
+        let target = ctab_blob.slice(ctab.get_u32_le() as usize..).get_cstring();
 
-        Ok(FXShader {
-            params,
-            techniques
-        })
+        let table_size = ((constants as usize) * 20) + 28;
+
+        let mut symbols = Vec::new();
+        for _ in 0..constants {
+            let name = ctab_blob.slice(ctab.get_u32_le() as usize..).get_cstring();
+            let reg_set = ctab.get_u16_le();
+            let reg_idx = ctab.get_u16_le();
+            let reg_cnt = ctab.get_u16_le();
+            ctab.get_u16_le();  // unknown
+            let type_inf = ctab.get_u32_le() as usize;
+            let default_val = ctab.get_u32_le();
+
+            let register_set = match reg_set {
+                0 => RegisterSet::Bool,
+                1 => RegisterSet::Int4,
+                2 => RegisterSet::Float4,
+                3 => RegisterSet::Sampler,
+                _ => RegisterSet::Unknown,
+            };
+
+            symbols.push(Symbol {
+                name,
+                register_set,
+                register_index: reg_idx,
+                register_count: reg_cnt,
+                info: Self::parse_symbol_type_info(&ctab_blob, type_inf)
+            });
+        }
+        ConstantTable {
+            creator,
+            version,
+            target,
+            symbols
+        }
+    }
+
+    fn parse_symbol_type_info(ctab_data: &Bytes, info_offset: usize) -> SymbolTypeInfo {
+        let mut type_data = ctab_data.slice(info_offset..);
+        SymbolTypeInfo {
+            parameter_class: SymbolClass::from_value(type_data.get_u16_le() as u32),
+            parameter_type: SymbolType::from_value(type_data.get_u16_le() as u32),
+            rows: type_data.get_u16_le(),
+            columns: type_data.get_u16_le(),
+            elements: type_data.get_u16_le(),
+            members: {
+                let num_elements = type_data.get_u16_le();
+                let mut elements = Vec::new();
+                for _ in 0..num_elements {
+                    let name = ctab_data.slice(type_data.get_u32_le() as usize..).get_cstring();
+                    let info = Self::parse_symbol_type_info(ctab_data, type_data.get_u32_le() as usize);
+                    elements.push(SymbolStructMember { name, info: Box::new(info) });
+                }
+                elements
+            }
+        }
     }
 }

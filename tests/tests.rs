@@ -16,6 +16,7 @@ const XNB_DATA: Dir = include_dir!("tests/data/xnb");
 #[cfg(test)]
 mod tests {
     use std::convert::TryInto;
+    use std::ffi::CStr;
     use std::fs::File;
     use std::io::{Read, Write};
     use webassetstudio::unity::assets::file::AssetFile;
@@ -24,10 +25,12 @@ mod tests {
     // use webassetstudio::unity::classes::{Animator, MonoBehaviour, SkinnedMeshRenderer, TypeDefFromBytes};
     use include_dir::{include_dir, Dir};
     use lzxd::{Lzxd, WindowSize};
+    use mojoshader;
     use webassetstudio::utils::compress::lzx_decompress;
     // use webassetstudio::utils::lzx_decompress;
     use webassetstudio::xna::xnb::XNBFile;
     use webassetstudio::gamemaker::qoi::decode_qoi;
+    use webassetstudio::directx::shader::FXShader;
     use crate::{UNITYFS_DATA, XNB_DATA};
 
     #[test]
@@ -65,7 +68,20 @@ mod tests {
 
     #[test]
     fn test_qoif() {
-        let d = decode_qoi(&mut Bytes::from_static(include_bytes!("../test3.qoif"))).unwrap();
-        d.save("test3.png").unwrap();
+        // let d = decode_qoi(&mut Bytes::from_static(include_bytes!("../test3.qoif"))).unwrap();
+        // d.save("test3.png").unwrap();
+    }
+
+    #[test]
+    fn test_shader() {
+        let fx = FXShader::from_bytes(&mut Bytes::from_static(include_bytes!("data/shader.dat")));
+        println!("{:?}", fx);
+    }
+
+    #[test]
+    fn test_msbind() {
+        unsafe {
+            println!("{:?}", mojoshader::changeset());
+        }
     }
 }

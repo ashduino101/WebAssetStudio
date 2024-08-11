@@ -35,6 +35,7 @@
     "three": "^0.155.0",
     "vite": "^4.4.9",
     "vite-plugin-wasm": "^3.2.2",
+    "vite-plugin-wasm-pack": "^0.1.12",
     "vorbis.js": "^0.1.1",
     "zstddec": "^0.1.0"
   }

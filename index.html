@@ -21,6 +21,15 @@
 <!--  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2171931658322943"-->
 <!--     crossorigin="anonymous"></script>-->
   <meta name="theme-color" content="#3344ff">
+<!-- Fix for FFI environment path -->
+<!--  <akjfkjhfkdascript type="importmap">-->
+<!--  {-->
+<!--    "imports": {-->
+<!--      "env": "./env.js"-->
+<!--    }-->
+<!--  }-->
+<!--  </script>-->
+
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z0DDCL76HZ"></script>
@@ -70,33 +79,9 @@
 <!--  <script src="js/main.js" type="module"></script>-->
 <canvas id="debug_canvas"></canvas>
   <script type="module">
-    import "./pkg/webassetstudio.js";
+    import init from "./pkg/webassetstudio.js";
+    init();
     // console.log(was);
   </script>
-<script>
-  function getCharPtr(ptr) {
-    if (ptr === 0) {
-      return null;
-    }
-    let i = 0;
-    let b = 1;
-    let r = '';
-    while (b !== 0) {
-      b = HEAPU8[ptr + i];
-      if (b !== 0) {
-        r += String.fromCharCode(b);
-      }
-      i++;
-    }
-    return r;
-  }
-  function get128(ptr) {
-    return HEAPU8.slice(ptr, ptr + 128);
-  }
-  function setHeap(data, allocFunc) {
-    let ptr = allocFunc(data.length);
-    HEAPU8.set(data, ptr);
-  }
-</script>
 </body>
 </html>
