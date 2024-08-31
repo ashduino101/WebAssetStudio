@@ -1707,17 +1707,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mojoshader"
-version = "0.1.0"
-dependencies = [
- "bindgen",
- "cc",
- "wasm-bindgen",
- "wasm-bindgen-test",
- "wasm32-unknown-unknown-openbsd-libc",
-]
-
-[[package]]
 name = "native-tls"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3386,7 +3375,6 @@ dependencies = [
  "lz4_flex",
  "lzma-rs",
  "lzxd",
- "mojoshader",
  "num",
  "num-derive",
  "num-traits",

@@ -28,7 +28,7 @@ use tar::Archive;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_test::console_log;
-use mojoshader::*;
+// use mojoshader::*;
 use js_sys::{Function, Reflect, Object};
 use crate::directx::effect::FXEffect;
 use crate::gamemaker::file::GameMakerFile;
@@ -48,13 +48,13 @@ use crate::utils::dom::{create_data_url, create_img};
 use crate::utils::time::now;
 
 async fn unity_test() {
-    console_log!("constructing");
-    let mut ctx = EffectShaderContext::new("hlsl");
-    console_log!("compiling");
-    let res = ctx.compile(include_bytes!("../test.fx"));
-    console_log!("done");
-    console_log!("{:?}", res);
-    return;
+    // console_log!("constructing");
+    // let mut ctx = EffectShaderContext::new("hlsl");
+    // console_log!("compiling");
+    // let res = ctx.compile(include_bytes!("../test.fx"));
+    // console_log!("done");
+    // console_log!("{:?}", res);
+    // return;
     let mut dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 

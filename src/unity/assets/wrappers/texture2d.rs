@@ -72,6 +72,7 @@ impl Texture2DWrapper {
     }
 
     pub fn get_image(&self, index: i32) -> Vec<u8> {
+        console_log!("{:?}", self.format);
         decode(
             self.format.clone(),
             &mut self.data.clone().slice(
