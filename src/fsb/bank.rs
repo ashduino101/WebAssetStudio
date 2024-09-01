@@ -90,6 +90,15 @@ impl ChunkType {
 }
 
 #[derive(Debug)]
+pub struct SubSound {
+    pub is_stereo: bool,
+    pub frequency: u32,
+    pub sample_rate: u32,
+    pub data: Bytes,
+    pub comment: Option<String>
+}
+
+#[derive(Debug)]
 pub struct SoundBank {
     subversion: i32,
     num_subsounds: i32,
@@ -97,6 +106,7 @@ pub struct SoundBank {
     data_chunk_size: i32,
     total_size: i32,
     pub format: SoundFormat,
+    pub subsounds: Vec<SubSound>
 }
 
 impl SoundBank {
@@ -122,6 +132,7 @@ impl SoundBank {
         let mut chunk_data = data.slice(0..header_chunk_size as usize);
         data.advance(header_chunk_size as usize);
 
+        let mut subsounds = Vec::new();
         for _ in 0..num_subsounds {
             let meta = chunk_data.get_u64_le();
             let mut next_chunk = (meta & 1) == 1;  // 1 bit
@@ -141,7 +152,7 @@ impl SoundBank {
             };  // 4 bits
             let stereo = ((meta & 0x3f) >> 5) != 0;  // 1 bit
             let data_offset = (meta & 0x3ffffffff) >> 6;  // 28 bits
-            let sample_rate = meta >> 34;  // 30 bits
+            let sample_rate = (meta >> 34) as u32;  // 30 bits
             // console_log!("freq {} stereo {} offset {} rate {}", frequency, stereo, data_offset, sample_rate);
 
             let mut sample_data = data.slice(data_offset as usize..(total_size - data_chunk_size) as usize);
@@ -176,7 +187,7 @@ impl SoundBank {
 
             let data = match format {
                 SoundFormat::Vorbis => {
-                    fix_vorbis_container(&mut sample_data, if stereo { 2 } else { 1 }, frequency, vorbis_crc, sample_rate as u32).expect("error while fixing vorbis container")
+                    fix_vorbis_container(&mut sample_data, if stereo { 2 } else { 1 }, frequency, vorbis_crc, sample_rate).expect("error while fixing vorbis container")
                 },
                 SoundFormat::Pcm8 => {
                     encode_wav(sample_data, WavFormat::PCM8, frequency, if stereo { 2 } else { 1 })
@@ -199,13 +210,20 @@ impl SoundBank {
                 _ => todo!()
             };
 
-            let window = web_sys::window().expect("no global `window` exists");
-            let document = window.document().expect("should have a document on window");
-            let body = document.body().expect("document should have a body");
-            let elem = document.create_element("audio").expect("failed to create element");
-            elem.set_attribute("src", &create_data_url(&data[..])).expect("set_attribute");
-            elem.set_attribute("controls", "").expect("set_attribute");
-            body.append_child(&elem).expect("append_child");
+            // let window = web_sys::window().expect("no global `window` exists");
+            // let document = window.document().expect("should have a document on window");
+            // let body = document.body().expect("document should have a body");
+            // let elem = document.create_element("audio").expect("failed to create element");
+            // elem.set_attribute("src", &create_data_url(&data[..])).expect("set_attribute");
+            // elem.set_attribute("controls", "").expect("set_attribute");
+            // body.append_child(&elem).expect("append_child");
+            subsounds.push(SubSound {
+                is_stereo: stereo,
+                frequency,
+                sample_rate,
+                data,
+                comment
+            });
         }
 
         data.advance(total_size as usize);
@@ -216,7 +234,8 @@ impl SoundBank {
             header_chunk_size,
             data_chunk_size,
             total_size,
-            format
+            format,
+            subsounds
         }
     }
 }

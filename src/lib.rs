@@ -62,7 +62,7 @@ async fn unity_test() {
     let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
     console_log!("end decompress: {} bytes", file.len());
 
-    console_log!("start asset file parse");
+    console_log!("start asset file parse at {}", now());
     let asset = AssetFile::new(&mut file);
 
     let mut i = 0;
@@ -90,7 +90,6 @@ async fn unity_test() {
         }
         if typ.class_id == 83 {
             let w = AudioClipWrapper::from_value(&parsed, &f).expect("failed to wrap object");
-            // console_log!("{:?}", w.bank);
         }
         if typ.class_id == 43 {
             let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
@@ -108,6 +107,7 @@ async fn unity_test() {
         // console_log!("{:?}", parsed);
     }
 
+    console_log!("end asset file parse at {}", now());
     console_log!("{:?}", asset);
     console_log!("{:?}", f);
 
