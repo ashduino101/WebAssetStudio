@@ -124,9 +124,8 @@ impl SoundBank {
 
         for _ in 0..num_subsounds {
             let meta = chunk_data.get_u64_le();
-            // yes these constants are a bit out of hand but shifting wouldn't make this any nicer
             let mut next_chunk = (meta & 1) == 1;  // 1 bit
-            let frequency: u32 = match (meta & 31) >> 1 {
+            let frequency: u32 = match (meta & 0x1f) >> 1 {
                 0 => 4000,
                 1 => 8000,
                 2 => 11000,
@@ -140,8 +139,8 @@ impl SoundBank {
                 10 => 96000,
                 other => panic!("unknown frequency {}", other)
             };  // 4 bits
-            let stereo = ((meta & 63) >> 5) != 0;  // 1 bit
-            let data_offset = (meta & 17179869183) >> 6;  // 28 bits
+            let stereo = ((meta & 0x3f) >> 5) != 0;  // 1 bit
+            let data_offset = (meta & 0x3ffffffff) >> 6;  // 28 bits
             let sample_rate = meta >> 34;  // 30 bits
             console_log!("freq {} stereo {} offset {} rate {}", frequency, stereo, data_offset, sample_rate);
 
@@ -152,8 +151,8 @@ impl SoundBank {
             while next_chunk {
                 let meta = chunk_data.get_u32_le();
                 next_chunk = (meta & 1) == 1;  // 1 bit
-                let chunk_size = ((meta & 33554431) >> 1) as usize;  // 24 bits
-                let chunk_type = ChunkType::from_u32((meta & 4294967295) >> 25);  // 7 bits
+                let chunk_size = ((meta & 0x1ffffff) >> 1) as usize;  // 24 bits
+                let chunk_type = ChunkType::from_u32((meta & 0xffffffff) >> 25);  // 7 bits
                 let mut chunk = chunk_data.slice(0..chunk_size);
                 chunk_data.advance(chunk_size);
                 console_log!("chunk {:?} of length {}", chunk_type, chunk_size);

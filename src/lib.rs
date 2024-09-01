@@ -55,7 +55,7 @@ async fn unity_test() {
     // console_log!("done");
     // console_log!("{:?}", res);
     // return;
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../test4.unity3d")));
     let mut f = BundleFile::new(&mut dat);
 
     console_log!("start decompress");

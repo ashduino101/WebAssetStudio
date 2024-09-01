@@ -68,7 +68,10 @@ impl BundleFlags {
 pub struct BundleFile {
     pub header: BundleFileHeader,
     pub storage: StorageInfo,
-    block_data: Bytes
+    block_data: Bytes,
+
+    archive_pat: Regex  // TODO: init this statically somehow?
+                        //  we do it in the constructor because it is a relatively slow operation
 }
 
 impl Debug for BundleFile {
@@ -91,7 +94,9 @@ impl BundleFile {
                                                header.uncompressed_block_info_size, &header.flags);
         let block_data = data.clone();
 
-        Self { header, storage, block_data }
+        Self { header, storage, block_data, archive_pat: Regex::new(
+            r#"archive:/[\w\d\-_.'"\[\]{}()]+/(.*)"#
+            ).expect("compile error") }
     }
 
     fn parse_header(data: &mut Bytes) -> BundleFileHeader {
@@ -143,6 +148,16 @@ impl BundleFile {
 
     pub fn get_file(&self, path: &str) -> Option<Bytes> {
         let node = self.storage.get_node_by_path(path)?;
+        if self.storage.blocks.len() == 1 {
+            let block = &self.storage.blocks[0];
+            let b = decompress(
+                &mut self.block_data.slice(0..block.compressed_size),
+                block.flags.compression_type,
+                block.compressed_size,
+                block.uncompressed_size
+            );
+            return Some(b.slice(node.offset..));
+        }
         let (blocks, first_offset, raw_offset) = self.storage.get_blocks_for_node(node);
         let mut buf = BytesMut::new();
         let mut offset = first_offset;
@@ -168,12 +183,7 @@ impl BundleFile {
         let mut source = path.to_owned();
 
         if source.starts_with("archive:/") {
-            let pat = Regex::new(
-                r#"archive:/[\w\d\-_.'"\[\]{}()]+/(.*)"#
-            ).expect("compile error");
-
-
-            let (_, [s]) = pat.captures_iter(&source).map(|c| c.extract()).last().expect("no matches");
+            let (_, [s]) = self.archive_pat.captures_iter(&source).map(|c| c.extract()).last().expect("no matches");
             source = s.into();
         }
         console_log!("get resource {}", source);

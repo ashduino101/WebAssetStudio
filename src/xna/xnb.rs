@@ -44,8 +44,8 @@ impl XNBFile {
         self.platform.to_string()
     }
 
-    pub fn type_readers(&self) -> Box<[TypeReader]> {
-        self.type_readers.clone().into()
+    pub fn type_readers(&self) -> &Vec<TypeReader> {
+        &self.type_readers
     }
 
     pub fn new(data: &mut Bytes) -> Box<XNBFile> {
