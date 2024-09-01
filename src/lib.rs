@@ -74,7 +74,7 @@ async fn unity_test() {
         // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
         let parsed = TypeParser::parse_object_from_info(typ, data);
         let name = parsed.get("m_Name").ok().map_or("<untitled>".to_owned(), |v| v.as_string().unwrap());
-        console_log!("{:?}", name);
+        // console_log!("{:?}", name);
         if typ.class_id == 28 {
             //     // console_log!("{:?}", parsed);
             let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
@@ -90,7 +90,7 @@ async fn unity_test() {
         }
         if typ.class_id == 83 {
             let w = AudioClipWrapper::from_value(&parsed, &f).expect("failed to wrap object");
-            console_log!("{:?}", w.bank);
+            // console_log!("{:?}", w.bank);
         }
         if typ.class_id == 43 {
             let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();

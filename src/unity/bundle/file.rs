@@ -186,10 +186,10 @@ impl BundleFile {
             let (_, [s]) = self.archive_pat.captures_iter(&source).map(|c| c.extract()).last().expect("no matches");
             source = s.into();
         }
-        console_log!("get resource {}", source);
+        // console_log!("get resource {}", source);
 
         let file = self.get_file(&source).expect("resource points to non-existent file");
-        console_log!("got resource: {}, slicing at {} to {}", file.len(), offset, size);
+        // console_log!("got resource: {}, slicing at {} to {}", file.len(), offset, size);
         let data = file.slice(offset..offset + size);
         Ok(data)
     }

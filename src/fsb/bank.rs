@@ -142,12 +142,13 @@ impl SoundBank {
             let stereo = ((meta & 0x3f) >> 5) != 0;  // 1 bit
             let data_offset = (meta & 0x3ffffffff) >> 6;  // 28 bits
             let sample_rate = meta >> 34;  // 30 bits
-            console_log!("freq {} stereo {} offset {} rate {}", frequency, stereo, data_offset, sample_rate);
+            // console_log!("freq {} stereo {} offset {} rate {}", frequency, stereo, data_offset, sample_rate);
 
             let mut sample_data = data.slice(data_offset as usize..(total_size - data_chunk_size) as usize);
 
             // let mut chunks = Vec::new();
             let mut vorbis_crc = 0;
+            let mut comment = None;
             while next_chunk {
                 let meta = chunk_data.get_u32_le();
                 next_chunk = (meta & 1) == 1;  // 1 bit
@@ -155,11 +156,20 @@ impl SoundBank {
                 let chunk_type = ChunkType::from_u32((meta & 0xffffffff) >> 25);  // 7 bits
                 let mut chunk = chunk_data.slice(0..chunk_size);
                 chunk_data.advance(chunk_size);
-                console_log!("chunk {:?} of length {}", chunk_type, chunk_size);
+                // console_log!("chunk {:?} of length {}", chunk_type, chunk_size);
                 match chunk_type {
                     ChunkType::VorbisSeekTable => {
                         vorbis_crc = chunk.get_u32_le();
                     },
+                    ChunkType::Comment => {
+                        // console_log!("{:?}", chunk);
+                        chunk.get_u32_le();  // ???
+                        // let comment = chunk.get_cstring();
+                        // FIXME: fix cstring decoder so we don't have to do this for proper utf-8 support
+                        let comment_data = chunk.slice(0..chunk.iter().position(|&b| b == 0).unwrap_or(0));
+                        comment = Some(String::from_utf8(Vec::from(comment_data)).unwrap());
+                        // console_log!("{:?}", comment);
+                    }
                     _ => {}
                 }
             }
