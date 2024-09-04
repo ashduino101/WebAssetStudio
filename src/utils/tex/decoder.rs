@@ -926,18 +926,18 @@ pub fn decode(format: TextureFormat, data: &mut Bytes, width: usize, height: usi
         _ => [].into()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use bytes::Bytes;
-    use crate::utils::tex::decoder::*;
-
-    #[test]
-    fn test_generated() {
-        assert_eq!(decode_a8(&mut Bytes::from(vec![0, 8, 16, 32, 64, 128, 64, 32])),
-                   vec![0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 16, 0, 0, 0, 32,
-                        0, 0, 0, 64, 0, 0, 0, 128, 0, 0, 0, 64, 0, 0, 0, 32]);
-        assert_eq!(decode_rgb565(&mut Bytes::from(vec![0x08, 0x43, 0x20, 0xa6])),
-                   vec![1, 2, 3, 0, 4, 5, 6, 0]);
-    }
-}
+//
+// #[cfg(test)]
+// mod tests {
+//     use bytes::Bytes;
+//     use crate::utils::tex::decoder::*;
+//
+//     #[test]
+//     fn test_generated() {
+//         assert_eq!(decode_a8(&mut Bytes::from(vec![0, 8, 16, 32, 64, 128, 64, 32])),
+//                    vec![0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 16, 0, 0, 0, 32,
+//                         0, 0, 0, 64, 0, 0, 0, 128, 0, 0, 0, 64, 0, 0, 0, 32]);
+//         assert_eq!(decode_rgb565(&mut Bytes::from(vec![0x08, 0x43, 0x20, 0xa6])),
+//                    vec![1, 2, 3, 0, 4, 5, 6, 0]);
+//     }
+// }

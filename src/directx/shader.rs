@@ -307,7 +307,7 @@ impl FXShader {
                             let mode = chunk.get_u32_le();
                             let item = chunk.get_u32_le();
                             let mut array_registers = Vec::new();
-                            let mut operand_type;
+                            let operand_type;
                             match mode {
                                 1 => {
                                     operand_type = PreshaderOperandType::Literal;

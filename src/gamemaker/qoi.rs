@@ -1,9 +1,8 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter, Write};
 use bytes::{Buf, Bytes};
-use image::{DynamicImage, Pixel, Rgba, RgbaImage};
+use image::{Pixel, Rgba, RgbaImage};
 use anyhow;
-use num_traits::ops::overflowing::OverflowingAdd;
 
 static MAGIC: u32 = 0x716f6966;  // "qoif"
 

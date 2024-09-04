@@ -5,7 +5,7 @@ use bytes::Bytes;
 use wasm_bindgen_test::console_log;
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
-use crate::{BundleFile, create_data_url};
+use crate::BundleFile;
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 use crate::utils::tex::pngenc::encode_png;

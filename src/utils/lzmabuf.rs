@@ -1,5 +1,4 @@
 use std::io::{Read, Write};
-use std::ops::{Index, Range};
 use lzma_rs::decompress::{Options, Stream};
 
 pub struct BufferedLZMAReader<'a> {
@@ -11,7 +10,7 @@ pub struct BufferedLZMAReader<'a> {
 
 impl BufferedLZMAReader<'_> {
     pub fn from(src: &[u8]) -> BufferedLZMAReader<'_> {
-        let mut dst = Vec::new();
+        let dst = Vec::new();
         BufferedLZMAReader {
             stream: Stream::new_with_options(&Options {
                 unpacked_size: Default::default(),

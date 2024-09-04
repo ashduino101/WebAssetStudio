@@ -1,15 +1,10 @@
 use std::io::Cursor;
 use bytes::{Bytes};
 use image::{ImageFormat, RgbaImage};
-use rand::distributions::{Alphanumeric, DistString};
-use rand::Rng;
-use three_d::{AmbientLight, Camera, ClearState, CpuModel, FlyControl, FrameOutput, Geometry, Model, OrbitControl, PhysicalMaterial, Skybox, vec3, Window, WindowSettings};
-use three_d_asset::{degrees, GeometryFunction, LightingModel, NormalDistributionFunction, Scene, Srgba, TriMesh, Viewport};
+use three_d::{AmbientLight, Camera, ClearState, CpuModel, FlyControl, FrameOutput, Geometry, Model, PhysicalMaterial, Skybox, vec3, Window, WindowSettings};
+use three_d_asset::{degrees, GeometryFunction, LightingModel, NormalDistributionFunction, Scene, Srgba, Viewport};
 use wasm_bindgen_test::console_log;
-use wasm_bindgen::JsCast;
-use web_sys::HtmlCanvasElement;
-use crate::CpuTexture;
-use crate::utils::dom::{create_data_url, get_element_by_id};
+use crate::utils::dom::create_data_url;
 
 pub fn load_image(image: RgbaImage) {
     let window = web_sys::window().expect("no global `window` exists");

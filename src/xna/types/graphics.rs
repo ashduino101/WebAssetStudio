@@ -1,10 +1,11 @@
 use std::fmt::{Debug, Formatter};
 use bytes::{Buf, Bytes};
 use crate::base::asset::{Asset, Export};
-use crate::create_img;
+use crate::{create_img, XNBFile};
 use crate::utils::buf::{FromBytes};
 use crate::utils::tex::pngenc::encode_png;
 use crate::xna::type_base::XNBType;
+use crate::xna::xnb::TypeReader;
 
 #[derive(Debug)]
 pub enum SurfaceFormat {
@@ -102,7 +103,7 @@ impl Asset for Texture2D {
 }
 
 impl XNBType for Texture2D {
-    fn from_bytes(data: &mut Bytes) -> Texture2D {
+    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> Texture2D {
         let surface_format = SurfaceFormat::from_bytes(data);
         let width = data.get_u32_le();
         let height = data.get_u32_le();
@@ -122,3 +123,47 @@ impl XNBType for Texture2D {
         }
     }
 }
+
+
+#[derive(Debug)]
+pub struct SpriteFont {
+    pub texture: Box<dyn XNBType>,
+    pub glyphs: Box<dyn XNBType>,
+    pub cropping: Box<dyn XNBType>,
+    pub character_map: Box<dyn XNBType>,
+    pub vertical_line_spacing: i32,
+    pub horizontal_spacing: f32,
+    pub default_character: Option<u8>
+}
+
+impl Asset for SpriteFont {
+    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+        self.texture.make_html(doc)
+    }
+
+    fn export(&mut self) -> Export {
+        self.texture.export()
+    }
+}
+
+impl XNBType for SpriteFont {
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> SpriteFont {
+        let texture = XNBFile::read_type(&readers.get((data.get_varint() - 1) as usize).expect("invalid index").typename, data, &readers);
+        let glyphs = XNBFile::read_type(&readers.get((data.get_varint() - 1) as usize).expect("invalid index").typename, data, &readers);
+        let cropping = XNBFile::read_type(&readers.get((data.get_varint() - 1) as usize).expect("invalid index").typename, data, &readers);
+        let character_map = XNBFile::read_type(&readers.get((data.get_varint() - 1) as usize).expect("invalid index").typename, data, &readers);
+        let vertical_line_spacing = data.get_i32_le();
+        let horizontal_spacing = data.get_f32_le();
+        let default_character = if data.get_u8() != 0 { Some(data.get_u8()) } else { None };
+        SpriteFont {
+            texture,
+            glyphs,
+            cropping,
+            character_map,
+            vertical_line_spacing,
+            horizontal_spacing,
+            default_character
+        }
+    }
+}
+

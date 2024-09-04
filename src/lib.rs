@@ -19,23 +19,15 @@ use std::{panic};
 use std::io::{Cursor, Write};
 
 use std::panic::PanicInfo;
-use std::ffi::CStr;
-use bytes::{Bytes, BytesMut, Buf};
+use bytes::Bytes;
+use lzma_rs::xz_decompress;
 use three_d::*;
-use lzma_rs;
-use lzma_rs::decompress::Options;
-use tar::Archive;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_test::console_log;
 // use mojoshader::*;
-use js_sys::{Function, Reflect, Object};
-use crate::directx::effect::FXEffect;
-use crate::gamemaker::file::GameMakerFile;
 
 use crate::logger::splash;
-use crate::studio::components::checkbox::Checkbox;
-use crate::studio::dock::widget::WidgetContainer;
 use crate::unity::assets::file::AssetFile;
 use crate::unity::assets::typetree::TypeParser;
 use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
@@ -43,9 +35,10 @@ use crate::unity::assets::wrappers::mesh::MeshWrapper;
 use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::unity::bundle::file::BundleFile;
 use crate::unity::version::UnityVersion;
-use crate::utils::debug::{load_audio, render_mesh};
-use crate::utils::dom::{create_data_url, create_img};
+use crate::utils::debug::load_audio;
+use crate::utils::dom::create_img;
 use crate::utils::time::now;
+use crate::xna::xnb::XNBFile;
 
 async fn unity_test() {
     // console_log!("constructing");
@@ -55,8 +48,25 @@ async fn unity_test() {
     // console_log!("done");
     // console_log!("{:?}", res);
     // return;
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../test4.unity3d")));
-    let mut f = BundleFile::new(&mut dat);
+
+    // let mut d = include_bytes!("unity/assets/trees.tar.xz");
+    // console_log!("start decompress at {}", now());
+    // let mut out = Vec::new();
+    // xz_decompress(&mut Cursor::new(&mut d), &mut out).unwrap();
+    // console_log!("end decompress at {} (size: {})", now(), out.len());
+
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
+    let body = document.body().expect("document should have a body");
+
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../xnbtests/GUI/Fonts/Bold-20")));
+    let mut xnb = XNBFile::new(&mut dat);
+    console_log!("{:?}", xnb);
+    body.append_child(&xnb.primary_asset.make_html(&document)).unwrap();
+    return;
+
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../test2.unity3d")));
+    let f = BundleFile::new(&mut dat);
 
     console_log!("start decompress");
     let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
@@ -73,16 +83,11 @@ async fn unity_test() {
         // console_log!("{}", typ.string_repr);
         // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
         let parsed = TypeParser::parse_object_from_info(typ, data);
-        let name = parsed.get("m_Name").ok().map_or("<untitled>".to_owned(), |v| v.as_string().unwrap());
+        let name = parsed.get("m_Name").ok().map_or("<unnamed>".to_owned(), |v| v.as_string().unwrap());
         // console_log!("{:?}", name);
         if typ.class_id == 28 {
-            //     // console_log!("{:?}", parsed);
             let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
-            //     // console_log!("{:?}", w);
-
-            let window = web_sys::window().expect("no global `window` exists");
-            let document = window.document().expect("should have a document on window");
-            let body = document.body().expect("document should have a body");
+            // console_log!("{:?}", w);
 
             let elem = document.create_element("img").expect("failed to create element");
             elem.set_attribute("src", &create_img(w.get_image(w.num_images - 1).as_ref(), w.width as usize, w.height as usize, true)).expect("set_attribute");
@@ -100,9 +105,6 @@ async fn unity_test() {
             // }
 
             i += 1;
-            // break;
-            // console_log!("{}", create_data_url(&w.vertex_data[..]));
-            // console_log!("{:?}", parsed.get("m_VertexData").unwrap().get("m_DataSize").unwrap().as_bytes().unwrap().len());
         }
         // console_log!("{:?}", parsed);
     }

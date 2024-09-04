@@ -1,6 +1,5 @@
 use std::str::FromStr;
 use regex::Regex;
-use wasm_bindgen_test::console_log;
 
 #[derive(Debug, Copy, Clone)]
 pub enum ReleaseType {

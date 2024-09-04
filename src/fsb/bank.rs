@@ -1,8 +1,6 @@
 use bytes::{Buf, Bytes};
-use wasm_bindgen_test::console_log;
 use crate::fsb::codecs::vorbis::fix_vorbis_container;
 use crate::utils::buf::BufExt;
-use crate::utils::dom::create_data_url;
 use crate::utils::pcm::{encode_wav, WavFormat};
 
 #[derive(Debug, Copy, Clone)]

@@ -18,7 +18,6 @@ impl WavFormat {
             WavFormat::PCM8 | WavFormat::PCM16 | WavFormat::PCM24 | WavFormat::PCM32 => 1,
             WavFormat::PCMF32 | WavFormat::PCMF64 => 3,
             WavFormat::IMAADPCM => 17,
-            _ => 0
         }
     }
 
@@ -31,7 +30,6 @@ impl WavFormat {
             WavFormat::PCM32 => 32,
             WavFormat::PCMF32 => 32,
             WavFormat::PCMF64 => 32,
-            _ => 0
         }
     }
 }

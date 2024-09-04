@@ -1,8 +1,7 @@
 use std::io::{Cursor, Seek, SeekFrom};
 use bytes::{Buf, Bytes};
 use bzip2_rs::decoder::{Decoder, ReadState, WriteState};
-use image::{DynamicImage, ImageDecoder, ImageReader, RgbaImage};
-use image::codecs::png::PngDecoder;
+use image::ImageReader;
 
 use crate::gamemaker::iff::IFFReader;
 use crate::gamemaker::qoi::decode_qoi;

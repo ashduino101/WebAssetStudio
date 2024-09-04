@@ -1,6 +1,4 @@
 use std::fmt::{Debug};
-use bytes::Bytes;
-use wasm_bindgen_test::console_log;
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
 use crate::BundleFile;
@@ -8,7 +6,6 @@ use crate::fsb::bank::{SoundBank, SoundFormat};
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 
-use crate::utils::tex::decoder::{decode, get_mipmap_offset_and_size, TextureFormat};
 
 
 #[derive(Debug)]

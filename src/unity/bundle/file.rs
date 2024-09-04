@@ -3,8 +3,7 @@ use std::fmt::Debug;
 use std::iter::FromIterator;
 use bytes::{Bytes, Buf, BytesMut, BufMut};
 use regex::Regex;
-use wasm_bindgen_test::console_log;
-use crate::unity::assets::typetree::{ObjectError, ValueType};
+use crate::unity::assets::typetree::ObjectError;
 
 use crate::unity::bundle::block::{BlockInfo};
 use crate::unity::bundle::node::{Node};

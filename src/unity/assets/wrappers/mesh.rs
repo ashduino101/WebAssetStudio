@@ -2,12 +2,11 @@ extern crate num;
 
 use std::fmt::{Debug};
 use bytes::{Buf, Bytes};
-use three_d::{CpuMesh, Matrix4, Mesh, Vector2, Vector3, Vector4};
+use three_d::{CpuMesh, Matrix4, Vector2, Vector3, Vector4};
 use three_d_asset::{Geometry, Indices, Mat4, Node, PbrMaterial, Positions, Scene, Srgba};
 use wasm_bindgen_test::console_log;
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
-use crate::CpuGeometry;
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 use crate::utils::fp16::fp16_ieee_to_fp32_value;
@@ -100,7 +99,7 @@ impl MeshWrapper {
                 let channel = &channels[chn];
                 let dim = channel.get("dimension")?.as_u8()?;
                 if channel.get("stream")?.as_u8()? == s && dim > 0 {
-                    chn_mask |= (1u32 << (chn as u32));
+                    chn_mask |= 1u32 << (chn as u32);
                     stride += dim as u32 * get_vertex_size(channel.get("format")?.as_u8()?, is_pre_2017);
                 }
             }

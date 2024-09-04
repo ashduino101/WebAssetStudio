@@ -53,10 +53,8 @@ macro_rules! error {
     &crate::logger::module_style(file!()), crate::logger::TEXT_STYLE))
 }
 
-pub(crate) use debug;
 pub(crate) use info;
 pub(crate) use warning;
-pub(crate) use error;
 
 pub struct Logger {
     pub mod_name: String
