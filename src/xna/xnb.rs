@@ -14,6 +14,14 @@ use crate::xna::types::system::*;
 
 const XNB_MAGIC: &str = "XNB";
 
+fn type_to_reader(type_name: &str) -> &str {
+    match type_name {
+        "Microsoft.Xna.Framework.Rectangle" => "Microsoft.Xna.Framework.Content.RectangleReader",
+        "Microsoft.Xna.Framework.Vector3" => "Microsoft.Xna.Framework.Content.Vector3Reader",
+        v => v
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct TypeReader {
@@ -120,9 +128,30 @@ impl XNBFile {
 
             "Microsoft.Xna.Framework.Content.Texture2DReader" => Box::from(Texture2D::from_bytes(data, readers)),
             "Microsoft.Xna.Framework.Content.SpriteFontReader" => Box::from(SpriteFont::from_bytes(data, readers)),
-            _ => {
-                warning!("Unknown class {}", class);
-                panic!("^^")
+            v => {
+                if v.starts_with("Microsoft.Xna.Framework.Content.ListReader`1") {
+                    console_log!("size={}", data.len());
+                    match v {
+                        "Microsoft.Xna.Framework.Content.ListReader`1[[System.Char" => {
+                            Box::new(Vec::<char>::from_bytes(data, readers))
+                        }
+                        _ => {
+                            let len = data.get_u32_le();
+                            console_log!("len={len}");
+                            let type_name = type_to_reader(v
+                                .split("[[").collect::<Vec<_>>()[1]
+                                .split(",").collect::<Vec<_>>()[0]);
+                            let mut val = Vec::new();
+                            for _ in 0..len {
+                                val.push(Self::read_type(type_name, data, readers));
+                            }
+                            Box::new(val)
+                        }
+                    }
+                } else {
+                    warning!("Unknown class {}", class);
+                    panic!("^^")
+                }
             }
         }
     }

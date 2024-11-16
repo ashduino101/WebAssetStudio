@@ -86,7 +86,11 @@ pub enum TextureFormat {
     RGBA5551,
     RGBHalf,
     L8,
-    LA16
+    LA16,
+    BGR565,
+    BGRA5551,
+    BGRA4444,
+    RGBA1010102,
 }
 
 // TODO: this *could* be nice, but is it fast enough?

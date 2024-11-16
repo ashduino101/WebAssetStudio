@@ -3372,6 +3372,7 @@ dependencies = [
  "image 0.25.2",
  "include_dir",
  "js-sys",
+ "lebe",
  "lz4_flex",
  "lzma-rs",
  "lzxd",
