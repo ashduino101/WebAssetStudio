@@ -59,7 +59,7 @@ async fn unity_test() {
     let document = window.document().expect("should have a document on window");
     let body = document.body().expect("document should have a body");
 
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../xnbtests/GUI/Fonts/Bold-20")));
+    let mut dat = Bytes::from(Vec::from(include_bytes!("../xnbtests/GUI/Fonts/BoldItalic-26")));
     console_log!("starting size: {}", dat.len());
     let mut xnb = XNBFile::new(&mut dat);
     console_log!("{:?}", xnb);

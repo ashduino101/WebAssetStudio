@@ -581,9 +581,9 @@ pub fn decode_rgba64(data: &mut Bytes, width: usize, height: usize) -> Vec<u8> {
 fn decode_generic_blocky(data: &mut Bytes, width: usize, height: usize, func: impl Fn(&[u8], &mut [u32]), stride: usize) -> Vec<u8> {
     let mut i = 0;
     let mut out: Vec<u32> = Vec::new();
-    out.resize((width * height) as usize, 0);
-    for by in 0..(((height + 3) / 4) as usize) {
-        for bx in 0..(((width + 3) / 4) as usize) {
+    out.resize(width * height, 0);
+    for by in 0..((height + 3) / 4) {
+        for bx in 0..((width + 3) / 4) {
             let mut outblk = [0u32; 16];
             func(&data[i..i + stride], &mut outblk);
             copy_block_buffer(bx, by, width, height, 4, 4, &outblk, &mut out);
@@ -598,24 +598,34 @@ pub fn decode_dxt1(data: &mut Bytes, width: usize, height: usize) -> Vec<u8> {
 }
 
 fn decode_bc2_block(data: &[u8], outbuf: &mut [u32]) {
-    let mut alpha = [0xffu32; 16];
-    for row in 0..4 {
-        let a0 = (data[row * 2] >> 4) * 16;
-        let a1 = (data[row * 2] & 0b1111) * 16;
-        let a2 = (data[row * 2 + 1] >> 4) * 16;
-        let a3 = (data[row * 2 + 1] & 0b1111) * 16;
-
-        alpha[row * 4] = a0 as u32;
-        alpha[row * 4 + 1] = a1 as u32;
-        alpha[row * 4 + 2] = a2 as u32;
-        alpha[row * 4 + 3] = a3 as u32;
-    }
-
     let mut colors = [0u32; 16];
     decode_bc1_block(&data[8..], &mut colors);
-    for (i, c) in colors.iter().enumerate() {
-        outbuf[i] = c & 0x00ffffff | (alpha[i] << 24);
+    // idk why we have to do this
+    // let m = [4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11];
+    // let mut colors = [0u32; 16];
+    // for p in 0..16 {
+    //     colors[p] = orig_colors[m[p]];
+    // }
+    for row in 0..4 {
+        let a0 = (data[row * 2] & 0b1111) << 4;
+        let a1 = (data[row * 2] >> 4) << 4;
+        let a2 = (data[row * 2 + 1] & 0b1111) << 4;
+        let a3 = (data[row * 2 + 1] >> 4) << 4;
+
+        // alpha[row * 4] = a0 as u32;
+        // alpha[row * 4 + 1] = a1 as u32;
+        // alpha[row * 4 + 2] = a2 as u32;
+        // alpha[row * 4 + 3] = a3 as u32;
+        outbuf[row * 4] = colors[row * 4] & 0x00ffffff | ((a0 as u32) << 24);
+        outbuf[row * 4 + 1] = colors[row * 4 + 1] & 0x00ffffff | ((a1 as u32) << 24);
+        outbuf[row * 4 + 2] = colors[row * 4 + 2] & 0x00ffffff | ((a2 as u32) << 24);
+        outbuf[row * 4 + 3] = colors[row * 4 + 3] & 0x00ffffff | ((a3 as u32) << 24);
     }
+
+    // for (i, c) in colors.iter().enumerate() {
+    //     // outbuf[m[i]] = c & 0x00ffffff | (alpha[i] << 24);
+    //     outbuf[i] = alpha[i] | (alpha[i] << 8) | (alpha[i] << 16) | (alpha[i] << 24);
+    // }
 }
 
 pub fn decode_dxt3(data: &mut Bytes, width: usize, height: usize) -> Vec<u8> {
@@ -930,18 +940,19 @@ pub fn decode(format: TextureFormat, data: &mut Bytes, width: usize, height: usi
         _ => [].into()
     }
 }
-//
-// #[cfg(test)]
-// mod tests {
-//     use bytes::Bytes;
-//     use crate::utils::tex::decoder::*;
-//
-//     #[test]
-//     fn test_generated() {
-//         assert_eq!(decode_a8(&mut Bytes::from(vec![0, 8, 16, 32, 64, 128, 64, 32])),
-//                    vec![0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 16, 0, 0, 0, 32,
-//                         0, 0, 0, 64, 0, 0, 0, 128, 0, 0, 0, 64, 0, 0, 0, 32]);
-//         assert_eq!(decode_rgb565(&mut Bytes::from(vec![0x08, 0x43, 0x20, 0xa6])),
-//                    vec![1, 2, 3, 0, 4, 5, 6, 0]);
-//     }
-// }
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_dxt() {
+        let data = [0, 0, 0, 0x40];
+        let mut outbuf = [0u8; 16];
+        let mut d: usize = u32::from_le_bytes(data) as usize;
+        (0..16).for_each(|i| {
+            outbuf[i] = (d & 3) as u8;
+            d >>= 2;
+        });
+        println!("{outbuf:?}");
+    }
+}
