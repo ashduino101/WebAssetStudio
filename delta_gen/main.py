@@ -8,7 +8,7 @@ import os
 import re
 import struct
 
-import tqdm
+# import tqdm
 
 TYPE_MAP = {
     'bool': 'bool',
@@ -147,39 +147,37 @@ class Node:
     def diff(self, other: Node, version):  # other must be older
         all_names = list(set([c.name for c in (self.children + other.children)]))
         for name in all_names:
-            child = self.get(name)  # Node on our newer node
+            newer_child = self.get(name)  # Node on our newer node
             older_child = other.get(name)  # Node on our older node
-            if child and older_child:  # If it is present in both...
-                child.version_ranges += older_child.version_ranges  # ...make sure to persist the version
-                child.align_version_ranges += older_child.align_version_ranges  # ...and the alignment version ranges
+            if newer_child and older_child:  # If it is present in both...
+                newer_child.version_ranges += older_child.version_ranges  # ...make sure to persist the version
+                newer_child.align_version_ranges += older_child.align_version_ranges  # ...and the alignment version ranges
 
-            if not other.get(name):  # Since it isn't present in the older version, we can assume it was added in this one
-                i = self.get(name)  # Get our newer one
-                i.align_version_ranges.append(VersionRange(version, None))
-                if i.meta_flags & 16384:
-                    i.align_version_ranges.append(VersionRange(version, None))
-            elif not self.get(name):  # Removed in this version -- present in the older node but not the newer one
-                i = other.get(name)  # Get the older one
-                if len(i.version_ranges) == 0:
-                    i.version_ranges.append(VersionRange(None, 0))
-                i.version_ranges[-1].end = version
+            if not older_child:  # Since it isn't present in the older version, we can assume it was added in this one
+                newer_child.version_ranges.append(VersionRange(version, None))
+                if newer_child.meta_flags & 16384:
+                    newer_child.align_version_ranges.append(VersionRange(version, None))
+            elif not newer_child:  # Removed in this version -- present in the older node but not the newer one
+                if len(older_child.version_ranges) == 0:
+                    older_child.version_ranges.append(VersionRange(None, 0))
+                if older_child.version_ranges[-1].end is None:
+                    older_child.version_ranges[-1].end = version
                 # copy to self -- we want to keep all properties even if they have been removed
                 prev_idx = list(other.child_map.keys()).index(name) - 1
-                self.children.insert(prev_idx, i)
-                self.child_map[name] = i
+                self.children.insert(prev_idx, older_child)
+                self.child_map[name] = older_child
             else:
-                item = other.get(name)
-                if len(item.children) > 0:
-                    child.diff(item, version)
+                if len(older_child.children) > 0:
+                    newer_child.diff(older_child, version)
 
-                if (child.meta_flags & 16384) and not (older_child.meta_flags & 16384):
+                if (newer_child.meta_flags & 16384) and not (older_child.meta_flags & 16384):
                     # now aligned, previously not
-                    child.align_version_ranges.append(VersionRange(version, None))
-                elif (older_child.meta_flags & 16384) and not (child.meta_flags & 16384):
+                    newer_child.align_version_ranges.append(VersionRange(version, None))
+                elif (older_child.meta_flags & 16384) and not (newer_child.meta_flags & 16384):
                     # no longer aligned
-                    if len(child.align_version_ranges) == 0:
-                        child.align_version_ranges.append(VersionRange(None, 0))
-                    child.align_version_ranges[-1].end = version
+                    if len(newer_child.align_version_ranges) == 0:
+                        newer_child.align_version_ranges.append(VersionRange(None, 0))
+                    newer_child.align_version_ranges[-1].end = version
 
     @staticmethod
     def rustify_prop(name):
@@ -212,7 +210,7 @@ class Node:
         n = n.replace('__', '_')
         n = re.sub(r'\(\w+[&*]\)', '', n)
         if n[0].isnumeric():
-            n = 'a' + n
+            n = '_' + n
 
         # Replace keywords
         n = re.sub('^type$', 'r#type', n)
@@ -409,7 +407,7 @@ def load_tree(version):
 
 
 def version2int(version):
-    types = ['', 'a', 'b', 'f']
+    types = ['', 'a', 'b', 'f', 'p']
     parts = re.findall(r'(\d+)\.(\d+)\.(\d+)(?:([abf])(\d+))?', version)[0]
     res = f'{f"{parts[0]:0>4}"[1:]}{f"{parts[1]:0>2}"[:2]}{f"{parts[2]:0>2}"[:2]}{types.index(parts[3])}{f"{parts[4]:0>2}"[:2]}'
     return int(res)
@@ -424,12 +422,13 @@ def main():
 
     versions = sorted(versions, key=lambda i: i[0])
 
-    versions = [[version2int('3.4.0'), '3.4.0'], [version2int('2023.2.8f1'), '2023.2.8f1']]
+    # versions = [[version2int('3.4.0'), '3.4.0'], [version2int('2023.2.8f1'), '2023.2.8f1']]
 
     print('Comparing trees')
 
     old = None
-    for i, v in enumerate(tqdm.tqdm(versions)):
+    for i, v in enumerate(versions):
+        print(f'{i}/{len(versions)}')
         if i == 0:
             old = []
         new = load_tree(v[1])
@@ -439,10 +438,12 @@ def main():
             if len(elem1) == 0:
                 elem1.append(Node())
             elem1 = elem1[0]
+            # if len(elem1.children) > 0:
+            #     print(v, elem1.get('m_Component').children[0].children[1].children)
             elem2.diff(elem1, v[0])
             trees[elem2.type_name] = elem2
 
-            break
+            # break
         old = new
 
     print('Generating code')
@@ -476,5 +477,46 @@ def main():
     print(trees)
 
 
+def test():
+    def define_for_testing(nodes):
+        root = Node()
+        root.type_name = 'Root'
+        root.name = 'root'
+        def build(b, v, level=0):
+            for (name, val) in v.items():
+                n = Node()
+                if isinstance(val, dict):
+                    n.type_name = 'object'
+                    build(n, val, level + 1)
+                else:
+                    n.type_name = val
+                n.name = name
+                b.children.append(n)
+        build(root, nodes)
+        return root
+
+    tree_a = define_for_testing({
+        'a': 'int',
+        'b': 'float',
+        'c': 'bool',
+        'd': {
+            'a': 'float',
+            'b': 'string'
+        }
+    })
+    tree_b = define_for_testing({
+        'a': 'int',
+        'b': 'float',
+        'c': 'bool',
+        'd': {
+            'a': 'float',
+            'b': 'string'
+        }
+    })
+    tree_a.diff(tree_b, 1)
+    print(tree_a)
+
+
 if __name__ == '__main__':
     main()
+    # test()
