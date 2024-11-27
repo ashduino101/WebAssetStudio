@@ -35,9 +35,9 @@ impl ClassWrapper for AudioClipWrapper {
 }
 
 impl AudioClipWrapper {
-    pub fn from_value(value: &ValueType, bundle: &BundleFile) -> Result<Self, ObjectError> {
+    pub fn from_value(value: &ValueType, bundle: Option<&BundleFile>) -> Result<Self, ObjectError> {
         let resource = value.get("m_Resource")?.clone();
-        let mut res = bundle.get_resource_data(
+        let mut res = bundle.unwrap().get_resource_data(
             resource.get("m_Source")?.as_string()?.as_str(),
             resource.get("m_Offset")?.as_offset()?,
             resource.get("m_Size")?.as_offset()?
