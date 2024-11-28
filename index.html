@@ -48,7 +48,21 @@
   </template>
   <div id="app-container">
     <div id="dock-left">
-      <div id="file-selector" class="dock-widget"></div>
+      <div id="file-selector" class="dock-widget">
+        <div class="row">
+          <button class="ui-button">
+            <span class="ui-button-text">Open file</span>
+          </button>
+          <button class="ui-button">
+            <span class="ui-button-text">Open folder</span>
+          </button>
+        </div>
+        <div class="row">
+          <button class="ui-button bottom">
+            <span class="ui-button-text">Export all</span>
+          </button>
+        </div>
+      </div>
       <div id="file-browser" class="dock-widget"></div>
     </div>
     <div id="dock-middle">

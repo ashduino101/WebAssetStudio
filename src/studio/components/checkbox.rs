@@ -15,8 +15,8 @@ impl Checkbox {
 impl WidgetComponent for Checkbox {
     fn render(&self, mount: &Element) {
         let checkbox = create_element("input");
-        checkbox.set_attribute("type", "checkbox").expect("set_attribute");
-        // checkbox.class_list().add("ui-checkbox");
+        checkbox.set_attribute("type", "checkbox").unwrap();
+        checkbox.class_list().add_1("ui-checkbox").unwrap();
         mount.append_child(&checkbox).expect("append_child");
     }
 }

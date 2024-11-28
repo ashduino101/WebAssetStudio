@@ -417,6 +417,9 @@ body {
 }
 
 #app-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   width: 100%;
   height: 100%;
 }
@@ -425,44 +428,83 @@ body {
   position: relative;
   background-color: var(--theme-widget-bg);
   border-radius: 3px;
-  margin: 5px;
+  margin: 3px;
   box-sizing: border-box;
 }
 
 #dock-left {
-  display: inline-block;
-  width: calc(15% - 10px);
+  display: flex;
+  flex-direction: column;
+  width: calc(20% - 12px);
   height: 100%;
+  margin-right: 6px;
 }
 
 #file-selector {
   width: 100%;
-  height: calc(25% - 10px);
+  height: calc(25%);
 }
 
 #file-browser {
   width: 100%;
-  height: calc(75% - 5px);
+  height: calc(75%);
 }
 
 #dock-middle {
-  display: inline-block;
-  width: calc(65% - 5px);
+  display: flex;
+  flex-direction: column;
+  width: calc(60% - 3px);
   height: 100%;
+  margin-right: 6px;
 }
 
 #viewport {
   width: 100%;
-  height: calc(100% - 10px);
+  height: 80%;
+}
+
+#console {
+  width: 100%;
+  height: 20%;
 }
 
 #dock-right {
-  display: inline-block;
-  width: calc(20% - 5px);
+  display: flex;
+  flex-direction: column;
+  width: calc(20% - 6px);
   height: 100%;
 }
 
 #element-inspector {
   width: 100%;
-  height: calc(100% - 10px);
+  height: 100%;
+}
+
+.ui-button {
+  background-color: #2a59ad;
+  display: block;
+  height: 32px;
+  color: white;
+  border-radius : 4px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  padding: 10px;
+  box-sizing: border-box;
+  border: none;
+  margin-right: 3px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  margin-left: 3px;
+  margin-top: 3px;
+}
+
+.bottom {
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 3px;
 }

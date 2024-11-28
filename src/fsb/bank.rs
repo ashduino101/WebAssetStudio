@@ -205,7 +205,10 @@ impl SoundBank {
                 // SoundFormat::ImaAdpcm => {
                 //     encode_wav(sample_data, WavFormat::IMAADPCM, frequency, if stereo { 2 } else { 1 })
                 // }
-                _ => todo!()
+                _ => {
+                    // panic!("unsupported: {:?}", format)
+                    Bytes::new()
+                }
             };
 
             // let window = web_sys::window().expect("no global `window` exists");

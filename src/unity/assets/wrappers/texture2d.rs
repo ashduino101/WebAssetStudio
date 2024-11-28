@@ -19,8 +19,8 @@ pub struct Texture2DWrapper {
     pub(crate) height: i32,
     pub(crate) num_mips: i32,
     pub(crate) num_images: i32,
-    dimensions: i32,
-    format: TextureFormat,
+    pub(crate) dimensions: i32,
+    pub(crate) format: TextureFormat,
     data: Bytes
 }
 
@@ -75,7 +75,7 @@ impl Texture2DWrapper {
         console_log!("{:?}", self.format);
         decode(
             self.format.clone(),
-            &mut self.data.clone().slice(
+            &mut self.data.slice(
                 get_mipmap_offset_and_size(index, self.format.clone(), self.width, self.height).0 as usize..
             ),
             self.width as usize,

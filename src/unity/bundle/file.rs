@@ -83,17 +83,16 @@ impl Debug for BundleFile {
 }
 
 impl BundleFile {
-    pub fn new(data: &mut Bytes) -> BundleFile {
+    pub fn new(data: Bytes) -> BundleFile {
         BundleFile::from_bytes(data)
     }
 
-    fn from_bytes(data: &mut Bytes) -> BundleFile {
-        let header = Self::parse_header(data);
-        let storage = Self::parse_storage_info(data, header.compressed_block_info_size,
+    fn from_bytes(mut data: Bytes) -> BundleFile {
+        let header = Self::parse_header(&mut data);
+        let storage = Self::parse_storage_info(&mut data, header.compressed_block_info_size,
                                                header.uncompressed_block_info_size, &header.flags);
-        let block_data = data.clone();
 
-        Self { header, storage, block_data, archive_pat: Regex::new(
+        Self { header, storage, block_data: data, archive_pat: Regex::new(
             r#"archive:/[\w\d\-_.'"\[\]{}()]+/(.*)"#
             ).expect("compile error") }
     }

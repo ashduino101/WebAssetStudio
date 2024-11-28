@@ -25,6 +25,7 @@ use three_d::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_test::console_log;
+use crate::base::asset::Asset;
 // use mojoshader::*;
 
 use crate::logger::splash;
@@ -59,15 +60,18 @@ async fn unity_test() {
     let document = window.document().expect("should have a document on window");
     let body = document.body().expect("document should have a body");
 
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../xnbtests/GUI/Fonts/BoldItalic-26")));
-    console_log!("starting size: {}", dat.len());
-    let mut xnb = XNBFile::new(&mut dat);
-    console_log!("{:?}", xnb);
-    body.append_child(&xnb.primary_asset.make_html(&document)).unwrap();
-    return;
+    // let mut dat = Bytes::from(Vec::from(include_bytes!("../xnbtests/GUI/Fonts/BoldItalic-26")));
+    // console_log!("starting size: {}", dat.len());
+    // let mut xnb = XNBFile::new(&mut dat);
+    // console_log!("{:?}", xnb);
+    // body.append_child(&xnb.primary_asset.make_html(&document)).unwrap();
+    // return;
 
-    let mut dat = Bytes::from(Vec::from(include_bytes!("../test2.unity3d")));
-    let f = BundleFile::new(&mut dat);
+    let start = now();
+    console_log!("start load at {start}");
+
+    let dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
+    let f = BundleFile::new(dat);
 
     console_log!("start decompress");
     let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
@@ -90,17 +94,22 @@ async fn unity_test() {
             let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
             // console_log!("{:?}", w);
 
-            let elem = document.create_element("img").expect("failed to create element");
-            elem.set_attribute("src", &create_img(w.get_image(w.num_images - 1).as_ref(), w.width as usize, w.height as usize, true)).expect("set_attribute");
-            body.append_child(&elem).expect("append_child");
+            for img in 0..w.num_images {
+                let img_start = now();
+                let elem = document.create_element("img").unwrap();
+                elem.set_attribute("src", &create_img(w.get_image(img).as_ref(), w.width as usize, w.height as usize, true)).unwrap();
+                body.append_child(&elem).unwrap();
+                console_log!("decoding {}x{} of format {:?} took {}ms", w.width, w.height, w.format, now() - img_start);
+            }
         }
         if typ.class_id == 83 {
-            let w = AudioClipWrapper::from_value(&parsed, &f).expect("failed to wrap object");
+            let mut w = AudioClipWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
+            body.append_child(&w.make_html(&document)).unwrap();
         }
         if typ.class_id == 43 {
-            let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
-            console_log!("{:?}", w);
-            let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
+            // let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
+            // console_log!("{:?}", w);
+            // let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
             // if i == 5 {
             //     render_mesh(scene).await;
             // }
@@ -114,7 +123,7 @@ async fn unity_test() {
     console_log!("{:?}", asset);
     console_log!("{:?}", f);
 
-    console_log!("done");
+    console_log!("done: took {}ms", now() - start);
 }
 
 
