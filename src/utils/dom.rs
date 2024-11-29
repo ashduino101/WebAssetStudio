@@ -2,7 +2,7 @@ use wasm_bindgen::JsValue;
 use web_sys;
 use js_sys;
 use js_sys::{Array, Uint8Array};
-use web_sys::{Element, Url};
+use web_sys::{Blob, Element, Url};
 use crate::utils::tex::pngenc::encode_png;
 
 pub fn create_data_url(data: &[u8]) -> String {
@@ -10,7 +10,7 @@ pub fn create_data_url(data: &[u8]) -> String {
     arr.copy_from(&data);
     let parts = Array::new_with_length(1);
     parts.set(0, JsValue::from(arr));
-    let blob = web_sys::Blob::new_with_u8_array_sequence(&JsValue::from(parts)).expect("failed to create blob");
+    let blob = Blob::new_with_u8_array_sequence(&JsValue::from(parts)).expect("failed to create blob");
     Url::create_object_url_with_blob(&blob).expect("failed to create object url")
 }
 

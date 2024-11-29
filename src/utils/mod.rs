@@ -8,3 +8,4 @@ pub mod pcm;
 pub mod debug;
 pub mod time;
 pub mod lzmabuf;
+pub mod js;

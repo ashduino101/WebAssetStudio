@@ -1,3 +1,4 @@
+#![feature(async_iterator)]
 extern crate core;
 #[macro_use]
 extern crate num_derive;
@@ -16,16 +17,23 @@ pub mod directx;
 pub mod errors;
 
 use std::{panic};
-use std::io::{Cursor, Write};
+use std::io::{Cursor, Read, Write};
 
 use std::panic::PanicInfo;
+use std::pin::Pin;
+use async_recursion::async_recursion;
 use bytes::Bytes;
+use flate2::bufread::GzDecoder;
+use futures::executor::block_on;
+use js_sys::{Array, Reflect};
 use lzma_rs::xz_decompress;
 use three_d::*;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
+use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen_test::console_log;
+use futures::future::{BoxFuture, FutureExt};
 use crate::base::asset::Asset;
+use crate::directx::types::SymbolClass::Object;
 // use mojoshader::*;
 
 use crate::logger::splash;
@@ -38,6 +46,7 @@ use crate::unity::bundle::file::BundleFile;
 use crate::unity::version::UnityVersion;
 use crate::utils::debug::load_audio;
 use crate::utils::dom::create_img;
+use crate::utils::js::filesystem::{DirectoryEntry, DirectoryHandle, FileHandle};
 use crate::utils::time::now;
 use crate::xna::xnb::XNBFile;
 
@@ -150,6 +159,24 @@ async fn unity_test() {
 //     console_log!("decompress took {}ms", end - start);
 // }
 
+#[async_recursion(?Send)]
+async fn collect_all_files(entries: Vec<DirectoryEntry>, accum: &mut Vec<(String, FileHandle)>) {
+    // println!("{} entries", entries.len());
+    for entry in entries {
+        match entry {
+            DirectoryEntry::File(name, f) => {
+                accum.push((name, f));
+                // console_log!("file: {name}");
+            }
+            DirectoryEntry::Directory(name, d) => {
+                // console_log!("dir: {name}");
+                let entries = d.entries().await;
+                collect_all_files(entries, accum).await;
+            }
+        }
+    }
+}
+
 
 #[wasm_bindgen(start)]
 async fn main() {
@@ -162,12 +189,45 @@ async fn main() {
         alert_hook::hook(info);
     }));
 
+    #[cfg(not(target_arch = "wasm32"))]
+    pretty_env_logger::init();
+
+    let mut picker = DirectoryHandle::open_picker().await.unwrap();
+    let entries = picker.entries().await;
+    let mut files = Vec::new();
+    collect_all_files(entries, &mut files).await;
+    // console_log!("{files:?}");
+    for (name, handle) in files {
+        if !name.ends_with(".xnb") {
+            continue;
+        }
+        let mut buf = handle.data().await;
+        let mut gz = GzDecoder::new(&buf[..]);
+        let mut buf = Vec::new();
+        match gz.read_to_end(&mut buf) {
+            Ok(_) => {
+                spawn_local(async move {
+                    let start = now();
+                    let mut reader = XNBFile::new(&mut Bytes::from(buf));
+                    let window = web_sys::window().expect("no global `window` exists");
+                    let document = window.document().expect("should have a document on window");
+                    let body = document.body().expect("document should have a body");
+                    body.append_child(&reader.primary_asset.make_html(&document)).unwrap();
+                    let dur = now() - start;
+                    println!("took {}ms", dur);
+                });
+            },
+            Err(_) => {
+                println!("skipping on gz error");
+                continue;
+            }
+        };
+    }
+    return;
+
     // let mut dat = Bytes::from(Vec::from(include_bytes!("../tests/data/xnb/Background.xnb")));
     // let mut xnb = XNBFile::new(&mut dat);
     //
-    let window = web_sys::window().expect("no global `window` exists");
-    let document = window.document().expect("should have a document on window");
-    let body = document.body().expect("document should have a body");
     //
     // let elem = xnb.primary_asset.make_html(&document);
     // body.append_child(&elem);

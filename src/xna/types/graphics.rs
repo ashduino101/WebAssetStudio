@@ -1,10 +1,12 @@
 use std::fmt::{Debug, Formatter};
 use bytes::{Buf, Bytes};
+use crate::logger::info;
 use crate::base::asset::{Asset, Export};
 use crate::{create_img, XNBFile};
 use crate::utils::buf::{FromBytes};
 use crate::utils::tex::decoder::{decode, TextureFormat};
 use crate::utils::tex::pngenc::encode_png;
+use crate::utils::time::now;
 use crate::xna::type_base::XNBType;
 use crate::xna::xnb::TypeReader;
 impl TextureFormat {
@@ -65,7 +67,9 @@ pub struct Texture2D {
 impl Asset for Texture2D {
     fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
         let elem = doc.create_element("img").expect("failed to create element");
+        let start = now();
         elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize, false)).expect("set_attribute");
+        info!("converted to native image in {}ms", now() - start);
         elem
     }
 
@@ -86,15 +90,46 @@ impl XNBType for Texture2D {
         let data_size = data.get_u32_le() as usize;
         let texture_data = data.copy_to_bytes(data_size);
         let mut textures = Vec::new();
+        let start = now();
         for _ in 0..num_mips {
             textures.push(Mip::decode(&mut texture_data.slice(0..(texture_data.len() / num_mips as usize)), &surface_format, width as usize, height as usize))
         }
+        info!("loaded texture in {}ms", now() - start);
         Texture2D {
             surface_format,
             width,
             height,
             num_mips,
             textures
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Effect {
+    pub data: Bytes
+}
+
+impl Asset for Effect {
+    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+        doc.create_element("div").unwrap()  // TODO
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "fx".to_string(),
+            data: vec![],
+        }
+    }
+}
+
+impl XNBType for Effect {
+    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> Effect {
+        let size = data.get_u32_le() as usize;
+        let effect = data.slice(0..size);
+        data.advance(size);
+        Effect {
+            data: effect
         }
     }
 }
@@ -144,4 +179,3 @@ impl XNBType for SpriteFont {
         }
     }
 }
-

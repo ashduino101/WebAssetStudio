@@ -1,21 +1,52 @@
 use wasm_bindgen::prelude::*;
+use log;
 
 #[wasm_bindgen]
 extern "C" {
     // TODO: write a macro to allow for variable arguments and %c
     #[wasm_bindgen(js_namespace = console, js_name="log")]
-    fn log1(a: &str);
+    #[cfg(target_arch = "wasm32")]
+    pub fn log1(a: &str);
     #[wasm_bindgen(js_namespace = console, js_name="log")]
-    fn log2(a: &str, b: &str);
+    #[cfg(target_arch = "wasm32")]
+    pub fn log2(a: &str, b: &str);
     #[wasm_bindgen(js_namespace = console, js_name="log")]
-    fn log3(a: &str, b: &str, c: &str);
+    #[cfg(target_arch = "wasm32")]
+    pub fn log3(a: &str, b: &str, c: &str);
     #[wasm_bindgen(js_namespace = console, js_name="log")]
-    fn log4(a: &str, b: &str, c: &str, d: &str);
+    #[cfg(target_arch = "wasm32")]
+    pub fn log4(a: &str, b: &str, c: &str, d: &str);
     #[wasm_bindgen(js_namespace = console, js_name="log")]
+    #[cfg(target_arch = "wasm32")]
     pub fn log5(a: &str, b: &str, c: &str, d: &str, e: &str);
 
     #[wasm_bindgen(js_namespace = console, js_name="log")]
     pub fn log1obj(a: &JsValue);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn log1(a: &str) {
+    println!("{a}")
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn log2(a: &str, b: &str) {
+    println!("{a} {b}")
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn log3(a: &str, b: &str, c: &str) {
+    println!("{a} {b} {c}")
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn log4(a: &str, b: &str, c: &str, d: &str) {
+    println!("{a} {b} {c} {d}")
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn log5(a: &str, b: &str, c: &str, d: &str, e: &str) {
+    println!("{a} {b} {c} {d} {e}")
 }
 
 // TODO: garbage
@@ -29,28 +60,52 @@ pub(crate) fn module_style(name: &str) -> String {
     format!("color: rgb({}, {}, {}); font-weight: bold", (crc >> 16) & 0xff, (crc >> 8) & 0xff, crc & 0xff)
 }
 
+#[cfg(target_arch = "wasm32")]
 macro_rules! debug {
     ($($args: tt)*) => (crate::logger::log5(&format!("%cDEBUG%c  [%c{}%c] {}", file!(),
     format_args!($($args)*)), crate::logger::DEBUG_STYLE, crate::logger::TEXT_STYLE,
     &crate::logger::module_style(file!()), crate::logger::TEXT_STYLE))
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+macro_rules! debug {
+    ($($args: tt)*) => {println!("debug: {}", format!($($args)*))}
+}
+
+#[cfg(target_arch = "wasm32")]
 macro_rules! info {
     ($($args: tt)*) => (crate::logger::log5(&format!("%cINFO%c  [%c{}%c] {}", file!(),
     format_args!($($args)*)), crate::logger::INFO_STYLE, crate::logger::TEXT_STYLE,
     &crate::logger::module_style(file!()), crate::logger::TEXT_STYLE))
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+macro_rules! info {
+    ($($args: tt)*) => {println!("info: {}", format!($($args)*))}
+}
+
+#[cfg(target_arch = "wasm32")]
 macro_rules! warning {
     ($($args: tt)*) => (crate::logger::log5(&format!("%cWARN%c  [%c{}%c] {}", file!(),
     format_args!($($args)*)), crate::logger::WARN_STYLE, crate::logger::TEXT_STYLE,
     &crate::logger::module_style(file!()), crate::logger::TEXT_STYLE))
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+macro_rules! warning {
+    ($($args: tt)*) => {println!("warning: {}", format!($($args)*))}
+}
+
+#[cfg(target_arch = "wasm32")]
 macro_rules! error {
     ($($args: tt)*) => (crate::logger::log5(&format!("%cERROR%c [%c{}%c] {}", file!(),
     format_args!($($args)*)), crate::logger::ERROR_STYLE, crate::logger::TEXT_STYLE,
     &crate::logger::module_style(file!()), crate::logger::TEXT_STYLE))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+macro_rules! error {
+    ($($args: tt)*) => {println!("error: {}", format!($($args)*))}
 }
 
 pub(crate) use info;

@@ -5,11 +5,11 @@ use crate::base::asset::Void;
 use crate::base::types::{Matrix4x4, Quaternion, Vector2, Vector3, Vector4};
 
 use crate::utils::buf::{BufExt, FromBytes};
-use crate::logger::warning;
+use crate::logger::{info, warning};
 use crate::xna::type_base::XNBType;
-use crate::xna::types::graphics::{SpriteFont, Texture2D};
+use crate::xna::types::graphics::{Effect, SpriteFont, Texture2D};
 use crate::xna::types::math::Rectangle;
-
+use crate::xna::types::media::{Song, SoundEffect};
 use crate::xna::types::system::*;
 
 const XNB_MAGIC: &str = "XNB";
@@ -113,8 +113,10 @@ impl XNBFile {
     }
 
     pub(crate) fn read_type(class: &str, data: &mut Bytes, readers: &Vec<TypeReader>) -> Box<dyn XNBType> {
-        console_log!("read type {:?}", class);
+        info!("read type {:?}", class);
         match class {
+            "Microsoft.Xna.Framework.Content.Int32Reader" => Box::from(data.get_i32_le()),
+
             "Microsoft.Xna.Framework.Content.TimeSpanReader" => Box::from(TimeSpan::from_bytes(data, readers)),
             "Microsoft.Xna.Framework.Content.DateTimeReader" => Box::from(DateTime::from_bytes(data, readers)),
             "Microsoft.Xna.Framework.Content.DecimalReader" => Box::from(Decimal::from_bytes(data, readers)),
@@ -127,17 +129,19 @@ impl XNBFile {
             "Microsoft.Xna.Framework.Content.RectangleReader" => Box::from(Rectangle::from_bytes(data, readers)),
 
             "Microsoft.Xna.Framework.Content.Texture2DReader" => Box::from(Texture2D::from_bytes(data, readers)),
+            "Microsoft.Xna.Framework.Content.EffectReader" => Box::from(Effect::from_bytes(data, readers)),
             "Microsoft.Xna.Framework.Content.SpriteFontReader" => Box::from(SpriteFont::from_bytes(data, readers)),
+
+            "Microsoft.Xna.Framework.Content.SoundEffectReader" => Box::from(SoundEffect::from_bytes(data, readers)),
+            "Microsoft.Xna.Framework.Content.SongReader" => Box::from(Song::from_bytes(data, readers)),
             v => {
                 if v.starts_with("Microsoft.Xna.Framework.Content.ListReader`1") {
-                    console_log!("size={}", data.len());
                     match v {
                         "Microsoft.Xna.Framework.Content.ListReader`1[[System.Char" => {
                             Box::new(Vec::<char>::from_bytes(data, readers))
                         }
                         _ => {
                             let len = data.get_u32_le();
-                            console_log!("len={len}");
                             let type_name = type_to_reader(v
                                 .split("[[").collect::<Vec<_>>()[1]
                                 .split(",").collect::<Vec<_>>()[0]);
@@ -152,6 +156,46 @@ impl XNBFile {
                     warning!("Unknown class {}", class);
                     panic!("^^")
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use std::io::Read;
+    use std::time::Instant;
+    use bytes::Bytes;
+    use walkdir::WalkDir;
+    use flate2::bufread::GzDecoder;
+    use crate::xna::xnb::XNBFile;
+
+    #[test]
+    fn test_many() {
+        let dir = WalkDir::new("xnbtests");
+
+        for file in dir {
+            if let Ok(ref f) = file {
+                if f.file_type().is_dir() || !f.file_name().to_str().unwrap().ends_with(".xnb") {
+                    continue;
+                }
+                println!("{}", f.file_name().to_str().unwrap());
+                let fp = fs::read(f.path()).unwrap();
+                let mut gz = GzDecoder::new(&fp[..]);
+                let mut buf = Vec::new();
+                match gz.read_to_end(&mut buf) {
+                    Ok(_) => {
+                        let start = Instant::now();
+                        let reader = XNBFile::new(&mut Bytes::from(buf));
+                        let dur = Instant::now() - start;
+                        println!("took {}ms", dur.as_millis());
+                    },
+                    Err(_) => {
+                        println!("skipping on gz error");
+                        continue;
+                    }
+                };
             }
         }
     }
