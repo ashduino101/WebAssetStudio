@@ -273,7 +273,7 @@ impl MeshWrapper {
         }
 
         // FIXME: error handling
-        mesh.transform(&Mat4::from(Matrix4::from_scale(10.0f32))).expect("unable to scale geometry");
+        mesh.transform(Mat4::from(Matrix4::from_scale(10.0f32))).expect("unable to scale geometry");
 
         let material = PbrMaterial {
             ..Default::default()

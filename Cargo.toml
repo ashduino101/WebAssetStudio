@@ -15,40 +15,40 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 bytes = { git = "https://github.com/ashduino101/bytes" }
-wasm-bindgen = "0.2.84"
+wasm-bindgen = "0.2.95"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
-console_error_panic_hook = { version = "0.1.6", optional = true }
+console_error_panic_hook = { version = "0.1.7", optional = true }
 bitfields = "0.2.0"
 lzma-rs = { version = "0.3.0", features = ["stream"] }
 lzxd = "0.2.5"
-js-sys = "0.3.68"
-wasm-bindgen-futures = "0.4.41"
-wasm-bindgen-test = "0.3.41"
-png = "0.17.10"
+js-sys = "0.3.72"
+wasm-bindgen-futures = "0.4.45"
+wasm-bindgen-test = "0.3.45"
+png = { version = "0.17.14", features = ["unstable"] }
 texture2ddecoder = { git = "https://github.com/ashduino101/texture2ddecoder-rgba" }
-anyhow = "1.0.81"
-three-d = { version = "0.17", features = ["egui-gui"] }
-three-d-asset = { version = "0.7", features = ["gltf", "hdr", "jpeg", "http"] }
-num = "0.4.1"
+anyhow = "1.0.93"
+three-d = { version = "0.18.0", features = ["egui-gui"] }
+three-d-asset = { version = "0.9.0", features = ["gltf", "hdr", "jpeg", "http"] }
+num = "0.4.3"
 num-derive = "0.4.2"
-num-traits = "0.2.18"
-bitstream-io = "2.2.0"
+num-traits = "0.2.19"
+bitstream-io = "2.6.0"
 rand = "0.8.5"
 byteorder = "1.5.0"
-crc32fast = "1.4.0"
-zerocopy = "0.7.32"
+crc32fast = "1.4.2"
+zerocopy = "0.8.11"
 bzip2-rs = "0.1.2"
-tar = "0.4.40"
-bitflags = "2.5.0"
-regex = "1.10.4"
-image = "0.25.2"
-serde = "1.0.204"
-serde_derive = "1.0.204"
-async-std = "1.12.0"
+tar = "0.4.43"
+bitflags = "2.6.0"
+regex = "1.11.1"
+image = "0.25.5"
+serde = "1.0.215"
+serde_derive = "1.0.215"
+async-std = "1.13.0"
 lebe = "0.5.2"
 flate2 = "1.0.35"
 log = "0.4.22"
@@ -66,7 +66,7 @@ version = "0.9.1"
 features = ["bytes"]
 
 [dependencies.lz4_flex]
-version = "0.11.2"
+version = "0.11.3"
 features = ["safe-decode", "safe-encode"]
 
 [dependencies.web-sys]
@@ -74,8 +74,8 @@ version = "0.3.72"  # keep inline with version used by wgpu
 features = ["Document", "Element", "HtmlElement", "Node", "Window", "Blob", "Url", "DomTokenList", "NamedNodeMap", "File", "FileSystem", "FileSystemHandle", "FileSystemDirectoryHandle", "FileSystemDirectoryEntry", "FileSystemDirectoryReader", "FileSystemFileHandle", "FileSystemFileEntry", "FileReader", "FileReaderSync", "Event", "OffscreenCanvas", "CanvasRenderingContext2d", "ImageData", "ImageBitmap", "OffscreenCanvasRenderingContext2d", "ImageEncodeOptions"]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.34"
-include_dir = "0.7.3"
+wasm-bindgen-test = "0.3.45"
+include_dir = "0.7.4"
 
 [build-dependencies]
 bindgen = "*"
