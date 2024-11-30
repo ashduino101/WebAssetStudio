@@ -14,6 +14,7 @@
     "stream-browserify": "^3.0.0"
   },
   "dependencies": {
+    "@pdf-lib/upng": "^1.0.1",
     "@vitejs/plugin-legacy": "^4.1.1",
     "highlight.js": "^11.9.0",
     "sort-paths": "^1.1.1",

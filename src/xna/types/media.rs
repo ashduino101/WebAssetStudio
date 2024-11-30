@@ -1,6 +1,8 @@
-use bytes::{Buf, Bytes};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
+use crate::utils::buf::BufMutExt;
+use crate::utils::dom::create_data_url;
 use crate::xna::type_base::XNBType;
 use crate::xna::xnb::{TypeReader, XNBFile};
 
@@ -13,13 +15,36 @@ pub struct SoundEffect {
     pub duration: i32
 }
 
+impl SoundEffect {
+    pub fn to_wav(&self) -> Bytes {
+        let mut b = BytesMut::new();
+        b.put_chars("RIFF".to_owned());
+        b.put_u32_le((self.format.len() + self.data.len() + 28) as u32);
+        b.put_chars("WAVE".to_owned());
+        b.put_chars("fmt ".to_owned());
+        b.put_u32_le(self.format.len() as u32);
+        b.put(&self.format[..]);
+        b.put_chars("data".to_owned());
+        b.put_u32_le(self.data.len() as u32);
+        b.put(&self.data[..]);
+        b.into()
+    }
+}
+
 impl Asset for SoundEffect {
     fn make_html(&mut self, doc: &Document) -> Element {
-        todo!()
+        let elem = doc.create_element("audio").unwrap();
+        let wav = self.to_wav();
+        elem.set_attribute("src", &create_data_url(&wav[..], "audio/wav")).unwrap();
+        elem.set_attribute("controls", "true").unwrap();
+        elem
     }
 
     fn export(&mut self) -> Export {
-        todo!()
+        Export {
+            extension: "wav".to_owned(),
+            data: self.to_wav().into(),
+        }
     }
 }
 
@@ -51,7 +76,7 @@ pub struct Song {
 }
 
 impl Asset for Song {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("audio").unwrap();
         // TODO: the song is a separate file
         elem

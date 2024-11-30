@@ -50,10 +50,10 @@
     <div id="dock-left">
       <div id="file-selector" class="dock-widget">
         <div class="row">
-          <button class="ui-button">
+          <button class="ui-button" id="btn-open-file">
             <span class="ui-button-text">Open file</span>
           </button>
-          <button class="ui-button">
+          <button class="ui-button" id="btn-open-folder">
             <span class="ui-button-text">Open folder</span>
           </button>
         </div>
@@ -94,6 +94,8 @@
 <canvas id="debug_canvas"></canvas>
   <script type="module">
     import "./pkg/webassetstudio.js";
+    import UPNG from '@pdf-lib/upng';
+    window.UPNG = UPNG;
     // console.log(was);
   </script>
 </body>

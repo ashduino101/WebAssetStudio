@@ -32,11 +32,12 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen_test::console_log;
 use futures::future::{BoxFuture, FutureExt};
+use log::warn;
 use crate::base::asset::Asset;
 use crate::directx::types::SymbolClass::Object;
 // use mojoshader::*;
 
-use crate::logger::splash;
+use crate::logger::{info, splash};
 use crate::unity::assets::file::AssetFile;
 use crate::unity::assets::typetree::TypeParser;
 use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
@@ -198,7 +199,7 @@ async fn main() {
     collect_all_files(entries, &mut files).await;
     // console_log!("{files:?}");
     for (name, handle) in files {
-        if !name.ends_with(".xnb") {
+        if !(name.ends_with(".xnb") || name.ends_with(".xnb.deploy")) {
             continue;
         }
         let mut buf = handle.data().await;
@@ -207,18 +208,17 @@ async fn main() {
         match gz.read_to_end(&mut buf) {
             Ok(_) => {
                 spawn_local(async move {
-                    let start = now();
                     let mut reader = XNBFile::new(&mut Bytes::from(buf));
                     let window = web_sys::window().expect("no global `window` exists");
                     let document = window.document().expect("should have a document on window");
                     let body = document.body().expect("document should have a body");
                     body.append_child(&reader.primary_asset.make_html(&document)).unwrap();
-                    let dur = now() - start;
-                    println!("took {}ms", dur);
                 });
+                info!("{name}");
+                // break;
             },
             Err(_) => {
-                println!("skipping on gz error");
+                warn!("skipping on gz error");
                 continue;
             }
         };

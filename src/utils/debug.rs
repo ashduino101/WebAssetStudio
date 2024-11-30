@@ -13,7 +13,7 @@ pub fn load_image(image: RgbaImage) {
     let elem = document.create_element("img").expect("failed to create element");
     let mut data = Vec::new();
     image.write_to(&mut Cursor::new(&mut data), ImageFormat::Png).unwrap();
-    elem.set_attribute("src", &create_data_url(&data[..])).expect("set_attribute");
+    elem.set_attribute("src", &create_data_url(&data[..], "image/png")).expect("set_attribute");
     body.append_child(&elem).expect("append_child");
 }
 
@@ -22,7 +22,8 @@ pub fn load_audio(data: Bytes) {
     let document = window.document().expect("should have a document on window");
     let body = document.body().expect("document should have a body");
     let elem = document.create_element("audio").expect("failed to create element");
-    elem.set_attribute("src", &create_data_url(&data[..])).expect("set_attribute");
+    // FIXME: idk what audio format this function is used for
+    elem.set_attribute("src", &create_data_url(&data[..], "audio/*")).expect("set_attribute");
     elem.set_attribute("controls", "").expect("set_attribute");
     body.append_child(&elem).expect("append_child");
 }
