@@ -17,6 +17,7 @@ pub mod directx;
 pub mod errors;
 
 use std::{panic};
+use std::convert::TryFrom;
 use std::io::{Cursor, Read, Write};
 
 use std::panic::PanicInfo;
@@ -33,7 +34,7 @@ use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen_test::console_log;
 use futures::future::{BoxFuture, FutureExt};
 use log::warn;
-use web_sys::MouseEvent;
+use web_sys::{HtmlInputElement, MouseEvent};
 use crate::base::asset::Asset;
 use crate::directx::types::SymbolClass::Object;
 // use mojoshader::*;
@@ -183,6 +184,10 @@ async fn collect_all_files(entries: Vec<DirectoryEntry>, accum: &mut Vec<(String
 
 async fn open_file() {
     info!("open file");
+    let elem = web_sys::window().unwrap()
+        .document().unwrap()
+        .get_element_by_id("open-file-input").unwrap()
+        .dyn_into::<HtmlInputElement>().unwrap();
 }
 
 async fn open_folder() {
