@@ -33,6 +33,7 @@ use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen_test::console_log;
 use futures::future::{BoxFuture, FutureExt};
 use log::warn;
+use web_sys::MouseEvent;
 use crate::base::asset::Asset;
 use crate::directx::types::SymbolClass::Object;
 // use mojoshader::*;
@@ -47,6 +48,7 @@ use crate::unity::bundle::file::BundleFile;
 use crate::unity::version::UnityVersion;
 use crate::utils::debug::load_audio;
 use crate::utils::dom::create_img;
+use crate::utils::js::events::add_event_listener;
 use crate::utils::js::filesystem::{DirectoryEntry, DirectoryHandle, FileHandle};
 use crate::utils::time::now;
 use crate::xna::shader::get_mojoshader;
@@ -179,29 +181,12 @@ async fn collect_all_files(entries: Vec<DirectoryEntry>, accum: &mut Vec<(String
     }
 }
 
+async fn open_file() {
+    info!("open file");
+}
 
-#[wasm_bindgen(start)]
-async fn main() {
-    // Fancy console splash text
-    splash();
-
-    // Register our custom panic hooks
-    panic::set_hook(Box::new(|info: &PanicInfo| {
-        console_error_panic_hook::hook(info);
-        alert_hook::hook(info);
-    }));
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pretty_env_logger::init();
-
-    // let win = web_sys::window().unwrap();
-    //
-    // let ms = get_mojoshader();
-    // let f = Closure::wrap(Box::new(move || {
-    //     ms.parse(include_bytes!("../Pool.fx"), "glsl120");
-    // }) as Box<dyn FnMut()>);
-    // win.set_timeout_with_callback_and_timeout_and_arguments_0(f.as_ref().unchecked_ref(), 500).unwrap();
-
+async fn open_folder() {
+    info!("open folder");
     let mut picker = DirectoryHandle::open_picker().await.unwrap();
     let entries = picker.entries().await;
     let mut files = Vec::new();
@@ -232,6 +217,34 @@ async fn main() {
             }
         };
     }
+}
+
+
+#[wasm_bindgen(start)]
+async fn main() {
+    // Fancy console splash text
+    splash();
+
+    // Register our custom panic hooks
+    panic::set_hook(Box::new(|info: &PanicInfo| {
+        console_error_panic_hook::hook(info);
+        alert_hook::hook(info);
+    }));
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pretty_env_logger::init();
+
+    let win = web_sys::window().unwrap();
+    let doc = win.document().unwrap();
+    add_event_listener(&doc.get_element_by_id("btn-open-folder").unwrap(), "mouseup", open_folder).unwrap();
+    add_event_listener(&doc.get_element_by_id("btn-open-file").unwrap(), "mouseup", open_file).unwrap();
+    // let win = web_sys::window().unwrap();
+    //
+    // let ms = get_mojoshader();
+    // let f = Closure::wrap(Box::new(move || {
+    //     ms.parse(include_bytes!("../Pool.fx"), "glsl120");
+    // }) as Box<dyn FnMut()>);
+    // win.set_timeout_with_callback_and_timeout_and_arguments_0(f.as_ref().unchecked_ref(), 500).unwrap();
     return;
 
     // let mut dat = Bytes::from(Vec::from(include_bytes!("../tests/data/xnb/Background.xnb")));
