@@ -49,6 +49,7 @@ use crate::utils::debug::load_audio;
 use crate::utils::dom::create_img;
 use crate::utils::js::filesystem::{DirectoryEntry, DirectoryHandle, FileHandle};
 use crate::utils::time::now;
+use crate::xna::shader::get_mojoshader;
 use crate::xna::xnb::XNBFile;
 
 async fn unity_test() {
@@ -193,6 +194,14 @@ async fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     pretty_env_logger::init();
 
+    // let win = web_sys::window().unwrap();
+    //
+    // let ms = get_mojoshader();
+    // let f = Closure::wrap(Box::new(move || {
+    //     ms.parse(include_bytes!("../Pool.fx"), "glsl120");
+    // }) as Box<dyn FnMut()>);
+    // win.set_timeout_with_callback_and_timeout_and_arguments_0(f.as_ref().unchecked_ref(), 500).unwrap();
+
     let mut picker = DirectoryHandle::open_picker().await.unwrap();
     let entries = picker.entries().await;
     let mut files = Vec::new();
@@ -214,7 +223,7 @@ async fn main() {
                     let body = document.body().expect("document should have a body");
                     body.append_child(&reader.primary_asset.make_html(&document)).unwrap();
                 });
-                info!("{name}");
+                info!("name: {name}");
                 // break;
             },
             Err(_) => {
