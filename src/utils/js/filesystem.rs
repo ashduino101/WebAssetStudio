@@ -7,7 +7,9 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen_test::console_log;
 use web_sys::{Blob, Event, File, FileReader, FileSystemDirectoryHandle, FileSystemFileHandle};
+use crate::utils::js::events::add_event_listener;
 use crate::utils::js::file_reader::read_file;
+use crate::utils::time::now;
 
 #[derive(Debug)]
 pub enum DirectoryEntry {
@@ -27,9 +29,11 @@ pub struct FileHandle {
 }
 
 impl FileHandle {
+    pub async fn get_file(&self) -> File {
+        File::from(JsFuture::from(self.inner.get_file()).await.unwrap())
+    }
     pub async fn data(&self) -> Bytes {
-        let file = File::from(JsFuture::from(self.inner.get_file()).await.unwrap());
-        read_file(file).await.unwrap()
+        read_file(self.get_file().await).await.unwrap()
     }
 }
 
@@ -50,6 +54,11 @@ pub struct DirectoryHandle {
 }
 
 impl DirectoryHandle {
+    pub fn is_available() -> bool {
+        let window = web_sys::window().unwrap();
+        window.has_own_property(&JsValue::from_str("showDirectoryPicker"))
+    }
+
     pub async fn open_picker() -> anyhow::Result<Self> {
         let window = web_sys::window().unwrap();
         // TODO: return error

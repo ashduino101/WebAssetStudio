@@ -34,7 +34,7 @@ use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen_test::console_log;
 use futures::future::{BoxFuture, FutureExt};
 use log::warn;
-use web_sys::{HtmlInputElement, MouseEvent};
+use web_sys::{File, HtmlInputElement, MouseEvent};
 use crate::base::asset::Asset;
 use crate::directx::types::SymbolClass::Object;
 // use mojoshader::*;
@@ -50,6 +50,7 @@ use crate::unity::version::UnityVersion;
 use crate::utils::debug::load_audio;
 use crate::utils::dom::create_img;
 use crate::utils::js::events::add_event_listener;
+use crate::utils::js::file_reader::read_file;
 use crate::utils::js::filesystem::{DirectoryEntry, DirectoryHandle, FileHandle};
 use crate::utils::time::now;
 use crate::xna::shader::get_mojoshader;
@@ -182,46 +183,68 @@ async fn collect_all_files(entries: Vec<DirectoryEntry>, accum: &mut Vec<(String
     }
 }
 
-async fn open_file() {
+async fn open_file_dialog() {
     info!("open file");
     let elem = web_sys::window().unwrap()
         .document().unwrap()
         .get_element_by_id("open-file-input").unwrap()
         .dyn_into::<HtmlInputElement>().unwrap();
+    elem.click();
+}
+
+async fn open_file() {
+    let elem = web_sys::window().unwrap()
+        .document().unwrap()
+        .get_element_by_id("open-file-input").unwrap()
+        .dyn_into::<HtmlInputElement>().unwrap();
+    let files = elem.files().unwrap();
+    for i in 0..files.length() {
+        let file = files.get(i).unwrap();
+        let name = file.name();
+        handle_file(name, file).await;
+    }
 }
 
 async fn open_folder() {
     info!("open folder");
-    let mut picker = DirectoryHandle::open_picker().await.unwrap();
+    let mut picker = match DirectoryHandle::open_picker().await {
+        Ok(p) => p,
+        Err(_) => return,  // probably declined by user
+    };
     let entries = picker.entries().await;
     let mut files = Vec::new();
     collect_all_files(entries, &mut files).await;
     // console_log!("{files:?}");
     for (name, handle) in files {
-        if !(name.ends_with(".xnb") || name.ends_with(".xnb.deploy")) {
-            continue;
-        }
-        let mut buf = handle.data().await;
-        let mut gz = GzDecoder::new(&buf[..]);
-        let mut buf = Vec::new();
-        match gz.read_to_end(&mut buf) {
-            Ok(_) => {
-                spawn_local(async move {
-                    let mut reader = XNBFile::new(&mut Bytes::from(buf));
-                    let window = web_sys::window().expect("no global `window` exists");
-                    let document = window.document().expect("should have a document on window");
-                    let body = document.body().expect("document should have a body");
-                    body.append_child(&reader.primary_asset.make_html(&document)).unwrap();
-                });
-                info!("name: {name}");
-                // break;
-            },
-            Err(_) => {
-                warn!("skipping on gz error");
-                continue;
-            }
-        };
+        let file = handle.get_file().await;
+        handle_file(name, file).await;
     }
+}
+
+async fn handle_file(name: String, file: File) {
+    if !(name.ends_with(".xnb") || name.ends_with(".xnb.deploy")) {
+        return;
+    }
+    let mut buf = read_file(file).await.unwrap();
+    let mut gz = GzDecoder::new(&buf[..]);
+    let mut buf = Vec::new();
+    match gz.read_to_end(&mut buf) {
+        Ok(_) => {
+            spawn_local(async move {
+                let mut reader = XNBFile::new(&mut Bytes::from(buf));
+                let window = web_sys::window().expect("no global `window` exists");
+                let document = window.document().expect("should have a document on window");
+                let body = document.body().expect("document should have a body");
+                body.append_child(&reader.primary_asset.make_html(&document)).unwrap();
+            });
+            info!("name: {name}");
+            // break;
+        },
+        Err(_) => {
+            warn!("skipping on gz error");
+            return;
+        }
+    };
 }
 
 
@@ -241,8 +264,14 @@ async fn main() {
 
     let win = web_sys::window().unwrap();
     let doc = win.document().unwrap();
-    add_event_listener(&doc.get_element_by_id("btn-open-folder").unwrap(), "mouseup", open_folder).unwrap();
-    add_event_listener(&doc.get_element_by_id("btn-open-file").unwrap(), "mouseup", open_file).unwrap();
+    if DirectoryHandle::is_available() {
+        let elem = doc.get_element_by_id("btn-open-folder").unwrap();
+        elem.class_list().remove_1("disabled").unwrap();
+        add_event_listener(&elem, "mouseup", open_folder).unwrap();
+
+    }
+    add_event_listener(&doc.get_element_by_id("btn-open-file").unwrap(), "mouseup", open_file_dialog).unwrap();
+    add_event_listener(&doc.get_element_by_id("open-file-input").unwrap(), "change", open_file).unwrap();
     // let win = web_sys::window().unwrap();
     //
     // let ms = get_mojoshader();
