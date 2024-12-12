@@ -5,8 +5,7 @@ use crate::BundleFile;
 use crate::fsb::bank::{SoundBank, SoundFormat};
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
-
-
+use crate::utils::dom::create_data_url;
 
 #[derive(Debug)]
 pub struct AudioClipWrapper {
@@ -15,7 +14,26 @@ pub struct AudioClipWrapper {
 
 impl Asset for AudioClipWrapper {
     fn make_html(&mut self, doc: &Document) -> Element {
-        doc.create_element("div").expect("dummy")
+        let cont = doc.create_element("div").unwrap();
+        for s in &self.bank.subsounds {
+            let elem = doc.create_element("audio").unwrap();
+            let url = create_data_url(&s.data[..], match s.format {
+                SoundFormat::Pcm8 => "audio/wav",
+                SoundFormat::Pcm16 => "audio/wav",
+                SoundFormat::Pcm24 => "audio/wav",
+                SoundFormat::Pcm32 => "audio/wav",
+                SoundFormat::PcmFloat => "audio/wav",
+                SoundFormat::GcAdpcm => "audio/wav",
+                SoundFormat::ImaAdpcm => "audio/wav",
+                SoundFormat::Vorbis => "audio/ogg",
+                SoundFormat::Opus => "audio/ogg",
+                _ => "application/octet-stream"
+            });
+            elem.set_attribute("src", &url).unwrap();
+            elem.set_attribute("controls", "true").unwrap();
+            cont.append_child(&elem).unwrap();
+        }
+        cont
     }
 
     fn export(&mut self) -> Export {

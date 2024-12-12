@@ -56,92 +56,6 @@ use crate::utils::time::now;
 use crate::xna::shader::get_mojoshader;
 use crate::xna::xnb::XNBFile;
 
-async fn unity_test() {
-    // console_log!("constructing");
-    // let mut ctx = EffectShaderContext::new("hlsl");
-    // console_log!("compiling");
-    // let res = ctx.compile(include_bytes!("../test.fx"));
-    // console_log!("done");
-    // console_log!("{:?}", res);
-    // return;
-
-    // let mut d = include_bytes!("unity/assets/trees.tar.xz");
-    // console_log!("start decompress at {}", now());
-    // let mut out = Vec::new();
-    // xz_decompress(&mut Cursor::new(&mut d), &mut out).unwrap();
-    // console_log!("end decompress at {} (size: {})", now(), out.len());
-
-    let window = web_sys::window().expect("no global `window` exists");
-    let document = window.document().expect("should have a document on window");
-    let body = document.body().expect("document should have a body");
-
-    // let mut dat = Bytes::from(Vec::from(include_bytes!("../xnbtests/GUI/Fonts/BoldItalic-26")));
-    // console_log!("starting size: {}", dat.len());
-    // let mut xnb = XNBFile::new(&mut dat);
-    // console_log!("{:?}", xnb);
-    // body.append_child(&xnb.primary_asset.make_html(&document)).unwrap();
-    // return;
-
-    let start = now();
-    console_log!("start load at {start}");
-
-    let dat = Bytes::from(Vec::from(include_bytes!("../test.unity3d")));
-    let f = BundleFile::new(dat);
-
-    console_log!("start decompress");
-    let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
-    console_log!("end decompress: {} bytes", file.len());
-
-    console_log!("start asset file parse at {}", now());
-    let asset = AssetFile::new(&mut file);
-
-    let mut i = 0;
-
-    for object in &asset.objects {
-        let typ = &asset.types[object.type_id as usize];
-        let data = &mut asset.object_data.slice(object.offset..object.offset + object.size);
-        // console_log!("{}", typ.string_repr);
-        // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
-        let parsed = TypeParser::parse_object_from_info(typ, data);
-        let name = parsed.get("m_Name").ok().map_or("<unnamed>".to_owned(), |v| v.as_string().unwrap());
-        // console_log!("{:?}", name);
-        if typ.class_id == 28 {
-            let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
-            // console_log!("{:?}", w);
-
-            for img in 0..w.num_images {
-                let img_start = now();
-                let elem = document.create_element("img").unwrap();
-                elem.set_attribute("src", &create_img(w.get_image(img).as_ref(), w.width as usize, w.height as usize, true)).unwrap();
-                body.append_child(&elem).unwrap();
-                console_log!("decoding {}x{} of format {:?} took {}ms", w.width, w.height, w.format, now() - img_start);
-            }
-        }
-        if typ.class_id == 83 {
-            let mut w = AudioClipWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
-            body.append_child(&w.make_html(&document)).unwrap();
-        }
-        if typ.class_id == 43 {
-            // let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
-            // console_log!("{:?}", w);
-            // let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
-            // if i == 5 {
-            //     render_mesh(scene).await;
-            // }
-
-            i += 1;
-        }
-        // console_log!("{:?}", parsed);
-    }
-
-    console_log!("end asset file parse at {}", now());
-    console_log!("{:?}", asset);
-    console_log!("{:?}", f);
-
-    console_log!("done: took {}ms", now() - start);
-}
-
-
 // async fn dectest() {
 //     let start = now();
 //     let lzma_data = include_bytes!("../AppBundle.tar.lzma");
@@ -222,29 +136,85 @@ async fn open_folder() {
 }
 
 async fn handle_file(name: String, file: File) {
-    if !(name.ends_with(".xnb") || name.ends_with(".xnb.deploy")) {
-        return;
-    }
-    let mut buf = read_file(file).await.unwrap();
-    let mut gz = GzDecoder::new(&buf[..]);
-    let mut buf = Vec::new();
-    match gz.read_to_end(&mut buf) {
-        Ok(_) => {
-            spawn_local(async move {
-                let mut reader = XNBFile::new(&mut Bytes::from(buf));
-                let window = web_sys::window().expect("no global `window` exists");
-                let document = window.document().expect("should have a document on window");
-                let body = document.body().expect("document should have a body");
-                body.append_child(&reader.primary_asset.make_html(&document)).unwrap();
-            });
-            info!("name: {name}");
-            // break;
-        },
-        Err(_) => {
-            warn!("skipping on gz error");
-            return;
+    let dat = read_file(file).await.unwrap();
+
+    let window = web_sys::window().unwrap();
+    let document = window.document().unwrap();
+    let body = document.body().unwrap();
+
+    let start = now();
+    console_log!("start load at {start}");
+
+    let f = BundleFile::new(dat);
+
+    console_log!("start decompress");
+    let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
+    console_log!("end decompress: {} bytes", file.len());
+
+    console_log!("start asset file parse at {}", now());
+    let asset = AssetFile::new(&mut file);
+
+    let mut i = 0;
+
+    for object in &asset.objects {
+        let typ = &asset.types[object.type_id as usize];
+        let data = &mut asset.object_data.slice(object.offset..object.offset + object.size);
+        // console_log!("{}", typ.string_repr);
+        // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
+        let parsed = TypeParser::parse_object_from_info(typ, data);
+        let name = parsed.get("m_Name").ok().map_or("<unnamed>".to_owned(), |v| v.as_string().unwrap());
+        console_log!("{:?} {}", name, typ.class_id);
+        if typ.class_id == 28 {
+            let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
+            // console_log!("{:?}", w);
+
+            for img in 0..w.num_images {
+                let img_start = now();
+                let elem = document.create_element("img").unwrap();
+                elem.set_attribute("src", &create_img(w.get_image(img).as_ref(), w.width as usize, w.height as usize, true)).unwrap();
+                body.append_child(&elem).unwrap();
+                console_log!("decoding {}x{} of format {:?} took {}ms", w.width, w.height, w.format, now() - img_start);
+            }
         }
-    };
+        if typ.class_id == 83 {
+            let mut w = AudioClipWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
+            body.append_child(&w.make_html(&document)).unwrap();
+        }
+        if typ.class_id == 43 {
+            // let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
+            // console_log!("{:?}", w);
+            // let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
+            // if i == 5 {
+            //     render_mesh(scene).await;
+            // }
+
+            i += 1;
+        }
+        // console_log!("{:?}", parsed);
+    }
+
+    // if !(name.ends_with(".xnb") || name.ends_with(".xnb.deploy")) {
+    //     return;
+    // }
+    // let mut gz = GzDecoder::new(&buf[..]);
+    // let mut buf = Vec::new();
+    // match gz.read_to_end(&mut buf) {
+    //     Ok(_) => {
+    //         spawn_local(async move {
+    //             let mut reader = XNBFile::new(&mut Bytes::from(buf));
+    //             let window = web_sys::window().expect("no global `window` exists");
+    //             let document = window.document().expect("should have a document on window");
+    //             let body = document.body().expect("document should have a body");
+    //             body.append_child(&reader.primary_asset.make_html(&document)).unwrap();
+    //         });
+    //         info!("name: {name}");
+    //         // break;
+    //     },
+    //     Err(_) => {
+    //         warn!("skipping on gz error");
+    //         return;
+    //     }
+    // };
 }
 
 
@@ -320,7 +290,7 @@ async fn main() {
 
     // return;
 
-    spawn_local(unity_test());
+    // spawn_local(unity_test());
 
     // console_log!("{:?}", f.get_file(&f.list_files()[0]));
     // run().await;

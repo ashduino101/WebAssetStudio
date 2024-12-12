@@ -93,7 +93,8 @@ pub struct SubSound {
     pub frequency: u32,
     pub sample_rate: u32,
     pub data: Bytes,
-    pub comment: Option<String>
+    pub comment: Option<String>,
+    pub format: SoundFormat,
 }
 
 #[derive(Debug)]
@@ -165,42 +166,39 @@ impl SoundBank {
                 let chunk_type = ChunkType::from_u32((meta & 0xffffffff) >> 25);  // 7 bits
                 let mut chunk = chunk_data.slice(0..chunk_size);
                 chunk_data.advance(chunk_size);
-                // console_log!("chunk {:?} of length {}", chunk_type, chunk_size);
                 match chunk_type {
                     ChunkType::VorbisSeekTable => {
                         vorbis_crc = chunk.get_u32_le();
                     },
                     ChunkType::Comment => {
-                        // console_log!("{:?}", chunk);
                         chunk.get_u32_le();  // ???
-                        // let comment = chunk.get_cstring();
-                        // FIXME: fix cstring decoder so we don't have to do this for proper utf-8 support
+                        // FIXME: fix cstring decoder so utf-8 is read correctly
                         let comment_data = chunk.slice(0..chunk.iter().position(|&b| b == 0).unwrap_or(0));
                         comment = Some(String::from_utf8(Vec::from(comment_data)).unwrap());
-                        // console_log!("{:?}", comment);
                     }
                     _ => {}
                 }
             }
 
+            let channels = if stereo { 2u16 } else { 1 };
             let data = match format {
                 SoundFormat::Vorbis => {
-                    fix_vorbis_container(&mut sample_data, if stereo { 2 } else { 1 }, frequency, vorbis_crc, sample_rate).expect("error while fixing vorbis container")
+                    fix_vorbis_container(&mut sample_data, channels as i32, frequency, vorbis_crc, sample_rate).expect("error while fixing vorbis container")
                 },
                 SoundFormat::Pcm8 => {
-                    encode_wav(sample_data, WavFormat::PCM8, frequency, if stereo { 2 } else { 1 })
+                    encode_wav(sample_data, WavFormat::PCM8, frequency, channels)
                 },
                 SoundFormat::Pcm16 => {
-                    encode_wav(sample_data, WavFormat::PCM16, frequency, if stereo { 2 } else { 1 })
+                    encode_wav(sample_data, WavFormat::PCM16, frequency, channels)
                 },
                 SoundFormat::Pcm24 => {
-                    encode_wav(sample_data, WavFormat::PCM24, frequency, if stereo { 2 } else { 1 })
+                    encode_wav(sample_data, WavFormat::PCM24, frequency, channels)
                 },
                 SoundFormat::Pcm32 => {
-                    encode_wav(sample_data, WavFormat::PCM32, frequency, if stereo { 2 } else { 1 })
+                    encode_wav(sample_data, WavFormat::PCM32, frequency, channels)
                 },
                 SoundFormat::PcmFloat => {
-                    encode_wav(sample_data, WavFormat::PCMF32, frequency, if stereo { 2 } else { 1 })
+                    encode_wav(sample_data, WavFormat::PCMF32, frequency, channels)
                 },
                 // SoundFormat::ImaAdpcm => {
                 //     encode_wav(sample_data, WavFormat::IMAADPCM, frequency, if stereo { 2 } else { 1 })
@@ -211,19 +209,13 @@ impl SoundBank {
                 }
             };
 
-            // let window = web_sys::window().expect("no global `window` exists");
-            // let document = window.document().expect("should have a document on window");
-            // let body = document.body().expect("document should have a body");
-            // let elem = document.create_element("audio").expect("failed to create element");
-            // elem.set_attribute("src", &create_data_url(&data[..])).expect("set_attribute");
-            // elem.set_attribute("controls", "").expect("set_attribute");
-            // body.append_child(&elem).expect("append_child");
             subsounds.push(SubSound {
                 is_stereo: stereo,
                 frequency,
                 sample_rate,
                 data,
-                comment
+                format,
+                comment,
             });
         }
 
