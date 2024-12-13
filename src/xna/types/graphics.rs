@@ -1,8 +1,7 @@
 use std::fmt::{Debug, Formatter};
 use bytes::{Buf, Bytes};
-use js_sys::Uint8Array;
-use wasm_bindgen::JsValue;
-use crate::logger::{info, log1obj};
+use web_sys::{Document, Element};
+use crate::logger::info;
 use crate::base::asset::{Asset, Export};
 use crate::{create_img, XNBFile};
 use crate::utils::buf::{FromBytes};
@@ -67,7 +66,7 @@ pub struct Texture2D {
 }
 
 impl Asset for Texture2D {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("img").expect("failed to create element");
         let start = now();
         elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize, false)).expect("set_attribute");
@@ -113,7 +112,7 @@ pub struct Effect {
 }
 
 impl Asset for Effect {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         doc.create_element("div").unwrap()  // TODO
     }
 
@@ -150,7 +149,7 @@ pub struct SpriteFont {
 }
 
 impl Asset for SpriteFont {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         self.texture.make_html(doc)
     }
 

@@ -15,35 +15,28 @@ pub mod binary;
 pub mod studio;
 pub mod directx;
 pub mod errors;
+pub mod crunch;
+// mod crunch;
 
-use std::{panic};
 use std::convert::TryFrom;
-use std::io::{Cursor, Read, Write};
+use std::io::{Read, Write};
+use std::panic;
 
-use std::panic::PanicInfo;
-use std::pin::Pin;
+use crate::base::asset::Asset;
+use crate::crunch::CrunchLib;
 use async_recursion::async_recursion;
-use bytes::Bytes;
-use flate2::bufread::GzDecoder;
-use futures::executor::block_on;
-use js_sys::{Array, Reflect};
-use lzma_rs::xz_decompress;
+use futures::future::FutureExt;
+use std::panic::PanicInfo;
 use three_d::*;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen_test::console_log;
-use futures::future::{BoxFuture, FutureExt};
-use log::warn;
-use web_sys::{File, HtmlInputElement, MouseEvent};
-use crate::base::asset::Asset;
-use crate::directx::types::SymbolClass::Object;
+use web_sys::{File, HtmlInputElement};
 // use mojoshader::*;
 
 use crate::logger::{info, splash};
 use crate::unity::assets::file::AssetFile;
 use crate::unity::assets::typetree::TypeParser;
 use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
-use crate::unity::assets::wrappers::mesh::MeshWrapper;
 use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::unity::bundle::file::BundleFile;
 use crate::unity::version::UnityVersion;
@@ -53,7 +46,6 @@ use crate::utils::js::events::add_event_listener;
 use crate::utils::js::file_reader::read_file;
 use crate::utils::js::filesystem::{DirectoryEntry, DirectoryHandle, FileHandle};
 use crate::utils::time::now;
-use crate::xna::shader::get_mojoshader;
 use crate::xna::xnb::XNBFile;
 
 // async fn dectest() {
@@ -232,8 +224,27 @@ async fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     pretty_env_logger::init();
 
+    CrunchLib::load().await;
+
     let win = web_sys::window().unwrap();
+    // spawn_local(async move {
+    //     let win = web_sys::window().unwrap();
+    //     let doc = win.document().unwrap();
+    //
+    //     let crntest = include_bytes!("../testdata/crunch.dat");
+    //
+    //     let crnlib = get_crnlib().await;
+    //     let res = crnlib.unpack_unity_crunch(crntest);
+    //     let tex = decode(TextureFormat::DXT1, &mut Bytes::from(res), 2048, 2048, false);
+    //     let elem = doc.create_element("img").expect("failed to create element");
+    //     elem.set_attribute("src", &create_img(&tex[..], 2048, 2048, false)).unwrap();
+    //     doc.body().unwrap().append_child(&elem).unwrap();
+    // });
+
+
+
     let doc = win.document().unwrap();
+
     if DirectoryHandle::is_available() {
         let elem = doc.get_element_by_id("btn-open-folder").unwrap();
         elem.class_list().remove_1("disabled").unwrap();

@@ -1,6 +1,7 @@
 // Common types used in multiple formats
 
 use std::fmt::{Debug, Display, Formatter, Write};
+use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
 
 #[derive(Debug, Copy, Clone)]
@@ -10,7 +11,7 @@ pub struct Vector2 {
 }
 
 impl Asset for Vector2 {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Vector2({}, {})", self.x, self.y)));
         elem
@@ -33,7 +34,7 @@ pub struct Vector3 {
 }
 
 impl Asset for Vector3 {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*self.to_string()));
         elem
@@ -63,7 +64,7 @@ pub struct Vector4 {
 }
 
 impl Asset for Vector4 {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Vector4({}, {}, {}, {})", self.x, self.y, self.z, self.w)));
         elem
@@ -87,7 +88,7 @@ pub struct MatrixRow {
 }
 
 impl Asset for MatrixRow {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*self.to_string()));
         elem
@@ -116,7 +117,7 @@ pub struct Matrix4x4 {
 }
 
 impl Asset for Matrix4x4 {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*self.to_string()));
         elem
@@ -146,7 +147,7 @@ pub struct Quaternion {
 }
 
 impl Asset for Quaternion {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Quaternion({}, {}, {}, {})", self.x, self.y, self.z, self.w)));
         elem
@@ -170,7 +171,7 @@ pub struct Color32 {
 }
 
 impl Asset for Color32 {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Color({}, {}, {}, {})", self.red, self.green, self.blue, self.alpha)));
         elem
@@ -192,7 +193,7 @@ pub struct Plane {
 }
 
 impl Asset for Plane {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Plane({}, {})", self.normal, self.d)));
         elem

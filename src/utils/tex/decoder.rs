@@ -1,4 +1,3 @@
-use std::arch::asm;
 use std::cmp::{max};
 use std::io::Write;
 
@@ -12,7 +11,7 @@ use texture2ddecoder::{decode_astc as decode_astc_, decode_atc_rgb4_block, decod
 
 
 // For Unity by default, but can also be used with match/case for other formats
-#[derive(FromPrimitive, Debug, Copy, Clone)]
+#[derive(FromPrimitive, Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq)]
 pub enum TextureFormat {
     Alpha8 = 1,
     ARGB4444 = 2,
@@ -879,7 +878,10 @@ pub fn decode(format: TextureFormat, data: &mut Bytes, width: usize, height: usi
             // if is_xbox { swap_bytes_xbox(data) };
             decode_dxt5(data, width, height)
         },
-        TextureFormat::DXT1Crunched => decode_dxt1(data, width, height),
+        TextureFormat::DXT1Crunched => {
+
+            decode_dxt1(data, width, height)
+        },
         TextureFormat::DXT5Crunched => decode_dxt5(data, width, height),
 
         TextureFormat::PVRTCRGB2 | TextureFormat::PVRTCRGBA2 => decode_pvrtc(data, width, height, true),

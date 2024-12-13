@@ -57,6 +57,9 @@ pretty_env_logger = "0.5.0"
 walkdir = "2.5.0"
 async-recursion = "1.1.1"
 futures = "0.3.31"
+#bincode = { version = "2.0.0-rc.3", features = ["serde", "derive"] }
+#serde_repr = "0.1.19"
+#bitvec = {  version = "1.0.1", features = ["serde"] }
 #rust-lzma = "0.6.0"
 #mojoshader = { path = "mojoshader" }
 #wgpu = "0.19.1"

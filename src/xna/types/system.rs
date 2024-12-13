@@ -111,7 +111,7 @@ impl XNBType for ExternalReference {
 }
 
 impl Asset for Vec<Box<dyn XNBType>> {
-    fn make_html(&mut self, _: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         todo!()
     }
 

@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::iter::FromIterator;
 use bytes::{Bytes, Buf, BytesMut, BufMut};
 use regex::Regex;
+use wasm_bindgen_test::console_log;
 use crate::unity::assets::typetree::ObjectError;
 
 use crate::unity::bundle::block::{BlockInfo};
@@ -10,7 +11,7 @@ use crate::unity::bundle::node::{Node};
 use crate::unity::bundle::storage::StorageInfo;
 use crate::unity::compression::decompress;
 use crate::utils::buf::{BufExt, FromBytes};
-
+use crate::utils::debug::download_file;
 
 #[derive(Debug)]
 pub struct BundleFileHeader {
@@ -187,7 +188,6 @@ impl BundleFile {
         // console_log!("get resource {}", source);
 
         let file = self.get_file(&source).expect("resource points to non-existent file");
-        // console_log!("got resource: {}, slicing at {} to {}", file.len(), offset, size);
         let data = file.slice(offset..offset + size);
         Ok(data)
     }

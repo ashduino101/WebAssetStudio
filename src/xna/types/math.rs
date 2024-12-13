@@ -1,4 +1,5 @@
 use bytes::{Buf, Bytes};
+use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export, Void};
 use crate::base::types::{Color32, Matrix4x4, MatrixRow, Plane, Quaternion, Vector2, Vector3, Vector4};
 use crate::xna::type_base::XNBType;
@@ -104,7 +105,7 @@ pub struct Rectangle {
 }
 
 impl Asset for Rectangle {
-    fn make_html(&mut self, doc: &web_sys::Document) -> web_sys::Element {
+    fn make_html(&mut self, doc: &Document) -> Element {
         let elem = doc.create_element("p").expect("failed to create element");
         elem.set_text_content(Some(&*format!("Rectangle({}, {}, {}, {})", self.x, self.y, self.width, self.height)));
         elem

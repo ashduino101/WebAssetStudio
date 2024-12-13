@@ -3,8 +3,10 @@ use bytes::{Bytes};
 use image::{ImageFormat, RgbaImage};
 use three_d::{AmbientLight, Camera, ClearState, CpuModel, FlyControl, FrameOutput, Geometry, Model, PhysicalMaterial, Skybox, vec3, Window, WindowSettings};
 use three_d_asset::{degrees, GeometryFunction, LightingModel, NormalDistributionFunction, Scene, Srgba, Viewport};
+use wasm_bindgen::JsCast;
 use wasm_bindgen_test::console_log;
-use crate::utils::dom::create_data_url;
+use web_sys::HtmlElement;
+use crate::utils::dom::{create_data_url, create_element};
 
 pub fn load_image(image: RgbaImage) {
     let window = web_sys::window().expect("no global `window` exists");
@@ -26,6 +28,15 @@ pub fn load_audio(data: Bytes) {
     elem.set_attribute("src", &create_data_url(&data[..], "audio/*")).expect("set_attribute");
     elem.set_attribute("controls", "").expect("set_attribute");
     body.append_child(&elem).expect("append_child");
+}
+
+pub fn download_file(data: &[u8], filename: &str) {
+    let url = create_data_url(data, "application/octet-stream");
+    let a = create_element("a");
+    a.set_attribute("href", &url).unwrap();
+    a.set_attribute("download", filename).unwrap();
+    web_sys::window().unwrap().document().unwrap().body().unwrap().append_child(&a).unwrap();
+    a.dyn_into::<HtmlElement>().unwrap().click();
 }
 
 pub async fn render_mesh(scene: Scene) {
