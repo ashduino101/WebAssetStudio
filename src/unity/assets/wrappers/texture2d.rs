@@ -73,15 +73,11 @@ impl Texture2DWrapper {
     }
 
     pub fn get_image(&self, index: i32) -> Vec<u8> {
-        console_log!("{:?}", self.format);
+        console_log!("format={:?}", self.format);
         let mut data = if self.format == TextureFormat::DXT1Crunched || self.format == TextureFormat::DXT5Crunched
             || self.format == TextureFormat::ETCRGB4Crunched || self.format == TextureFormat::ETC2RGBA8Crunched {
             assert_eq!(index, 0, "cannot decode crunched texture with multiple mips");
-            console_log!("sending data {:?} for decode", self.data.slice(0..64));
-            let res = Bytes::from(CrunchLib::get().unwrap().unpack_unity_crunch(&self.data[..]));
-            console_log!("crn resu lt len: {}", res.len());
-            console_log!("crn result 64b: {:?}", res.slice(0..64));
-            res
+            Bytes::from(CrunchLib::get().unwrap().unpack_unity_crunch(&self.data[..]))
         } else {
             self.data.slice(
                 get_mipmap_offset_and_size(index, self.format.clone(), self.width, self.height).0 as usize..
