@@ -1,4 +1,4 @@
-const NUMBER_PATTERN = /[-+]?(?:[0-9]+[.]?|[0-9]*[.][0-9]+)(?:e[-+]?[0-9]+)?/i;
+const NUMBER_PATTERN = /^[-+]?(?:[0-9]+[.]?|[0-9]*[.][0-9]+)(?:e[-+]?[0-9]+)?/i;
 
 export default class StringReader {
   constructor(string) {
