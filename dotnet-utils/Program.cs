@@ -3,28 +3,14 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.IO.MemoryMappedFiles;
-using System.Reflection.Metadata;
-using System.Reflection.PortableExecutable;
-using System.Threading;
-using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
-using ICSharpCode.Decompiler.DebugInfo;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Solution;
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.IL;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Xml.Linq;
-using Mono.Cecil.Cil;
 
 Console.WriteLine("Decompiler loaded.");
 
@@ -34,7 +20,7 @@ public class DecompilerInstance
     UniversalAssemblyResolver resolver;
     CSharpDecompiler decompiler;
     string filename;
-
+    
     static DecompilerSettings GetSettings(PEFile module)
     {
         return new DecompilerSettings(LanguageVersion.Latest) {

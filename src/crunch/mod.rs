@@ -1,3 +1,10 @@
+mod header;
+mod palette;
+mod prefix_coding;
+mod symbol_codec;
+mod unpacker;
+mod utils;
+
 /// Crunch WASM module bindings
 /// TODO: rewrite this purely in Rust
 use crate::logger::info;
@@ -93,5 +100,31 @@ impl CrunchLib {
 
     pub fn unpack_unity_crunch(&self, data: &[u8]) -> Vec<u8> {
         self.unpack_crunch_generic(data, Function::from(Reflect::get(&self.module, &JsValue::from_str("_UnpackUnityCrunch")).unwrap()))
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use bytes::Bytes;
+    use crate::crunch::header::CrunchHeader;
+    use crate::crunch::unpacker::Unpacker;
+
+    #[test]
+    pub fn test_decompress() {
+        let mut d = Bytes::from_static(include_bytes!("../../testdata/crunch.crn"));
+        // let h = CrunchHeader::from_bytes(&mut d.clone());
+
+        let mut h = Unpacker::new(d);
+
+        h.init();
+
+        println!("{h:#?}");
+
+        // let mut codec = SymbolCodec::new();
+        // codec.get_bits_init();
+        // let len = (h.tables_offset as usize) + (h.tables_size as usize) / 8 + 1;
+        // codec.start_decoding(d.slice(h.tables_offset as usize..len), h.tables_size as usize);
+        // println!("{}", codec.decode_bits(14));
+        // println!("{}", codec.decode_bits(5));
     }
 }
