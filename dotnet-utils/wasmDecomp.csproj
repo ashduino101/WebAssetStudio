@@ -8,6 +8,9 @@
     <RunAOTCompilation>true</RunAOTCompilation>
     <TrimMode>full</TrimMode>
     <PublishTrimmed>true</PublishTrimmed>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <OptimizationPreference>Size</OptimizationPreference>
   </PropertyGroup>
 
   <ItemGroup>

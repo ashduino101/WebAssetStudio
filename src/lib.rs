@@ -37,10 +37,11 @@ use crate::logger::{info, splash};
 use crate::unity::assets::file::AssetFile;
 use crate::unity::assets::typetree::TypeParser;
 use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
+use crate::unity::assets::wrappers::mesh::MeshWrapper;
 use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::unity::bundle::file::BundleFile;
 use crate::unity::version::UnityVersion;
-use crate::utils::debug::load_audio;
+use crate::utils::debug::{load_audio, render_mesh};
 use crate::utils::dom::create_img;
 use crate::utils::js::events::add_event_listener;
 use crate::utils::js::file_reader::read_file;
@@ -173,12 +174,12 @@ async fn handle_file(name: String, file: File) {
             body.append_child(&w.make_html(&document)).unwrap();
         }
         if typ.class_id == 43 {
-            // let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
-            // console_log!("{:?}", w);
-            // let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
-            // if i == 5 {
-            //     render_mesh(scene).await;
-            // }
+            if i == 0 {
+                let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
+                console_log!("{:?}", w);
+                let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
+                render_mesh(scene.clone()).await;
+            }
 
             i += 1;
         }
