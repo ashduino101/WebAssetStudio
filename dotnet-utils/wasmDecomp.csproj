@@ -1,21 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
     <WasmMainJSPath>main.js</WasmMainJSPath>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RunAOTCompilation>true</RunAOTCompilation>
+    <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
     <TrimMode>full</TrimMode>
     <PublishTrimmed>true</PublishTrimmed>
-    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
-    <OptimizationPreference>Size</OptimizationPreference>
+    <OptimizationPreference>Speed</OptimizationPreference>
+    <SelfContained>true</SelfContained>
+    <IsTrimmable>true</IsTrimmable>
+    <DebuggerSupport>false</DebuggerSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <MetricsSupport>false</MetricsSupport>
+    <StackTraceSupport>false</StackTraceSupport>
+    <WasmEnableWebcil>true</WasmEnableWebcil>
+    <CompressionEnabled>true</CompressionEnabled>
+    <InvariantTimezone>true</InvariantTimezone>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
   </PropertyGroup>
 
   <ItemGroup>
     <WasmExtraFilesToDeploy Include="index.html" />
     <WasmExtraFilesToDeploy Include="main.js" />
+    <WasmExtraFilesToDeploy Include="xzwasm.min.js" />
     <Reference Include="Mono.Cecil">
       <HintPath>Mono.Cecil.dll</HintPath>
     </Reference>
