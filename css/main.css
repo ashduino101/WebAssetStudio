@@ -414,6 +414,7 @@ html, body {
 
 body {
   background-color: var(--theme-base);
+  overflow: hidden;
 }
 
 #app-container {
@@ -422,6 +423,7 @@ body {
   flex-wrap: nowrap;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
 .dock-widget {
@@ -448,6 +450,7 @@ body {
 #file-browser {
   width: 100%;
   height: calc(75%);
+  overflow: scroll;
 }
 
 #dock-middle {
@@ -516,4 +519,10 @@ body {
   position: absolute;
   bottom: 0;
   margin-bottom: 3px;
+}
+
+/* TODO: clean up old stuff (anything above this comment) */
+.browser-node {
+  margin-left: 10px;
+  color: white;
 }

@@ -20,7 +20,7 @@ mod tests {
     
     
     use bytes::Bytes;
-    use webassetstudio::unity::bundle::file::BundleFile;
+    use webassetstudio::unity::bundle::file::UnityBundleFile;
     // use webassetstudio::unity::classes::{Animator, MonoBehaviour, SkinnedMeshRenderer, TypeDefFromBytes};
     
     
@@ -37,7 +37,7 @@ mod tests {
         for f in UNITYFS_DATA.files().filter(|f| !f.path().ends_with(".empty")) {
             let data = Vec::from(f.contents());
             let mut b = Bytes::from(data);
-            let f = BundleFile::new(&mut b);
+            let f = UnityBundleFile::new(&mut b);
         }
     }
 

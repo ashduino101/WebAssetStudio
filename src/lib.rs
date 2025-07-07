@@ -27,21 +27,25 @@ use crate::crunch::CrunchLib;
 use async_recursion::async_recursion;
 use futures::future::FutureExt;
 use std::panic::PanicInfo;
-use three_d::*;
+use std::sync::{Arc, Mutex};
+use bytes::Bytes;
+use flate2::read::GzDecoder;
+use three_d::{vec3, AmbientLight, Camera, ClearState, CpuModel, FrameOutput, Geometry, Model, OrbitControl, PhysicalMaterial, Skybox, Window, WindowSettings};
+use three_d_asset::{degrees, GeometryFunction, LightingModel, NormalDistributionFunction, Srgba, Viewport};
+// use three_d::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::console_log;
-use web_sys::{File, HtmlInputElement};
+use web_sys::{Event, File, HtmlInputElement};
+use crate::base::asset::bundle::{BundleFile, GenericBundleFile};
+use crate::base::format::AssetFormat;
+use crate::base::format::detector::detect_asset_format;
 // use mojoshader::*;
 
 use crate::logger::{info, splash};
-use crate::unity::assets::file::AssetFile;
-use crate::unity::assets::typetree::TypeParser;
-use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
-use crate::unity::assets::wrappers::mesh::MeshWrapper;
-use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
-use crate::unity::bundle::file::BundleFile;
+use crate::studio::widgets::asset_browser::AssetBrowser;
+use crate::unity::bundle::file::UnityBundleFile;
 use crate::unity::version::UnityVersion;
-use crate::utils::debug::{load_audio, render_mesh};
+use crate::utils::debug::load_audio;
 use crate::utils::dom::create_img;
 use crate::utils::js::events::add_event_listener;
 use crate::utils::js::file_reader::read_file;
@@ -90,7 +94,7 @@ async fn collect_all_files(entries: Vec<DirectoryEntry>, accum: &mut Vec<(String
     }
 }
 
-async fn open_file_dialog() {
+async fn open_file_dialog(_: Event) {
     info!("open file");
     let elem = web_sys::window().unwrap()
         .document().unwrap()
@@ -99,7 +103,7 @@ async fn open_file_dialog() {
     elem.click();
 }
 
-async fn open_file() {
+async fn open_file(_: Event) {
     let elem = web_sys::window().unwrap()
         .document().unwrap()
         .get_element_by_id("open-file-input").unwrap()
@@ -112,7 +116,7 @@ async fn open_file() {
     }
 }
 
-async fn open_folder() {
+async fn open_folder(_: Event) {
     info!("open folder");
     let mut picker = match DirectoryHandle::open_picker().await {
         Ok(p) => p,
@@ -129,7 +133,7 @@ async fn open_folder() {
 }
 
 async fn handle_file(name: String, file: File) {
-    let dat = read_file(file).await.unwrap();
+    let mut dat = read_file(file).await.unwrap();
 
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
@@ -138,53 +142,80 @@ async fn handle_file(name: String, file: File) {
     let start = now();
     console_log!("start load at {start}");
 
-    let f = BundleFile::new(dat);
+    let mut format = detect_asset_format(&mut dat).unwrap();
+    if format == AssetFormat::GZipCompressed {
+        let mut dec = GzDecoder::new(&dat[..]);
+        let mut out = Vec::new();
+        dec.read_to_end(&mut out).unwrap();
+        dat = Bytes::from(out);
 
-    console_log!("start decompress");
-    let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
-    console_log!("end decompress: {} bytes", file.len());
-
-    console_log!("start asset file parse at {}", now());
-    let asset = AssetFile::new(&mut file);
-
-    let mut i = 0;
-
-    for object in &asset.objects {
-        let typ = &asset.types[object.type_id as usize];
-        let data = &mut asset.object_data.slice(object.offset..object.offset + object.size);
-        // console_log!("{}", typ.string_repr);
-        // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
-        let parsed = TypeParser::parse_object_from_info(typ, data);
-        let name = parsed.get("m_Name").ok().map_or("<unnamed>".to_owned(), |v| v.as_string().unwrap());
-        console_log!("{:?} {}", name, typ.class_id);
-        if typ.class_id == 28 {
-            let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
-            // console_log!("{:?}", w);
-
-            for img in 0..w.num_images {
-                let img_start = now();
-                let elem = document.create_element("img").unwrap();
-                elem.set_attribute("src", &create_img(w.get_image(img).as_ref(), w.width as usize, w.height as usize, true)).unwrap();
-                body.append_child(&elem).unwrap();
-                console_log!("decoding {}x{} of format {:?} took {}ms", w.width, w.height, w.format, now() - img_start);
-            }
-        }
-        if typ.class_id == 83 {
-            let mut w = AudioClipWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
-            body.append_child(&w.make_html(&document)).unwrap();
-        }
-        if typ.class_id == 43 {
-            if i == 0 {
-                let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
-                console_log!("{:?}", w);
-                let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
-                render_mesh(scene.clone()).await;
-            }
-
-            i += 1;
-        }
-        // console_log!("{:?}", parsed);
+        format = detect_asset_format(&mut dat.clone()).unwrap();
     }
+
+    let bundle: Box<dyn BundleFile + Send> = match format {
+        AssetFormat::UnityBundle => {
+            Box::new(UnityBundleFile::new(dat))
+        },
+        AssetFormat::XNB => {
+            Box::new(GenericBundleFile::wrap(XNBFile::new(&mut dat)))
+        },
+        _ => {
+            info!("unsupported format {format:?}");
+            return;
+        }
+    };
+
+    let mut browser = AssetBrowser::new(Arc::new(Mutex::new(bundle)));
+
+    browser.attach(&document.get_element_by_id("file-browser").unwrap());
+
+    // let f = ;
+    //
+    // console_log!("start decompress");
+    // let mut file = f.get_file(&f.list_files()[0]).expect("nonexistent file");
+    // console_log!("end decompress: {} bytes", file.len());
+    //
+    // console_log!("start asset file parse at {}", now());
+    // let asset = AssetFile::new(&mut file);
+    //
+    // let mut i = 0;
+    //
+    // for object in &asset.objects {
+    //     let typ = &asset.types[object.type_id as usize];
+    //     let data = &mut asset.object_data.slice(object.offset..object.offset + object.size);
+    //     // console_log!("{}", typ.string_repr);
+    //     // console_log!("{} ({})", typ.nodes[0].type_name, typ.class_id);
+    //     let parsed = TypeParser::parse_object_from_info(typ, data);
+    //     let name = parsed.get("m_Name").ok().map_or("<unnamed>".to_owned(), |v| v.as_string().unwrap());
+    //     console_log!("{:?} {}", name, typ.class_id);
+    //     if typ.class_id == 28 {
+    //         let w = Texture2DWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
+    //         // console_log!("{:?}", w);
+    //
+    //         for img in 0..w.num_images {
+    //             let img_start = now();
+    //             let elem = document.create_element("img").unwrap();
+    //             elem.set_attribute("src", &create_img(w.get_image(img).as_ref(), w.width as usize, w.height as usize, true)).unwrap();
+    //             body.append_child(&elem).unwrap();
+    //             console_log!("decoding {}x{} of format {:?} took {}ms", w.width, w.height, w.format, now() - img_start);
+    //         }
+    //     }
+    //     if typ.class_id == 83 {
+    //         let mut w = AudioClipWrapper::from_value(&parsed, Some(&f)).expect("failed to wrap object");
+    //         body.append_child(&w.make_html(&document)).unwrap();
+    //     }
+    //     if typ.class_id == 43 {
+    //         if i == 0 {
+    //             let mut w = MeshWrapper::from_value(&parsed, asset.unity_version.major, asset.little_endian).unwrap();
+    //             console_log!("{:?}", w);
+    //             let scene = w.load_mesh(asset.unity_version.major, asset.little_endian);
+    //             render_mesh(scene.clone()).await;
+    //         }
+    //
+    //         i += 1;
+    //     }
+    //     // console_log!("{:?}", parsed);
+    // }
 
     // if !(name.ends_with(".xnb") || name.ends_with(".xnb.deploy")) {
     //     return;

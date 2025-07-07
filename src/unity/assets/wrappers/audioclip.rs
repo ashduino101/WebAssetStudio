@@ -1,7 +1,9 @@
 use std::fmt::{Debug};
+use std::sync::{Arc, Mutex, MutexGuard};
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
-use crate::BundleFile;
+use crate::base::asset::bundle::BundleFile;
+use crate::UnityBundleFile;
 use crate::fsb::bank::{SoundBank, SoundFormat};
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
@@ -53,13 +55,13 @@ impl ClassWrapper for AudioClipWrapper {
 }
 
 impl AudioClipWrapper {
-    pub fn from_value(value: &ValueType, bundle: Option<&BundleFile>) -> Result<Self, ObjectError> {
+    pub fn from_value(value: &ValueType, bundle: Option<&mut MutexGuard<Box<dyn BundleFile + Send>>>) -> Result<Self, ObjectError> {
         let resource = value.get("m_Resource")?.clone();
-        let mut res = bundle.unwrap().get_resource_data(
-            resource.get("m_Source")?.as_string()?.as_str(),
-            resource.get("m_Offset")?.as_offset()?,
-            resource.get("m_Size")?.as_offset()?
-        )?;
+        let offset = resource.get("m_Offset")?.as_offset()?;
+        let size = resource.get("m_Size")?.as_offset()?;
+        let mut res = bundle.unwrap().get_blob(
+            resource.get("m_Source")?.as_string()?
+        ).unwrap().slice(offset..offset + size);
         Ok(AudioClipWrapper {
             bank: SoundBank::new(&mut res)
         })

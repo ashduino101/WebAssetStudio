@@ -1,10 +1,19 @@
 use std::fmt;
 use std::fmt::Debug;
+use std::rc::Rc;
+use std::sync::{Arc, Mutex, MutexGuard};
 use bytes::{Bytes, Buf};
+use crate::base::asset::{Asset, AssetMetadata};
+use crate::base::asset::bundle::BundleFile;
+use crate::base::asset::provider::AssetProvider;
+use crate::base::asset::types::AssetType;
 use crate::UnityVersion;
 
 use crate::unity::assets::external::External;
-use crate::unity::assets::typetree::TypeInfo;
+use crate::unity::assets::typetree::{TypeInfo, TypeParser, ValueType};
+use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
+use crate::unity::assets::wrappers::mesh::MeshWrapper;
+use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::unity::object::identifier::LocalObjectIdentifier;
 use crate::unity::object::info::ObjectInfo;
 
@@ -116,4 +125,44 @@ impl AssetFile {
             object_data
         }
     }
+
+    fn get_asset_from_info(&self, object: &ObjectInfo) -> ValueType {
+        let typ = &self.types[object.type_id as usize];
+        let data = &mut self.object_data.slice(object.offset..object.offset + object.size);
+        TypeParser::parse_object_from_info(typ, data)
+    }
 }
+
+impl AssetProvider for AssetFile {
+    fn list_assets(&self) -> Vec<AssetMetadata> {
+        self.objects.iter().map(|o| {
+            AssetMetadata {
+                // TODO: do this without loading the entire asset
+                name: self.get_asset_from_info(o).get("m_Name").ok().map_or("<unnamed>".to_owned(), |v| v.as_string().unwrap()),
+                // name: o.path_id.to_string(),
+                id: o.path_id.to_string(),
+                asset_type: AssetType::Misc  // TODO
+            }
+        }).collect()
+    }
+
+    fn get_asset(&self, id: String, parent: Option<&mut MutexGuard<Box<dyn BundleFile + Send>>>) -> Option<Arc<Mutex<Box<dyn Asset>>>> {
+        // TODO: support more
+        let object = *self.objects.iter().filter(|o| o.path_id.to_string() == id).collect::<Vec<_>>().first()?;
+        let typ = &self.types[object.type_id as usize];
+        let parsed = self.get_asset_from_info(object);
+        if typ.class_id == 28 {
+            return Some(Arc::new(Mutex::new(Box::new(Texture2DWrapper::from_value(&parsed, parent).expect("failed to wrap object")) as Box<dyn Asset>)));
+        }
+        if typ.class_id == 83 {
+            return Some(Arc::new(Mutex::new(Box::new(AudioClipWrapper::from_value(&parsed, parent).unwrap()) as Box<dyn Asset>)));
+        }
+        if typ.class_id == 43 {
+            return Some(Arc::new(Mutex::new(Box::new(MeshWrapper::from_value(&parsed, self.unity_version.major, self.little_endian).unwrap()) as Box<dyn Asset>)));
+        }
+        None
+    }
+}
+
+unsafe impl Send for AssetFile {}
+unsafe impl Sync for AssetFile {}

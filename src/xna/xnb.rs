@@ -1,7 +1,11 @@
+use std::rc::Rc;
+use std::sync::{Arc, Mutex, MutexGuard};
 use bytes::{Buf, Bytes};
 use wasm_bindgen_test::console_log;
-
-use crate::base::asset::Void;
+use crate::base::asset::provider::AssetProvider;
+use crate::base::asset::{Asset, AssetMetadata, Void};
+use crate::base::asset::bundle::BundleFile;
+use crate::base::asset::types::AssetType;
 use crate::base::types::{Matrix4x4, Quaternion, Vector2, Vector3, Vector4};
 
 use crate::utils::buf::{BufExt, FromBytes};
@@ -53,7 +57,7 @@ pub struct XNBFile {
     pub size: u32,
     pub uncompressed_size: u32,
     pub type_readers: Vec<TypeReader>,
-    pub primary_asset: Box<dyn XNBType>,
+    pub primary_asset: Arc<Mutex<Box<dyn Asset>>>,
     pub shared_resources: Vec<Box<dyn XNBType>>,
 }
 
@@ -107,7 +111,7 @@ impl XNBFile {
             size,
             uncompressed_size,
             type_readers,
-            primary_asset,
+            primary_asset: Arc::new(Mutex::new(primary_asset as Box<dyn Asset>)),
             shared_resources
         })
     }
@@ -160,6 +164,28 @@ impl XNBFile {
         }
     }
 }
+
+impl AssetProvider for XNBFile {
+    fn list_assets(&self) -> Vec<AssetMetadata> {
+        vec![AssetMetadata {
+            name: "primary".to_string(),
+            asset_type: AssetType::Misc,  // TODO
+            id: "primary".to_string(),
+        }]
+    }
+
+    fn get_asset(&self, id: String, parent: Option<&mut MutexGuard<Box<dyn BundleFile + Send>>>) -> Option<Arc<Mutex<Box<dyn Asset>>>> {
+        match id.as_str() {
+            "primary" => {
+                Some(self.primary_asset.clone())
+            },
+            _ => None
+        }
+    }
+}
+
+unsafe impl Send for XNBFile {}
+unsafe impl Sync for XNBFile {}
 
 #[cfg(test)]
 mod tests {

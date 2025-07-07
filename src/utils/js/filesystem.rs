@@ -7,7 +7,6 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen_test::console_log;
 use web_sys::{Blob, Event, File, FileReader, FileSystemDirectoryHandle, FileSystemFileHandle};
-use crate::utils::js::events::add_event_listener;
 use crate::utils::js::file_reader::read_file;
 use crate::utils::time::now;
 

@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter};
 use bytes::{Buf, Bytes};
-use web_sys::{Document, Element};
+use wasm_bindgen::JsCast;
+use web_sys::{Document, Element, HtmlImageElement};
 use crate::logger::info;
 use crate::base::asset::{Asset, Export};
 use crate::{create_img, XNBFile};
@@ -32,7 +33,7 @@ impl TextureFormat {
             16 => TextureFormat::RHalf,
             17 => TextureFormat::RGHalf,
             18 => TextureFormat::RGBAHalf,
-            19 => TextureFormat::RGBAHalf,  // TODO i have no idea
+            19 => TextureFormat::RGBAHalf,  // TODO HdrBlendable: uint16 (r, g, b) uint16 (a) (?)
             _ => TextureFormat::RGBA32
         }
     }
@@ -67,11 +68,21 @@ pub struct Texture2D {
 
 impl Asset for Texture2D {
     fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("img").expect("failed to create element");
+        let elem = doc.create_element("img").unwrap();
+        let elem = elem.unchecked_into::<HtmlImageElement>();
         let start = now();
-        elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize, false)).expect("set_attribute");
+        elem.set_attribute("src", &create_img(&self.textures[0].data, self.width as usize, self.height as usize, false)).unwrap();
+        let mut style = elem.style();
+        style.set_property("max-width", "100%").unwrap();
+        style.set_property("max-height", "100%").unwrap();
+        style.set_property("background", "repeating-conic-gradient(#ddd 0% 25%, #0000004d 0% 50%) 50% / 20px 20px").unwrap();
+        style.set_property("position", "relative").unwrap();
+        style.set_property("top", "50%").unwrap();
+        style.set_property("left", "50%").unwrap();
+        style.set_property("transform", "translate(-50%, -50%)").unwrap();
+        style.set_property("display", "block").unwrap();
         info!("converted to native image in {}ms", now() - start);
-        elem
+        elem.into()
     }
 
     fn export(&mut self) -> Export {

@@ -58,6 +58,7 @@ walkdir = "2.5.0"
 async-recursion = "1.1.1"
 futures = "0.3.31"
 bitvec = "1.0.1"
+itertools = "0.12.1"
 #bincode = { version = "2.0.0-rc.3", features = ["serde", "derive"] }
 #serde_repr = "0.1.19"
 #bitvec = {  version = "1.0.1", features = ["serde"] }
@@ -75,7 +76,7 @@ features = ["safe-decode", "safe-encode"]
 
 [dependencies.web-sys]
 version = "0.3.72"  # keep inline with version used by wgpu
-features = ["Document", "Element", "HtmlElement", "Node", "Window", "Blob", "Url", "DomTokenList", "NamedNodeMap", "File", "FileSystem", "FileSystemHandle", "FileSystemDirectoryHandle", "FileSystemDirectoryEntry", "FileSystemDirectoryReader", "FileSystemFileHandle", "FileSystemFileEntry", "FileReader", "FileReaderSync", "Event", "OffscreenCanvas", "CanvasRenderingContext2d", "ImageData", "ImageBitmap", "OffscreenCanvasRenderingContext2d", "ImageEncodeOptions", "BlobPropertyBag", "MouseEvent", "EventTarget", "HtmlInputElement", "InputEvent", "FileList"]
+features = ["Document", "Element", "HtmlElement", "Node", "Window", "Blob", "Url", "DomTokenList", "NamedNodeMap", "File", "FileSystem", "FileSystemHandle", "FileSystemDirectoryHandle", "FileSystemDirectoryEntry", "FileSystemDirectoryReader", "FileSystemFileHandle", "FileSystemFileEntry", "FileReader", "FileReaderSync", "Event", "OffscreenCanvas", "CanvasRenderingContext2d", "ImageData", "ImageBitmap", "OffscreenCanvasRenderingContext2d", "ImageEncodeOptions", "BlobPropertyBag", "MouseEvent", "EventTarget", "HtmlInputElement", "InputEvent", "FileList", "HtmlImageElement", "CssStyleDeclaration", "HtmlCollection"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.45"
@@ -90,3 +91,8 @@ wasm32-unknown-unknown-openbsd-libc = "0.2"
 [profile.release]
 # Tell `rustc` to optimize for small code size.
 opt-level = "s"
+
+# Always optimize lzma
+[profile.dev.package.lzma-rs]
+opt-level = 3
+

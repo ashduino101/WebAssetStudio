@@ -1,18 +1,23 @@
 extern crate num;
 
 use std::fmt::{Debug};
+use std::sync::{Arc, Mutex, MutexGuard};
 use bytes::Bytes;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_test::console_log;
-use web_sys::{Document, Element};
+use web_sys::{Document, Element, HtmlImageElement};
 use crate::base::asset::{Asset, Export};
-use crate::BundleFile;
+use crate::base::asset::bundle::BundleFile;
+use crate::UnityBundleFile;
 use crate::crunch::CrunchLib;
+use crate::logger::info;
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
+use crate::utils::dom::create_img;
 use crate::utils::tex::pngenc::encode_png;
 
 use crate::utils::tex::decoder::{decode, get_mipmap_offset_and_size, TextureFormat};
-
+use crate::utils::time::now;
 
 #[derive(Debug)]
 pub struct Texture2DWrapper {
@@ -27,7 +32,21 @@ pub struct Texture2DWrapper {
 
 impl Asset for Texture2DWrapper {
     fn make_html(&mut self, doc: &Document) -> Element {
-        doc.create_element("div").expect("dummy")
+        let elem = doc.create_element("img").unwrap();
+        let elem = elem.unchecked_into::<HtmlImageElement>();
+        let start = now();
+        elem.set_attribute("src", &create_img(&self.get_image(0), self.width as usize, self.height as usize, false)).unwrap();
+        let mut style = elem.style();
+        style.set_property("max-width", "100%").unwrap();
+        style.set_property("max-height", "100%").unwrap();
+        style.set_property("background", "repeating-conic-gradient(#ddd 0% 25%, #0000004d 0% 50%) 50% / 20px 20px").unwrap();
+        style.set_property("position", "relative").unwrap();
+        style.set_property("top", "50%").unwrap();
+        style.set_property("left", "50%").unwrap();
+        style.set_property("transform", "translate(-50%, -50%)").unwrap();
+        style.set_property("display", "block").unwrap();
+        info!("converted to native image in {}ms", now() - start);
+        elem.into()
     }
 
     fn export(&mut self) -> Export {
@@ -43,7 +62,7 @@ impl ClassWrapper for Texture2DWrapper {
 }
 
 impl Texture2DWrapper {
-    pub fn from_value(value: &ValueType, bundle: Option<&BundleFile>) -> Result<Self, ObjectError> {
+    pub fn from_value(value: &ValueType, bundle: Option<&mut MutexGuard<Box<dyn BundleFile + Send>>>) -> Result<Self, ObjectError> {
         Ok(Texture2DWrapper {
             width: value.get("m_Width")?.as_i32()?,
             height: value.get("m_Height")?.as_i32()?,
@@ -57,12 +76,12 @@ impl Texture2DWrapper {
                 if data.len() > 0 {
                     data
                 } else {
-                    if let Some(b) = bundle {
-                        b.get_resource_data(
-                            stream.get("path")?.as_string()?.as_str(),
-                            stream.get("offset")?.as_offset()?,
-                            stream.get("size")?.as_offset()?
-                        )?
+                    if let Some(mut b) = bundle {
+                        let offset = stream.get("offset")?.as_offset()?;
+                        let size = stream.get("size")?.as_offset()?;
+                        b.get_blob(
+                            stream.get("path")?.as_string()?
+                        ).unwrap().slice(offset..offset + size)
                     } else {
                         // FIXME error handling
                         panic!("texture contains streaming data but no bundle was provided");

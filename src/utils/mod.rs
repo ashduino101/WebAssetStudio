@@ -9,3 +9,4 @@ pub mod debug;
 pub mod time;
 pub mod lzmabuf;
 pub mod js;
+pub mod mesh;

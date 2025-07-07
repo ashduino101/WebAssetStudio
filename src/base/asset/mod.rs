@@ -1,10 +1,23 @@
+pub mod provider;
+pub mod types;
+pub mod bundle;
+
 use std::fmt::Debug;
 use bytes::{Buf, Bytes};
 use wasm_bindgen_test::console_log;
 use web_sys;
 use web_sys::{Document, Element};
+use crate::base::asset::types::AssetType;
 use crate::utils::buf::FromBytes;
 
+#[derive(Debug, Clone)]
+pub struct AssetMetadata {
+    pub name: String,
+    pub asset_type: AssetType,
+    pub id: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct Export {
     pub extension: String,
     pub data: Vec<u8>
@@ -81,7 +94,7 @@ impl FromBytes for char {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Void {}
 
 impl Asset for Void {

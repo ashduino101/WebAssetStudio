@@ -4,13 +4,14 @@ use std::fmt::{Debug};
 use bytes::{Buf, Bytes};
 use three_d::{CpuMesh, Matrix4, Vector2, Vector3, Vector4};
 use three_d_asset::{Geometry, Indices, Mat4, Node, PbrMaterial, Positions, Scene, Srgba};
+use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen_test::console_log;
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 use crate::utils::fp16::fp16_ieee_to_fp32_value;
-
+use crate::utils::mesh::render_mesh;
 
 fn get_vertex_size(format: u8, is_before_2017: bool) -> u32 {
     if is_before_2017 {
@@ -45,7 +46,17 @@ pub struct MeshWrapper {
 
 impl Asset for MeshWrapper {
     fn make_html(&mut self, doc: &Document) -> Element {
-        doc.create_element("div").expect("dummy")
+        let (mesh, container) = {
+            let mesh = self.load_mesh(self.major_version, self.little_endian);
+            let container = doc.create_element("div").unwrap();
+            (mesh, container)
+        };
+        let ret = container.clone();  // apparently u can just do this
+        let m = mesh.clone();
+        spawn_local(async move {
+            render_mesh(m, &container).await;
+        });
+        ret
     }
 
     fn export(&mut self) -> Export {
