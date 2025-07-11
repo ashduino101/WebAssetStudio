@@ -1,3 +1,5 @@
+use std::cell::OnceCell;
+use std::sync::OnceLock;
 use crate::logger::info;
 use crate::utils::dom::create_data_url;
 use crate::utils::time::now;
@@ -7,6 +9,7 @@ use wasm_bindgen::prelude::*;
 
 const WASM_XZ: &[u8] = include_bytes!("mojoshader.wasm.xz");
 const JS: &str = include_str!("mojoshader.js");
+static MODULE: OnceLock<MojoShader> = OnceLock::new();
 
 // #[derive(Deserialize)]
 // pub struct ParseError {
@@ -89,6 +92,7 @@ const JS: &str = include_str!("mojoshader.js");
 //     errors: Vec<ParseError>
 // }
 
+#[derive(Debug)]
 pub struct MojoShader {
     module: JsValue
 }
@@ -132,7 +136,13 @@ impl MojoShader {
     }
 }
 
-pub fn get_mojoshader() -> MojoShader {
+unsafe impl Sync for MojoShader {}
+unsafe impl Send for MojoShader {}
+
+pub fn get_mojoshader<'a>() -> &'a MojoShader {
+    if let Some(m) = MODULE.get() {
+        return m;
+    }
     let start = now();
     let mut res = Vec::new();
     xz_decompress(&mut WASM_XZ, &mut res).unwrap();
@@ -143,8 +153,9 @@ pub fn get_mojoshader() -> MojoShader {
     let module = func.call0(&JsValue::undefined()).unwrap();
 
     let module = MojoShader { module };
+    MODULE.set(module).unwrap();
 
     let elapsed = now() - start;
     info!("Loaded MojoShader in {} ms", elapsed);
-    module
+    MODULE.get().unwrap()
 }

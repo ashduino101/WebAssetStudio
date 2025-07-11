@@ -1,10 +1,30 @@
 use std::io::Read;
-use bytes::Bytes;
+use bytes::{Buf, Bytes};
 use flate2::bufread::GzDecoder;
 use crate::base::format::AssetFormat;
+use crate::logger::info;
 
 fn check_magic_basic(buf: &mut Bytes, magic: &[u8]) -> bool {
     &buf[0..magic.len()] == magic
+}
+
+pub(crate) fn check_unity_asset(buf: &mut Bytes) -> bool {
+    let orig_len = buf.len();
+    if orig_len < 20 {
+        return false;
+    }
+    buf.get_i32();
+    let mut file_size = buf.get_i32() as usize;
+    let version = buf.get_i32();
+    let mut data_offset = buf.get_i32() as usize;
+    if version >= 22 {
+        if orig_len < 48 {
+            return false;
+        }
+        data_offset = buf.get_i64() as usize;
+        file_size = buf.get_i64() as usize;
+    }
+    file_size == orig_len && data_offset < orig_len
 }
 
 pub(crate) fn detect_asset_format(buf: &mut Bytes) -> anyhow::Result<AssetFormat> {
@@ -12,7 +32,9 @@ pub(crate) fn detect_asset_format(buf: &mut Bytes) -> anyhow::Result<AssetFormat
     if check_magic_basic(buf, b"Unity") {
         return Ok(AssetFormat::UnityBundle);
     }
-    // asset todo
+    if check_unity_asset(&mut buf.clone()) {
+        return Ok(AssetFormat::UnityAsset);
+    }
 
     // Godot
     if check_magic_basic(buf, b"GDPC") {

@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Formatter};
 use bytes::{Buf, Bytes};
+use serde_json::Value;
 use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlImageElement};
 use crate::logger::info;
@@ -9,6 +10,7 @@ use crate::utils::buf::{FromBytes};
 use crate::utils::tex::decoder::{decode, TextureFormat};
 use crate::utils::tex::pngenc::encode_png;
 use crate::utils::time::now;
+use crate::xna::shader::get_mojoshader;
 use crate::xna::type_base::XNBType;
 use crate::xna::xnb::TypeReader;
 impl TextureFormat {
@@ -124,7 +126,9 @@ pub struct Effect {
 
 impl Asset for Effect {
     fn make_html(&mut self, doc: &Document) -> Element {
-        doc.create_element("div").unwrap()  // TODO
+        let elem = doc.create_element("pre").unwrap();
+        elem.set_text_content(Some(serde_json::from_str::<Value>(&get_mojoshader().parse(&self.data[..], "hlsl")).unwrap().as_object().unwrap().get("objects").unwrap().as_array().unwrap().iter().filter(|v| v.get("type").unwrap().as_str().unwrap() == "pixelshader").collect::<Vec<_>>().get(0).unwrap().as_object().unwrap().get("value").unwrap().as_object().unwrap().get("shader").unwrap().as_object().unwrap().get("output").unwrap().as_str().unwrap()));
+        elem
     }
 
     fn export(&mut self) -> Export {

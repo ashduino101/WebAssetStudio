@@ -10,7 +10,7 @@ use crate::base::asset::bundle::BundleFile;
 use crate::base::asset::provider::AssetProvider;
 use crate::logger::info;
 use itertools::Itertools;
-use crate::base::asset::AssetMetadata;
+use crate::base::asset::{Asset, AssetMetadata};
 use crate::studio::widgets::base::Widget;
 use crate::utils::js::events::{add_event_listener, add_event_listener_with_data};
 
@@ -54,7 +54,7 @@ impl AssetBrowser {
             a.len() > 100 && (a.iter().map(|v| v.name.clone()).max_by(|a, b| a.len().cmp(&b.len())).unwrap().len() >= lvl * 2)
         };
 
-        if group_starts && lvl < 4 {
+        if group_starts && lvl < 3 {
             let groups = {
                 let mut g = assets.lock().unwrap();
                 g.sort_by(|a, b| a.name.cmp(&b.name));
@@ -114,6 +114,9 @@ impl AssetBrowser {
 
         let mut document = window().unwrap().document().unwrap();
         let mut target = e.target().unwrap().unchecked_into::<Element>();
+        if target.class_list().contains("grouped") {
+            return;
+        }
         let provider_id = target.get_attribute("data-id").unwrap();
 
         let mut bun = bundle.lock().unwrap();
@@ -138,14 +141,23 @@ impl AssetBrowser {
 
         let mut bun = bundle.lock().unwrap();
         let mut prov = bun.get_provider(provider_id).unwrap();
-        let mut asset = prov.get_asset(asset_id, Some(&mut bun)).unwrap();
+        let mut asset = prov.get_asset(asset_id, Some(&mut bun));
 
         let mut viewport = document.get_element_by_id("viewport").unwrap();
         for i in 0..viewport.children().length() {
             viewport.children().item(i).unwrap().remove();
         }
-
-        viewport.append_child(&asset.lock().unwrap().make_html(&document)).unwrap();
+        match asset {
+            None => {
+                let elem = document.create_element("span").unwrap();
+                elem.set_text_content(Some("Failed to load asset"));
+                elem.set_id("load-failed");
+                viewport.append_child(&elem).unwrap();
+            }
+            Some(a) => {
+                viewport.append_child(&a.lock().unwrap().make_html(&document)).unwrap();
+            }
+        }
     }
 
     fn add_item(parent: &str, name: &str, /*icon: &Icon*/) {

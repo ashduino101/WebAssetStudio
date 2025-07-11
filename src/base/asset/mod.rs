@@ -29,6 +29,24 @@ pub trait Asset : Debug {
     fn export(&mut self) -> Export;
 }
 
+#[derive(Debug, Clone)]
+pub struct UnsupportedAsset {
+
+}
+
+impl Asset for UnsupportedAsset {
+    fn make_html(&mut self, doc: &Document) -> Element {
+        let elem = doc.create_element("div").unwrap();
+        elem.set_text_content(Some("No preview available"));
+        elem.class_list().add_1("unsupported-asset").unwrap();
+        elem
+    }
+
+    fn export(&mut self) -> Export {
+        Export { extension: "txt".to_string(), data: Vec::from(b"Asset cannot be exported") }
+    }
+}
+
 macro_rules! impl_primitive {
     ($t: ty, $($dfunc: tt)+) => {
         impl Asset for $t {

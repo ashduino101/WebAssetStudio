@@ -1,10 +1,9 @@
 use std::collections::HashMap;
-use std::fmt::Debug;
-
+use std::fmt::{Debug, Display, Formatter};
+use std::io::Error;
 use std::ops::Index;
 use bytes::{Buf, Bytes};
-
-
+use crate::logger::info;
 use crate::utils::buf::{BufExt, FromBytes};
 
 const SHARED_STRINGS: Bytes = Bytes::from_static(include_bytes!("strings.dat"));
@@ -18,8 +17,16 @@ fn get_string(table: &Bytes, offset: usize) -> String {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-pub struct ObjectError;
+#[derive(Debug, Clone)]
+pub struct ObjectError {
+    pub(crate) msg: Option<String>
+}
+
+impl Display for ObjectError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.msg.clone().or_else(|| Some("unknown error".to_owned())).unwrap())
+    }
+}
 
 // #[derive(Debug)]
 // pub struct ObjectType {
@@ -69,61 +76,61 @@ pub enum ValueType {
 
 impl ValueType {
     pub fn as_bool(&self) -> Result<bool, ObjectError> {
-        if let ValueType::Bool(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::Bool(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as bool".to_owned()) }) }
     }
     pub fn as_i8(&self) -> Result<i8, ObjectError> {
-        if let ValueType::Int8(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::Int8(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as i8".to_owned()) }) }
     }
     pub fn as_u8(&self) -> Result<u8, ObjectError> {
-        if let ValueType::UInt8(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::UInt8(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as u8".to_owned()) }) }
     }
     pub fn as_i16(&self) -> Result<i16, ObjectError> {
-        if let ValueType::Int16(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::Int16(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as i16".to_owned()) }) }
     }
     pub fn as_u16(&self) -> Result<u16, ObjectError> {
-        if let ValueType::UInt16(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::UInt16(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as u16".to_owned()) }) }
     }
     pub fn as_i32(&self) -> Result<i32, ObjectError> {
-        if let ValueType::Int32(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::Int32(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as i32".to_owned()) }) }
     }
     pub fn as_u32(&self) -> Result<u32, ObjectError> {
-        if let ValueType::UInt32(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::UInt32(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as u32".to_owned()) }) }
     }
     pub fn as_f32(&self) -> Result<f32, ObjectError> {
-        if let ValueType::Float32(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::Float32(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as f32".to_owned()) }) }
     }
     pub fn as_i64(&self) -> Result<i64, ObjectError> {
-        if let ValueType::Int64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::Int64(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as i64".to_owned()) }) }
     }
     pub fn as_offset(&self) -> Result<usize, ObjectError> {  // exists due to migrations from u32 to u64
         Ok(if let Ok(i) = self.as_u64() { i as usize } else { self.as_u32()? as usize })
     }
     pub fn as_u64(&self) -> Result<u64, ObjectError> {
-        if let ValueType::UInt64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::UInt64(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as u64".to_owned()) }) }
     }
     pub fn as_f64(&self) -> Result<f64, ObjectError> {
-        if let ValueType::Float64(v) = self { Ok(*v) } else { Err(ObjectError {}) }
+        if let ValueType::Float64(v) = self { Ok(*v) } else { Err(ObjectError { msg: Some("cannot get as f64".to_owned()) }) }
     }
     pub fn as_string(&self) -> Result<String, ObjectError> {
-        if let ValueType::String(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+        if let ValueType::String(v) = self { Ok(v.clone()) } else { Err(ObjectError { msg: Some("cannot get as string".to_owned()) }) }
     }
     pub fn as_bytes(&self) -> Result<Bytes, ObjectError> {
-        if let ValueType::Data(v) = self { Ok(v.clone()) } else { Err(ObjectError {}) }
+        if let ValueType::Data(v) = self { Ok(v.clone()) } else { Err(ObjectError { msg: Some("cannot get as bytes".to_owned()) }) }
     }
     pub fn as_array(&self) -> Result<&Vec<ValueType>, ObjectError> {
-        if let ValueType::Array(v) = self { Ok(v) } else { Err(ObjectError {}) }
+        if let ValueType::Array(v) = self { Ok(v) } else { Err(ObjectError { msg: Some("cannot get as array".to_owned()) }) }
     }
     pub fn as_u8_array(&self) -> Result<&Vec<u8>, ObjectError> {
-        if let ValueType::UInt8Array(v) = self { Ok(v) } else { Err(ObjectError {}) }
+        if let ValueType::UInt8Array(v) = self { Ok(v) } else { Err(ObjectError { msg: Some("cannot get as u8 array".to_owned()) }) }
     }
     pub fn as_f32_array(&self) -> Result<&Vec<f32>, ObjectError> {
-        if let ValueType::Float32Array(v) = self { Ok(v) } else { Err(ObjectError {}) }
+        if let ValueType::Float32Array(v) = self { Ok(v) } else { Err(ObjectError { msg: Some("cannot get as f32 array".to_owned()) }) }
     }
     pub fn as_object(&self) -> Result<&HashMap<String, ValueType>, ObjectError> {
-        if let ValueType::Object(v) = self { Ok(v) } else { Err(ObjectError {}) }
+        if let ValueType::Object(v) = self { Ok(v) } else { Err(ObjectError { msg: Some("cannot get as object".to_owned()) }) }
     }
     pub fn get(&self, key: &str) -> Result<&ValueType, ObjectError> {
-        Ok(self.as_object()?.get(key).ok_or(ObjectError {})?)
+        Ok(self.as_object()?.get(key).ok_or(ObjectError { msg: Some(format!("cannot get key \"{key}\"")) })?)
     }
 }
 
@@ -157,6 +164,32 @@ impl TypeNode {
             index: data.get_i32_ordered(little_endian),
             meta_flags: data.get_u32_ordered(little_endian),
             ref_hash: if version >= 19 { data.get_u64_ordered(little_endian) } else { 0u64 },
+            little_endian
+        }
+    }
+
+    pub fn from_stripped_bytes(data: &mut Bytes, little_endian: bool, strings: &Vec<String>) -> Self {
+        let flags = data.get_u8();
+        let level = flags & 0x3f;
+        let mut type_flags = 0;
+        let mut meta_flags = 0;
+
+        if flags & 0x40 != 0 { type_flags |= 0x1; }
+        if flags & 0x80 != 0 { meta_flags |= 0x4000 }
+
+        let typename_idx = data.get_u16_le() as usize;
+        let name_idx = data.get_u16_le() as usize;
+
+        TypeNode {
+            version: 0,
+            level,
+            type_flags,
+            type_name: strings.get(typename_idx).unwrap().clone(),
+            name: strings.get(name_idx).unwrap().clone(),
+            size: -1,
+            index: -1,
+            meta_flags,
+            ref_hash: 0,
             little_endian
         }
     }
@@ -207,7 +240,7 @@ pub fn primitive_parsing_supported(typename: &str) -> bool {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypeInfo {
     pub class_id: i32,
     pub is_stripped: bool,
@@ -267,6 +300,25 @@ impl TypeInfo {
             old_type_hash,
             nodes,
             type_deps
+        }
+    }
+
+    pub fn from_stripped_bytes(data: &mut Bytes, little_endian: bool, strings: &Vec<String>) -> Self {
+        let class_id = data.get_i32_le();
+        let num_nodes = data.get_u32_le();
+        let mut nodes = Vec::new();
+        for _ in 0..num_nodes {
+            nodes.push(TypeNode::from_stripped_bytes(data, little_endian, strings));
+        }
+        
+        TypeInfo {
+            class_id,
+            is_stripped: false,
+            script_type_index: 0,
+            script_id: 0,
+            old_type_hash: 0,
+            nodes,
+            type_deps: vec![],
         }
     }
 }
@@ -331,7 +383,7 @@ impl TypeParser {
                 data.align(orig_length, 4);
             }
             return value;
-        } else if self.nodes[self.index + 1].level > node.level {  // a "child" of this node
+        } else if self.nodes.len() > self.index + 1 && self.nodes[self.index + 1].level > node.level {  // a "child" of this node
             let mut child = HashMap::new();
             while (self.index < self.nodes.len() - 1) && (self.nodes[self.index + 1].level > node.level) {
                 self.index += 1;

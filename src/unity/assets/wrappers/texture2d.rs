@@ -69,7 +69,7 @@ impl Texture2DWrapper {
             num_mips: value.get("m_MipCount")?.as_i32()?,
             num_images: value.get("m_ImageCount")?.as_i32()?,
             dimensions: value.get("m_TextureDimension").unwrap_or(&ValueType::Int32(2)).as_i32()?,
-            format: num::FromPrimitive::from_i32(value.get("m_TextureFormat")?.as_i32()?).ok_or(ObjectError {})?,
+            format: num::FromPrimitive::from_i32(value.get("m_TextureFormat")?.as_i32()?).ok_or(ObjectError { msg: Some("cannot convert to texture format".to_owned()) })?,
             data: {
                 let stream = value.get("m_StreamData")?;
                 let data = value.get("image data")?.as_bytes()?;
@@ -81,7 +81,7 @@ impl Texture2DWrapper {
                         let size = stream.get("size")?.as_offset()?;
                         b.get_blob(
                             stream.get("path")?.as_string()?
-                        ).unwrap().slice(offset..offset + size)
+                        ).ok_or_else(|| ObjectError { msg: Some("no blob available".to_owned()) })?.slice(offset..offset + size)
                     } else {
                         // FIXME error handling
                         panic!("texture contains streaming data but no bundle was provided");
@@ -92,7 +92,7 @@ impl Texture2DWrapper {
     }
 
     pub fn get_image(&self, index: i32) -> Vec<u8> {
-        console_log!("format={:?}", self.format);
+        info!("format={:?}", self.format);
         let mut data = if self.format == TextureFormat::DXT1Crunched || self.format == TextureFormat::DXT5Crunched
             || self.format == TextureFormat::ETCRGB4Crunched || self.format == TextureFormat::ETC2RGBA8Crunched {
             assert_eq!(index, 0, "cannot decode crunched texture with multiple mips");
@@ -102,6 +102,7 @@ impl Texture2DWrapper {
                 get_mipmap_offset_and_size(index, self.format.clone(), self.width, self.height).0 as usize..
             )
         };
+        info!("{}", data.len());
         decode(
             self.format.clone(),
             &mut data,

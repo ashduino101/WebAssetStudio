@@ -1,6 +1,13 @@
+use std::sync::{Arc, Mutex, MutexGuard};
 use bytes::{Buf, Bytes};
+use web_sys::{Document, Element};
+use crate::base::asset::{Asset, AssetMetadata, Export};
+use crate::base::asset::bundle::BundleFile;
+use crate::base::asset::provider::AssetProvider;
+use crate::base::asset::types::AssetType;
 use crate::fsb::codecs::vorbis::fix_vorbis_container;
 use crate::utils::buf::BufExt;
+use crate::utils::dom::create_data_url;
 use crate::utils::pcm::{encode_wav, WavFormat};
 
 #[derive(Debug, Copy, Clone)]
@@ -87,7 +94,7 @@ impl ChunkType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SubSound {
     pub is_stereo: bool,
     pub frequency: u32,
@@ -95,6 +102,19 @@ pub struct SubSound {
     pub data: Bytes,
     pub comment: Option<String>,
     pub format: SoundFormat,
+}
+
+impl Asset for SubSound {
+    fn make_html(&mut self, doc: &Document) -> Element {
+        let e = doc.create_element("audio").unwrap();
+        e.set_attribute("controls", "").unwrap();
+        e.set_attribute("src", &create_data_url(&self.data[..], "audio/vnd.wave")).unwrap();
+        e
+    }
+
+    fn export(&mut self) -> Export {
+        todo!()
+    }
 }
 
 #[derive(Debug)]
@@ -232,3 +252,26 @@ impl SoundBank {
         }
     }
 }
+
+impl AssetProvider for SoundBank {
+    fn list_assets(&self) -> Vec<AssetMetadata> {
+        let mut i = 0;
+        let mut assets = Vec::new();
+        for s in &self.subsounds {
+            assets.push(AssetMetadata {
+                name: s.comment.clone().or_else(|| Some(format!("Sound {i}"))).unwrap(),
+                asset_type: AssetType::AudioClip,
+                id: i.to_string()
+            });
+            i += 1;
+        }
+        assets
+    }
+
+    fn get_asset(&self, id: String, _parent: Option<&mut MutexGuard<Box<dyn BundleFile + Send>>>) -> Option<Arc<Mutex<Box<dyn Asset>>>> {
+        id.parse::<usize>().ok().map(|i| self.subsounds.get(i).map(|s| Arc::new(Mutex::new(Box::new(s.clone()) as Box<dyn Asset>)))).flatten()
+    }
+}
+
+unsafe impl Send for SoundBank {}
+unsafe impl Sync for SoundBank {}

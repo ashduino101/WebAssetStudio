@@ -78,7 +78,7 @@ impl MeshWrapper {
             streams: Self::get_streams(value, major_version < 2017)?,
             vertex_data: value.get("m_VertexData")?.get("m_DataSize")?.as_bytes()?,
             vertex_count: value.get("m_VertexData")?.get("m_VertexCount")?.as_u32()?,
-            index_format: value.get("m_IndexFormat")?.as_i32()?,
+            index_format: value.get("m_IndexFormat").map(|v| v.as_i32().ok()).ok().flatten().unwrap_or(1),
             index_buffer: value.get("m_IndexBuffer")?.get("Array")?.as_u8_array()?.clone(),
             mesh: None,
             major_version,

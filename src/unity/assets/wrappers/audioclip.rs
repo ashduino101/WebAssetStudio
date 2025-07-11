@@ -61,7 +61,8 @@ impl AudioClipWrapper {
         let size = resource.get("m_Size")?.as_offset()?;
         let mut res = bundle.unwrap().get_blob(
             resource.get("m_Source")?.as_string()?
-        ).unwrap().slice(offset..offset + size);
+        ).ok_or_else(|| ObjectError { msg: Some("no blob available".to_owned()) })?
+            .slice(offset..offset + size);
         Ok(AudioClipWrapper {
             bank: SoundBank::new(&mut res)
         })

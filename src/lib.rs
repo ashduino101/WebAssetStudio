@@ -18,8 +18,9 @@ pub mod errors;
 pub mod crunch;
 // mod crunch;
 
+use std::collections::HashMap;
 use std::convert::TryFrom;
-use std::io::{Read, Write};
+use std::io::{Cursor, Read, Write};
 use std::panic;
 
 use crate::base::asset::Asset;
@@ -28,8 +29,9 @@ use async_recursion::async_recursion;
 use futures::future::FutureExt;
 use std::panic::PanicInfo;
 use std::sync::{Arc, Mutex};
-use bytes::Bytes;
+use bytes::{Bytes, Buf};
 use flate2::read::GzDecoder;
+use lzma_rs::xz_decompress;
 use three_d::{vec3, AmbientLight, Camera, ClearState, CpuModel, FrameOutput, Geometry, Model, OrbitControl, PhysicalMaterial, Skybox, Window, WindowSettings};
 use three_d_asset::{degrees, GeometryFunction, LightingModel, NormalDistributionFunction, Srgba, Viewport};
 // use three_d::*;
@@ -39,10 +41,13 @@ use web_sys::{Event, File, HtmlInputElement};
 use crate::base::asset::bundle::{BundleFile, GenericBundleFile};
 use crate::base::format::AssetFormat;
 use crate::base::format::detector::detect_asset_format;
+use crate::fsb::bank::SoundBank;
 // use mojoshader::*;
 
 use crate::logger::{info, splash};
 use crate::studio::widgets::asset_browser::AssetBrowser;
+use crate::unity::assets::file::AssetFile;
+use crate::unity::assets::typetree::TypeInfo;
 use crate::unity::bundle::file::UnityBundleFile;
 use crate::unity::version::UnityVersion;
 use crate::utils::debug::load_audio;
@@ -51,6 +56,7 @@ use crate::utils::js::events::add_event_listener;
 use crate::utils::js::file_reader::read_file;
 use crate::utils::js::filesystem::{DirectoryEntry, DirectoryHandle, FileHandle};
 use crate::utils::time::now;
+use crate::xna::shader::get_mojoshader;
 use crate::xna::xnb::XNBFile;
 
 // async fn dectest() {
@@ -156,8 +162,14 @@ async fn handle_file(name: String, file: File) {
         AssetFormat::UnityBundle => {
             Box::new(UnityBundleFile::new(dat))
         },
+        AssetFormat::UnityAsset => {
+            Box::new(GenericBundleFile::wrap(Box::new(AssetFile::new(&mut dat))))
+        },
         AssetFormat::XNB => {
             Box::new(GenericBundleFile::wrap(XNBFile::new(&mut dat)))
+        },
+        AssetFormat::FSB5 => {
+            Box::new(GenericBundleFile::wrap(Box::new(SoundBank::new(&mut dat))))
         },
         _ => {
             info!("unsupported format {format:?}");
@@ -257,6 +269,7 @@ async fn main() {
     pretty_env_logger::init();
 
     CrunchLib::load().await;
+    get_mojoshader();
 
     let win = web_sys::window().unwrap();
     // spawn_local(async move {

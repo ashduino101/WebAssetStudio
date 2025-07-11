@@ -1,12 +1,17 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Debug;
+use std::io::Cursor;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex, MutexGuard};
-use bytes::{Bytes, Buf};
-use crate::base::asset::{Asset, AssetMetadata};
+use bytes::{Bytes, Buf, BytesMut, BufMut};
+use lzma_rs::xz_decompress;
+use zerocopy::IntoBytes;
+use crate::base::asset::{Asset, AssetMetadata, UnsupportedAsset};
 use crate::base::asset::bundle::BundleFile;
 use crate::base::asset::provider::AssetProvider;
 use crate::base::asset::types::AssetType;
+use crate::logger::{info, warning};
 use crate::UnityVersion;
 
 use crate::unity::assets::external::External;
@@ -18,6 +23,7 @@ use crate::unity::object::identifier::LocalObjectIdentifier;
 use crate::unity::object::info::ObjectInfo;
 
 use crate::utils::buf::{BufExt, FromBytes};
+use crate::utils::time::now;
 
 pub struct AssetFile {
     pub metadata_size: usize,
@@ -70,11 +76,13 @@ impl AssetFile {
             metadata_size = data.get_u32() as usize;
             file_size = data.get_u64() as usize;
             data_offset = data.get_u64() as usize;
+            data.get_u64();  // unknown
         }
 
         let object_data = data.slice(data_offset - (if version >= 22 { 40 } else if version >= 9 { 20 } else { 16 })..);
 
-        let unity_version = UnityVersion::parse(&if version >= 7 { data.get_cstring() } else { "2.5.0f5".to_owned() }).unwrap();
+        let raw_version = if version >= 7 { data.get_cstring() } else { "2.5.0f5".to_owned() };
+        let unity_version = UnityVersion::parse(&raw_version).unwrap();
 
         let platform = if version >= 8 { data.get_u32_ordered(little_endian) } else { 0 };
         let enable_type_trees = if version >= 13 { data.get_u8() != 0 } else { false };
@@ -83,6 +91,51 @@ impl AssetFile {
         let mut types = Vec::new();
         for _ in 0..num_types {
             types.push(TypeInfo::from_bytes(data, version, little_endian, enable_type_trees));
+        }
+        if !enable_type_trees {
+            let old_types = types.clone();
+            types.clear();
+
+            // TODO: how do we know if it's editor or release?
+            let mut trees_buf = include_bytes!("./release.xz");
+            let mut trees_xz = Cursor::new(&mut trees_buf);
+            let start = now();
+            info!("Decompressing trees...");
+            let mut trees = Vec::new();
+            xz_decompress(&mut trees_xz, &mut trees).unwrap();
+            info!("Finished in {}ms", now() - start);
+            info!("{}", trees.len());
+            let mut trees = Bytes::from(trees);
+            let header_size = trees.get_u32_le() as usize;
+            let string_data_size = trees.get_u32_le() as usize;
+            let mut string_data = trees.slice(0..string_data_size);
+            let mut strings = Vec::new();
+            while string_data.has_remaining() {
+                strings.push(string_data.get_cstring());
+            }
+            trees.advance(string_data_size);
+            let num_versions = trees.get_u32_le();
+            let mut offsets = HashMap::new();
+            for _ in 0..num_versions {
+                let version_len = trees.get_u16_le();
+                let version = trees.get_chars(version_len as usize);
+                let offset = trees.get_u32_le();
+                offsets.insert(version, offset);
+            }
+            let offset = *offsets.get(&raw_version).unwrap() as usize;
+
+            let mut data = trees.slice(offset..);
+            let version = data.get_cstring();
+            let num_types = data.get_u32_le();
+            let mut new_types = Vec::new();
+            for _ in 0..num_types {
+                new_types.push(TypeInfo::from_stripped_bytes(&mut data, little_endian, &strings));
+            }
+            // maintain order
+            for t in old_types {
+                let new_type = new_types.iter().filter(|n| n.class_id == t.class_id).nth(0).unwrap();
+                types.push(new_type.clone());
+            }
         }
 
         let has_long_ids = if version >= 7 && version < 14 {
@@ -128,8 +181,17 @@ impl AssetFile {
 
     fn get_asset_from_info(&self, object: &ObjectInfo) -> ValueType {
         let typ = &self.types[object.type_id as usize];
-        let data = &mut self.object_data.slice(object.offset..object.offset + object.size);
-        TypeParser::parse_object_from_info(typ, data)
+        let mut data = &mut self.object_data.slice(object.offset..(object.offset + object.size).min(self.object_data.len()));
+        if data.len() < object.size {
+            warning!("object size exceeds buffer size: {} > {}", object.size, data.len());
+            let mut data = BytesMut::from(data.as_bytes());
+            while data.len() < object.size {
+                data.put_u8(0);
+            }
+            TypeParser::parse_object_from_info(typ, &mut Bytes::from(data))
+        } else {
+            TypeParser::parse_object_from_info(typ, data)
+        }
     }
 }
 
@@ -152,15 +214,18 @@ impl AssetProvider for AssetFile {
         let typ = &self.types[object.type_id as usize];
         let parsed = self.get_asset_from_info(object);
         if typ.class_id == 28 {
-            return Some(Arc::new(Mutex::new(Box::new(Texture2DWrapper::from_value(&parsed, parent).expect("failed to wrap object")) as Box<dyn Asset>)));
+            return Some(Arc::new(Mutex::new(Box::new(Texture2DWrapper::from_value(&parsed, parent).ok()?) as Box<dyn Asset>)));
         }
         if typ.class_id == 83 {
-            return Some(Arc::new(Mutex::new(Box::new(AudioClipWrapper::from_value(&parsed, parent).unwrap()) as Box<dyn Asset>)));
+            return Some(Arc::new(Mutex::new(Box::new(AudioClipWrapper::from_value(&parsed, parent).ok()?) as Box<dyn Asset>)));
         }
         if typ.class_id == 43 {
-            return Some(Arc::new(Mutex::new(Box::new(MeshWrapper::from_value(&parsed, self.unity_version.major, self.little_endian).unwrap()) as Box<dyn Asset>)));
+            return Some(Arc::new(Mutex::new(Box::new(MeshWrapper::from_value(&parsed, self.unity_version.major, self.little_endian).ok()?) as Box<dyn Asset>)));
         }
-        None
+        if typ.class_id == 74 {
+            info!("{:#?}", parsed);
+        }
+        Some(Arc::new(Mutex::new(Box::new(UnsupportedAsset {}))))
     }
 }
 
