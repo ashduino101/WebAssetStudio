@@ -50,7 +50,7 @@ pub(crate) fn detect_asset_format(buf: &mut Bytes) -> anyhow::Result<AssetFormat
         return Ok(AssetFormat::GodotCompressedTexture);
     }
     if check_magic_basic(buf, b"GDSC") {
-        return Ok(AssetFormat::GodotScene);
+        return Ok(AssetFormat::GodotScriptBytecode);
     }
 
     // FSB
