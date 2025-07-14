@@ -1,7 +1,16 @@
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex, MutexGuard};
 use anyhow::anyhow;
 use bytes::{Buf, Bytes};
+use crate::base::asset::{Asset, AssetMetadata, UnsupportedAsset};
+use crate::base::asset::bundle::BundleFile;
+use crate::base::asset::provider::AssetProvider;
+use crate::base::asset::types::AssetType;
 use crate::godot::variant::{get_string, Variant};
+use crate::godot::wrappers::audio::audio_stream_mp3::Mp3StreamWrapper;
+use crate::godot::wrappers::audio::audio_stream_ogg::OggStreamWrapper;
+use crate::godot::wrappers::audio::audio_stream_wav::WavStreamWrapper;
+use crate::logger::{info, warning};
 
 #[derive(Debug, Clone)]
 pub(crate) struct ExternalResourceReference {
@@ -18,8 +27,8 @@ pub(crate) struct InternalResourceReference {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Resource {
-    r#type: String,
-    properties: HashMap<String, Variant>
+    pub(crate) r#type: String,
+    pub(crate) properties: HashMap<String, Variant>
 }
 
 #[derive(Debug, Clone)]
@@ -78,8 +87,14 @@ impl ResourceFile {
         let resource_type = data.get_string_ordered(little_endian);
         let mut properties = HashMap::new();
         for _ in 0..data.get_i32_ordered(little_endian) {
-            properties.insert(get_string(data, &string_table).unwrap(), Variant::from_bytes(data, format_version, &string_table)?);
+            let key = get_string(data, &string_table).unwrap();
+            let val = Variant::from_bytes(data, format_version, &string_table)?;
+            properties.insert(key, val);
         }
+        // TODO: this will fail if there is more than one resource
+        // if data.get_chars(4) != "RSRC" {
+        //     return Err(anyhow!("resource file was not read properly"));
+        // }
         Ok(ResourceFile {
             use_real_64,
             major,
@@ -97,5 +112,30 @@ impl ResourceFile {
                 properties,
             },
         })
+    }
+}
+
+impl AssetProvider for ResourceFile {
+    fn list_assets(&self) -> Vec<AssetMetadata> {
+        // TODO: technically, there can be more than one resource per file
+        //  Right now we just read the first one
+        vec![AssetMetadata {
+            name: "resource".to_string(),
+            asset_type: AssetType::Misc,
+            id: "owo whats this".to_string(),
+        }]
+    }
+
+    fn get_asset(&self, id: String, parent: Option<&mut MutexGuard<Box<dyn BundleFile + Send>>>) -> Option<Arc<Mutex<Box<dyn Asset>>>> {
+        Some(Arc::new(Mutex::new(match self.type_name.as_str() {
+            "AudioStreamOGGVorbis" => Box::new(OggStreamWrapper::wrap(&self.resource).unwrap()) as Box<dyn Asset>,
+            "AudioStreamSample" => Box::new(WavStreamWrapper::wrap(&self.resource).unwrap()) as Box<dyn Asset>,
+            "AudioStreamMP3" => Box::new(Mp3StreamWrapper::wrap(&self.resource).unwrap()) as Box<dyn Asset>,
+            other => {
+                warning!("unknown type {other}");
+                info!("{:#?}", self);
+                Box::new(UnsupportedAsset {}) as Box<dyn Asset>
+            }
+        })))
     }
 }

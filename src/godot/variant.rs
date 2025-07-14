@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use anyhow::anyhow;
 use bytes::{Buf, Bytes};
 use crate::base::types::{Color128, IVector2, IVector3, IVector4, Matrix4x4, Plane, Quaternion, Rect2D, Vector2, Vector3, Vector4, AABB};
+use crate::logger::info;
 use crate::utils::buf::FromBytes;
 
 #[derive(Debug, Clone)]
@@ -252,7 +253,7 @@ impl Variant {
                 let len = data.get_u32_le() as usize;
                 let val = data.slice(0..len);
                 let extra = 4 - (len % 4);
-                let pad = if extra > 4 { extra } else { 0 };
+                let pad = if extra < 4 { extra } else { 0 };
                 data.advance(len + pad);
                 Variant::PackedByteArray(val)
             },
@@ -325,5 +326,37 @@ impl Variant {
                 Err(anyhow!("unknown variant type id {id}"))?
             }
         })
+    }
+
+    pub(crate) fn get(&self, prop: &str) -> Option<&Variant> {
+        if let Variant::Dictionary(h) = self {
+            h.get(prop)
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn as_int32(&self) -> Option<i32> {
+        if let Variant::Int(i) = self { Some(*i) } else { None }
+    }
+
+    pub(crate) fn as_float(&self) -> Option<f32> {
+        if let Variant::Float(i) = self { Some(*i) } else { None }
+    }
+
+    pub(crate) fn as_double(&self) -> Option<f64> {
+        if let Variant::Double(i) = self { Some(*i) } else { None }
+    }
+
+    pub(crate) fn as_int64(&self) -> Option<i64> {
+        if let Variant::Int64(i) = self { Some(*i) } else { None }
+    }
+
+    pub(crate) fn as_bool(&self) -> Option<bool> {
+        if let Variant::Bool(i) = self { Some(*i) } else { None }
+    }
+
+    pub(crate) fn as_byte_array(&self) -> Option<Bytes> {
+        if let Variant::PackedByteArray(i) = self { Some(i.clone()) } else { None }
     }
 }

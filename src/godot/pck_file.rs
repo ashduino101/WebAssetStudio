@@ -3,7 +3,7 @@ use anyhow::anyhow;
 use bytes::{Buf, Bytes};
 use crate::base::asset::{Asset, AssetMetadata};
 use crate::base::asset::bundle::BundleFile;
-use crate::base::asset::provider::AssetProvider;
+use crate::base::asset::provider::{AssetProvider, ProviderMetadata};
 use crate::base::asset::types::AssetType;
 
 #[derive(Debug, Clone)]
@@ -87,16 +87,23 @@ impl PckFile {
     }
 }
 
-impl AssetProvider for PckFile {
-    fn list_assets(&self) -> Vec<AssetMetadata> {
-        self.files.iter().map(|f| AssetMetadata {
+impl BundleFile for PckFile {
+    fn list_providers(&self) -> Vec<ProviderMetadata> {
+        self.files.iter().map(|f| ProviderMetadata {
             name: f.path.clone(),
-            asset_type: AssetType::Misc,  // TODO
             id: f.path.clone(),
         }).collect()
     }
 
-    fn get_asset(&self, id: String, parent: Option<&mut MutexGuard<Box<dyn BundleFile + Send>>>) -> Option<Arc<Mutex<Box<dyn Asset>>>> {
+    fn list_blobs(&self) -> Vec<ProviderMetadata> {
+        todo!()
+    }
+
+    fn get_provider(&mut self, id: String) -> Option<Arc<Box<dyn AssetProvider>>> {
+        todo!()
+    }
+
+    fn get_blob(&mut self, id: String) -> Option<Bytes> {
         todo!()
     }
 }

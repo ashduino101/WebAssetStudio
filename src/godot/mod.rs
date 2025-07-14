@@ -2,3 +2,5 @@ pub(crate) mod pck_file;
 pub(crate) mod variant;
 pub(crate) mod resource;
 pub(crate) mod compression;
+pub(crate) mod wrappers;
+pub(crate) mod texture;

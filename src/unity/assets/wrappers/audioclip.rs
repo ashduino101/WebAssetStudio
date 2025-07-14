@@ -1,10 +1,11 @@
 use std::fmt::{Debug};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::MutexGuard;
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
 use crate::base::asset::bundle::BundleFile;
-use crate::UnityBundleFile;
 use crate::fsb::bank::{SoundBank, SoundFormat};
+use crate::studio::components::asset_views::audio::AudioView;
+use crate::studio::components::base::WidgetComponent;
 use crate::unity::assets::typetree::{ObjectError, ValueType};
 use crate::unity::assets::wrappers::base::ClassWrapper;
 use crate::utils::dom::create_data_url;
@@ -15,9 +16,8 @@ pub struct AudioClipWrapper {
 }
 
 impl Asset for AudioClipWrapper {
-    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+    fn make_html(&mut self, _: &Document, parent: &Element) -> anyhow::Result<()> {
         for s in &self.bank.subsounds {
-            let elem = doc.create_element("audio").unwrap();
             let url = create_data_url(&s.data[..], match s.format {
                 SoundFormat::Pcm8 => "audio/wav",
                 SoundFormat::Pcm16 => "audio/wav",
@@ -30,9 +30,7 @@ impl Asset for AudioClipWrapper {
                 SoundFormat::Opus => "audio/ogg",
                 _ => "application/octet-stream"
             });
-            elem.set_attribute("src", &url).unwrap();
-            elem.set_attribute("controls", "true").unwrap();
-            parent.append_child(&elem).unwrap();
+            AudioView::from_url(&url).render(parent);
         }
         Ok(())
     }

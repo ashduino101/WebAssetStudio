@@ -91,6 +91,14 @@ pub enum TextureFormat {
     BGRA5551,
     BGRA4444,
     RGBA1010102,
+    BPTCRGBF,
+    BPTCRGBFU,
+    ETC2R11,
+    ETC2R11S,
+    ETC2RG11,
+    ETC2RG11S,
+    ETC2RAASRG,
+    DXT5RAASRG,
 }
 
 pub fn swap_bytes_xbox(data: &mut [u8]) {

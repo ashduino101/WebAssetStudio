@@ -46,6 +46,7 @@ use crate::base::format::detector::detect_asset_format;
 use crate::fsb::bank::SoundBank;
 use crate::godot::pck_file::PckFile;
 use crate::godot::resource::ResourceFile;
+use crate::godot::texture::stream::StreamTexture;
 // use mojoshader::*;
 
 use crate::logger::{info, splash};
@@ -180,13 +181,14 @@ async fn handle_file(name: String, file: File) {
             Box::new(GenericBundleFile::wrap_asset(Box::new(get_mojoshader().parse(&dat[..], "hlsl").unwrap()) as Box<dyn Asset>))
         },
         AssetFormat::GodotPck => {
-            Box::new(GenericBundleFile::wrap(Box::new(PckFile::new(&mut dat).unwrap())))
+            Box::new(PckFile::new(&mut dat).unwrap())
         },
         AssetFormat::GodotResource => {
-            let rsrc = ResourceFile::from_bytes(&mut dat).unwrap();
-            info!("{:#?}", rsrc);
-            return;
+            Box::new(GenericBundleFile::wrap(Box::new(ResourceFile::from_bytes(&mut dat).unwrap())))
         },
+        AssetFormat::GodotStreamTexture => {
+            Box::new(GenericBundleFile::wrap_asset(Box::new(StreamTexture::from_bytes(&mut dat).unwrap())))
+        }
         _ => {
             info!("unsupported format {format:?}");
             return;
