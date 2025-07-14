@@ -1,3 +1,6 @@
+//! TODO: This module is supposed to be a port of MojoShader, but at the moment, it doesn't
+//!  work and is definitely unfinished. Right now, we use a separate C++ module bound
+//!  dynamically, but should we try to get this running?
 use bytes::{Buf, Bytes};
 use crate::directx::types::{SymbolClass, SymbolType};
 

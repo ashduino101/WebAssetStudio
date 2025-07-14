@@ -45,7 +45,7 @@ pub struct MeshWrapper {
 }
 
 impl Asset for MeshWrapper {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         let (mesh, container) = {
             let mesh = self.load_mesh(self.major_version, self.little_endian);
             let container = doc.create_element("div").unwrap();
@@ -56,7 +56,8 @@ impl Asset for MeshWrapper {
         spawn_local(async move {
             render_mesh(m, &container).await;
         });
-        ret
+        parent.append_child(&ret).unwrap();
+        Ok(())
     }
 
     fn export(&mut self) -> Export {

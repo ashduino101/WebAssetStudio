@@ -16,6 +16,7 @@ pub mod studio;
 pub mod directx;
 pub mod errors;
 pub mod crunch;
+pub mod godot;
 // mod crunch;
 
 use std::collections::HashMap;
@@ -39,12 +40,16 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::console_log;
 use web_sys::{Event, File, HtmlInputElement};
 use crate::base::asset::bundle::{BundleFile, GenericBundleFile};
+use crate::base::asset::provider::{AssetProvider, GenericAssetProvider};
 use crate::base::format::AssetFormat;
 use crate::base::format::detector::detect_asset_format;
 use crate::fsb::bank::SoundBank;
+use crate::godot::pck_file::PckFile;
+use crate::godot::resource::ResourceFile;
 // use mojoshader::*;
 
 use crate::logger::{info, splash};
+use crate::studio::components::text_editor::get_ace;
 use crate::studio::widgets::asset_browser::AssetBrowser;
 use crate::unity::assets::file::AssetFile;
 use crate::unity::assets::typetree::TypeInfo;
@@ -171,6 +176,17 @@ async fn handle_file(name: String, file: File) {
         AssetFormat::FSB5 => {
             Box::new(GenericBundleFile::wrap(Box::new(SoundBank::new(&mut dat))))
         },
+        AssetFormat::DirectXShader  => {
+            Box::new(GenericBundleFile::wrap_asset(Box::new(get_mojoshader().parse(&dat[..], "hlsl").unwrap()) as Box<dyn Asset>))
+        },
+        AssetFormat::GodotPck => {
+            Box::new(GenericBundleFile::wrap(Box::new(PckFile::new(&mut dat).unwrap())))
+        },
+        AssetFormat::GodotResource => {
+            let rsrc = ResourceFile::from_bytes(&mut dat).unwrap();
+            info!("{:#?}", rsrc);
+            return;
+        },
         _ => {
             info!("unsupported format {format:?}");
             return;
@@ -268,8 +284,10 @@ async fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     pretty_env_logger::init();
 
+    // preload modules
     CrunchLib::load().await;
     get_mojoshader();
+    get_ace();
 
     let win = web_sys::window().unwrap();
     // spawn_local(async move {

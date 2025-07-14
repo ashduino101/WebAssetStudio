@@ -2,7 +2,7 @@ pub mod provider;
 pub mod types;
 pub mod bundle;
 
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use bytes::{Buf, Bytes};
 use wasm_bindgen_test::console_log;
 use web_sys;
@@ -24,9 +24,26 @@ pub struct Export {
 }
 
 pub trait Asset : Debug {
-    fn make_html(&mut self, doc: &Document) -> Element;
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()>;
 
     fn export(&mut self) -> Export;
+}
+
+/// Used as a trait bound for a simple asset implementation
+pub trait SimpleDisplayableAsset : Debug + Display {}
+
+impl<T> Asset for T where T: SimpleDisplayableAsset {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*format!("{}", self)));
+        Ok(())
+    }
+
+    fn export(&mut self) -> Export {
+        Export {
+            extension: "txt".to_string(),
+            data: format!("{}", self).into_bytes()
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -35,11 +52,12 @@ pub struct UnsupportedAsset {
 }
 
 impl Asset for UnsupportedAsset {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         let elem = doc.create_element("div").unwrap();
         elem.set_text_content(Some("No preview available"));
         elem.class_list().add_1("unsupported-asset").unwrap();
-        elem
+        parent.append_child(&elem).unwrap();
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -50,10 +68,9 @@ impl Asset for UnsupportedAsset {
 macro_rules! impl_primitive {
     ($t: ty, $($dfunc: tt)+) => {
         impl Asset for $t {
-            fn make_html(&mut self, doc: &Document) -> Element {
-                let elem = doc.create_element("p").expect("failed to create element");
-                elem.set_text_content(Some(&*self.to_string()));
-                elem
+            fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+                parent.set_text_content(Some(&*self.to_string()));
+                Ok(())
             }
 
             fn export(&mut self) -> Export {
@@ -83,10 +100,9 @@ impl_primitive!(f64, get_f64_le);
 
 // Chars are annoying
 impl Asset for char {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some(&*self.to_string()));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*self.to_string()));
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -116,10 +132,9 @@ impl FromBytes for char {
 pub struct Void {}
 
 impl Asset for Void {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some("<none>"));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some("<none>"));
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -128,10 +143,9 @@ impl Asset for Void {
 }
 
 impl Asset for String {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some(&*format!("{}", self)));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*format!("{}", self)));
+        Ok(())
     }
 
     fn export(&mut self) -> Export {

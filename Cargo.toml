@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-bytes = { git = "https://github.com/ashduino101/bytes" }
+bytes = { path = "thirdparty/bytes" }
 wasm-bindgen = "0.2.95"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
@@ -59,6 +59,7 @@ async-recursion = "1.1.1"
 futures = "0.3.31"
 bitvec = "1.0.1"
 itertools = "0.12.1"
+serde_path_to_error = "0.1"
 #bincode = { version = "2.0.0-rc.3", features = ["serde", "derive"] }
 #serde_repr = "0.1.19"
 #bitvec = {  version = "1.0.1", features = ["serde"] }

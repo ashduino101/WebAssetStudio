@@ -155,7 +155,7 @@ impl AssetBrowser {
                 viewport.append_child(&elem).unwrap();
             }
             Some(a) => {
-                viewport.append_child(&a.lock().unwrap().make_html(&document)).unwrap();
+                a.lock().unwrap().make_html(&document, &viewport).unwrap();
             }
         }
     }

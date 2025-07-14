@@ -105,11 +105,12 @@ pub struct SubSound {
 }
 
 impl Asset for SubSound {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         let e = doc.create_element("audio").unwrap();
         e.set_attribute("controls", "").unwrap();
         e.set_attribute("src", &create_data_url(&self.data[..], "audio/vnd.wave")).unwrap();
-        e
+        parent.append_child(&e).unwrap();
+        Ok(())
     }
 
     fn export(&mut self) -> Export {

@@ -125,11 +125,11 @@ impl XNBFile {
             "Microsoft.Xna.Framework.Content.DateTimeReader" => Box::from(DateTime::from_bytes(data, readers)),
             "Microsoft.Xna.Framework.Content.DecimalReader" => Box::from(Decimal::from_bytes(data, readers)),
             "Microsoft.Xna.Framework.Content.ExternalReferenceReader" => Box::from(ExternalReference::from_bytes(data, readers)),
-            "Microsoft.Xna.Framework.Content.Vector2Reader" => Box::from(Vector2::from_bytes(data, readers)),
-            "Microsoft.Xna.Framework.Content.Vector3Reader" => Box::from(Vector3::from_bytes(data, readers)),
-            "Microsoft.Xna.Framework.Content.Vector4Reader" => Box::from(Vector4::from_bytes(data, readers)),
-            "Microsoft.Xna.Framework.Content.MatrixReader" => Box::from(Matrix4x4::from_bytes(data, readers)),
-            "Microsoft.Xna.Framework.Content.QuaternionReader" => Box::from(Quaternion::from_bytes(data, readers)),
+            "Microsoft.Xna.Framework.Content.Vector2Reader" => Box::from(<Vector2 as XNBType>::from_bytes(data, readers)),
+            "Microsoft.Xna.Framework.Content.Vector3Reader" => Box::from(<Vector3 as XNBType>::from_bytes(data, readers)),
+            "Microsoft.Xna.Framework.Content.Vector4Reader" => Box::from(<Vector4 as XNBType>::from_bytes(data, readers)),
+            "Microsoft.Xna.Framework.Content.MatrixReader" => Box::from(<Matrix4x4 as XNBType>::from_bytes(data, readers)),
+            "Microsoft.Xna.Framework.Content.QuaternionReader" => Box::from(<Quaternion as XNBType>::from_bytes(data, readers)),
             "Microsoft.Xna.Framework.Content.RectangleReader" => Box::from(Rectangle::from_bytes(data, readers)),
 
             "Microsoft.Xna.Framework.Content.Texture2DReader" => Box::from(Texture2D::from_bytes(data, readers)),
@@ -142,7 +142,7 @@ impl XNBFile {
                 if v.starts_with("Microsoft.Xna.Framework.Content.ListReader`1") {
                     match v {
                         "Microsoft.Xna.Framework.Content.ListReader`1[[System.Char" => {
-                            Box::new(Vec::<char>::from_bytes(data, readers))
+                            Box::new(<Vec<char> as XNBType>::from_bytes(data, readers))
                         }
                         _ => {
                             let len = data.get_u32_le();

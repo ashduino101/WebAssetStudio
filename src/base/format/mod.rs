@@ -16,6 +16,7 @@ pub enum AssetFormat {
     XNB,
     PE,
     ELF,
+    DirectXShader,
 
     GZipCompressed
 }
@@ -37,6 +38,7 @@ impl AssetFormat {
             AssetFormat::XNB => 400,
             AssetFormat::PE => 500,
             AssetFormat::ELF => 501,
+            AssetFormat::DirectXShader => 600,
             AssetFormat::GZipCompressed => -1
         }
     }

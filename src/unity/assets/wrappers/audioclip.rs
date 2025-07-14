@@ -15,8 +15,7 @@ pub struct AudioClipWrapper {
 }
 
 impl Asset for AudioClipWrapper {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let cont = doc.create_element("div").unwrap();
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         for s in &self.bank.subsounds {
             let elem = doc.create_element("audio").unwrap();
             let url = create_data_url(&s.data[..], match s.format {
@@ -33,9 +32,9 @@ impl Asset for AudioClipWrapper {
             });
             elem.set_attribute("src", &url).unwrap();
             elem.set_attribute("controls", "true").unwrap();
-            cont.append_child(&elem).unwrap();
+            parent.append_child(&elem).unwrap();
         }
-        cont
+        Ok(())
     }
 
     fn export(&mut self) -> Export {

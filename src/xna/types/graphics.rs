@@ -6,13 +6,15 @@ use web_sys::{Document, Element, HtmlImageElement};
 use crate::logger::info;
 use crate::base::asset::{Asset, Export};
 use crate::{create_img, XNBFile};
+use crate::studio::components::text_editor::get_ace;
 use crate::utils::buf::{FromBytes};
 use crate::utils::tex::decoder::{decode, TextureFormat};
 use crate::utils::tex::pngenc::encode_png;
 use crate::utils::time::now;
-use crate::xna::shader::get_mojoshader;
+use crate::xna::shader::{get_mojoshader, EffectObject};
 use crate::xna::type_base::XNBType;
 use crate::xna::xnb::TypeReader;
+
 impl TextureFormat {
     fn from_bytes_xna(data: &mut Bytes) -> Self {
         match data.get_i32_le() {
@@ -69,7 +71,7 @@ pub struct Texture2D {
 }
 
 impl Asset for Texture2D {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         let elem = doc.create_element("img").unwrap();
         let elem = elem.unchecked_into::<HtmlImageElement>();
         let start = now();
@@ -84,7 +86,8 @@ impl Asset for Texture2D {
         style.set_property("transform", "translate(-50%, -50%)").unwrap();
         style.set_property("display", "block").unwrap();
         info!("converted to native image in {}ms", now() - start);
-        elem.into()
+        parent.append_child(&elem).unwrap();
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -125,16 +128,15 @@ pub struct Effect {
 }
 
 impl Asset for Effect {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("pre").unwrap();
-        elem.set_text_content(Some(serde_json::from_str::<Value>(&get_mojoshader().parse(&self.data[..], "hlsl")).unwrap().as_object().unwrap().get("objects").unwrap().as_array().unwrap().iter().filter(|v| v.get("type").unwrap().as_str().unwrap() == "pixelshader").collect::<Vec<_>>().get(0).unwrap().as_object().unwrap().get("value").unwrap().as_object().unwrap().get("shader").unwrap().as_object().unwrap().get("output").unwrap().as_str().unwrap()));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        let mut s = get_mojoshader().parse(&self.data[..], "hlsl").unwrap();
+        s.make_html(doc, parent)
     }
 
     fn export(&mut self) -> Export {
         Export {
             extension: "fx".to_string(),
-            data: vec![],
+            data: (&self.data[..]).into(),
         }
     }
 }
@@ -164,8 +166,8 @@ pub struct SpriteFont {
 }
 
 impl Asset for SpriteFont {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        self.texture.make_html(doc)
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        self.texture.make_html(doc, parent)
     }
 
     fn export(&mut self) -> Export {

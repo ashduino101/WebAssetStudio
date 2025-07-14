@@ -32,12 +32,13 @@ impl SoundEffect {
 }
 
 impl Asset for SoundEffect {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         let elem = doc.create_element("audio").unwrap();
         let wav = self.to_wav();
         elem.set_attribute("src", &create_data_url(&wav[..], "audio/wav")).unwrap();
         elem.set_attribute("controls", "true").unwrap();
-        elem
+        parent.append_child(&elem).unwrap();
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -76,10 +77,11 @@ pub struct Song {
 }
 
 impl Asset for Song {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         let elem = doc.create_element("audio").unwrap();
+        parent.append_child(&elem).unwrap();
         // TODO: the song is a separate file
-        elem
+        Ok(())
     }
 
     fn export(&mut self) -> Export {

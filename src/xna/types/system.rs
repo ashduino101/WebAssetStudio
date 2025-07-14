@@ -12,10 +12,9 @@ pub struct TimeSpan {
 }
 
 impl Asset for TimeSpan {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some(&*format!("{} ticks", self.ticks)));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*format!("{} ticks", self.ticks)));
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -38,10 +37,9 @@ pub struct DateTime {
 }
 
 impl Asset for DateTime {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some(&*format!("{}", self.value)));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*format!("{}", self.value)));
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -64,10 +62,9 @@ pub struct Decimal {
 }
 
 impl Asset for Decimal {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some(&*format!("RAW: {}", self.raw)));  // TODO display properly
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*format!("RAW: {}", self.raw)));  // TODO display properly
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -90,10 +87,9 @@ pub struct ExternalReference {
 }
 
 impl Asset for ExternalReference {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some(&*format!("Asset: {}", self.asset_name)));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*format!("Asset: {}", self.asset_name)));
+        Ok(())
     }
 
     fn export(&mut self) -> Export {
@@ -111,7 +107,7 @@ impl XNBType for ExternalReference {
 }
 
 impl Asset for Vec<Box<dyn XNBType>> {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         todo!()
     }
 
@@ -130,7 +126,7 @@ impl<T> Asset for Vec<T>
 where
     T: Asset + FromBytes + Debug + Sized,
 {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         todo!()
     }
 

@@ -426,7 +426,7 @@ body {
   overflow: hidden;
 }
 
-.dock-widget {
+.dock-widget:not(.ace_editor) {
   position: relative;
   background-color: var(--theme-widget-bg);
   border-radius: 3px;
@@ -525,4 +525,9 @@ body {
 .browser-node {
   margin-left: 10px;
   color: white;
+}
+
+.ace_editor {
+  width: 100%;
+  height: 100%;
 }

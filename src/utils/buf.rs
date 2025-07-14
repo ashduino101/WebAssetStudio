@@ -1,5 +1,7 @@
-use std::fmt::Write;
-use bytes::{BufMut, Bytes, BytesMut};
+use std::fmt::{Debug, Write};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
+use crate::base::asset::Asset;
+use crate::xna::xnb::TypeReader;
 
 pub trait BufExt {
     fn get_string(&mut self) -> String;
@@ -196,4 +198,25 @@ impl BufMutExt for BytesMut {
 
 pub trait FromBytes {
     fn from_bytes(data: &mut Bytes) -> Self;
+}
+
+
+impl FromBytes for String {
+    fn from_bytes(data: &mut Bytes) -> Self {
+        data.get_string()
+    }
+}
+
+impl<T> FromBytes for Vec<T> where T: FromBytes + Sized {
+    fn from_bytes(data: &mut Bytes) -> Self
+    where
+        Self: Sized
+    {
+        let cnt = data.get_u32_le();
+        let mut v = Vec::new();
+        for _ in 0..cnt {
+            v.push(T::from_bytes(data));
+        }
+        v
+    }
 }

@@ -2,6 +2,7 @@ use bytes::{Buf, Bytes};
 use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export, Void};
 use crate::base::types::{Color32, Matrix4x4, MatrixRow, Plane, Quaternion, Vector2, Vector3, Vector4};
+use crate::utils::buf::FromBytes;
 use crate::xna::type_base::XNBType;
 use crate::xna::xnb::TypeReader;
 
@@ -13,86 +14,75 @@ impl XNBType for Void {
 }
 
 impl XNBType for Vector2 {
-    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> Vector2 {
-        Vector2 {
-            x: data.get_f32_le(),
-            y: data.get_f32_le()
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
 impl XNBType for Vector3 {
-    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> Vector3 {
-        Vector3 {
-            x: data.get_f32_le(),
-            y: data.get_f32_le(),
-            z: data.get_f32_le()
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
 impl XNBType for Vector4 {
-    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> Vector4 {
-        Vector4 {
-            x: data.get_f32_le(),
-            y: data.get_f32_le(),
-            z: data.get_f32_le(),
-            w: data.get_f32_le()
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
 impl XNBType for MatrixRow {
-    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> MatrixRow {
-        MatrixRow {
-            val1: data.get_f32_le(),
-            val2: data.get_f32_le(),
-            val3: data.get_f32_le(),
-            val4: data.get_f32_le()
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
 // TODO: is this row-column or column-row?
 impl XNBType for Matrix4x4 {
-    fn from_bytes(data: &mut Bytes, r: &Vec<TypeReader>) -> Self where Self: Sized {
-        Matrix4x4 {
-            row1: MatrixRow::from_bytes(data, r),
-            row2: MatrixRow::from_bytes(data, r),
-            row3: MatrixRow::from_bytes(data, r),
-            row4: MatrixRow::from_bytes(data, r)
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
 impl XNBType for Quaternion {
-    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> Quaternion {
-        Quaternion {
-            x: data.get_f32_le(),
-            y: data.get_f32_le(),
-            z: data.get_f32_le(),
-            w: data.get_f32_le()
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
 impl XNBType for Color32 {
-    fn from_bytes(data: &mut Bytes, _: &Vec<TypeReader>) -> Color32 {
-        Color32 {
-            red: data.get_u8(),
-            green: data.get_u8(),
-            blue: data.get_u8(),
-            alpha: data.get_u8()
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
 impl XNBType for Plane {
-    fn from_bytes(data: &mut Bytes, r: &Vec<TypeReader>) -> Plane {
-        Plane {
-            normal: Vector3::from_bytes(data, r),
-            d: data.get_f32_le()
-        }
+    fn from_bytes(data: &mut Bytes, readers: &Vec<TypeReader>) -> Self
+    where
+        Self: Sized
+    {
+        <Self as FromBytes>::from_bytes(data)
     }
 }
 
@@ -105,10 +95,9 @@ pub struct Rectangle {
 }
 
 impl Asset for Rectangle {
-    fn make_html(&mut self, doc: &Document) -> Element {
-        let elem = doc.create_element("p").expect("failed to create element");
-        elem.set_text_content(Some(&*format!("Rectangle({}, {}, {}, {})", self.x, self.y, self.width, self.height)));
-        elem
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
+        parent.set_text_content(Some(&*format!("Rectangle({}, {}, {}, {})", self.x, self.y, self.width, self.height)));
+        Ok(())
     }
 
     fn export(&mut self) -> Export {

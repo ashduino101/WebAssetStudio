@@ -31,7 +31,7 @@ pub struct Texture2DWrapper {
 }
 
 impl Asset for Texture2DWrapper {
-    fn make_html(&mut self, doc: &Document) -> Element {
+    fn make_html(&mut self, doc: &Document, parent: &Element) -> anyhow::Result<()> {
         let elem = doc.create_element("img").unwrap();
         let elem = elem.unchecked_into::<HtmlImageElement>();
         let start = now();
@@ -46,7 +46,8 @@ impl Asset for Texture2DWrapper {
         style.set_property("transform", "translate(-50%, -50%)").unwrap();
         style.set_property("display", "block").unwrap();
         info!("converted to native image in {}ms", now() - start);
-        elem.into()
+        parent.append_child(&elem).unwrap();
+        Ok(())
     }
 
     fn export(&mut self) -> Export {

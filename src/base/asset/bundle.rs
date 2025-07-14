@@ -4,7 +4,8 @@ use std::sync::{Arc, Mutex};
 use bytes::Bytes;
 use wasm_bindgen::JsCast;
 use web_sys::{window, HtmlInputElement};
-use crate::base::asset::provider::{AssetProvider, ProviderMetadata};
+use crate::base::asset::Asset;
+use crate::base::asset::provider::{AssetProvider, GenericAssetProvider, ProviderMetadata};
 use crate::unity::assets::file::AssetFile;
 use crate::utils::js::events::{add_event_listener, add_event_listener_with_data};
 use crate::utils::js::file_reader::read_file;
@@ -24,18 +25,24 @@ pub struct GenericBundleFile {
 }
 
 impl GenericBundleFile {
+    /// Wrap a single asset provider.
     pub fn wrap(inner: Box<dyn AssetProvider>) -> Self {
         GenericBundleFile {
             _inner: Arc::new(inner),
             resources: Arc::new(Mutex::new(HashMap::new()))
         }
     }
+
+    /// Wrap a single asset using a generic asset provider.
+    pub fn wrap_asset(asset: Box<dyn Asset>) -> Self {
+        GenericBundleFile::wrap(Box::new(GenericAssetProvider::wrap(asset)) as Box<dyn AssetProvider>)
+    }
 }
 
 impl BundleFile for GenericBundleFile {
     fn list_providers(&self) -> Vec<ProviderMetadata> {
         vec![ProviderMetadata {
-            name: "<generic>".to_string(),
+            name: "Root".to_string(),
             id: ":3".to_string(),
         }]
     }
