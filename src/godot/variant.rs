@@ -2,15 +2,20 @@ use std::collections::HashMap;
 use anyhow::anyhow;
 use bytes::{Buf, Bytes};
 use crate::base::types::{Color128, IVector2, IVector3, IVector4, Matrix4x4, Plane, Quaternion, Rect2D, Vector2, Vector3, Vector4, AABB};
-use crate::logger::info;
 use crate::utils::buf::FromBytes;
+
+const MAP_V2_TO_STATIC: &[i32; 29] = &[1, 2, 3, 4, 5, 10, 11, 12, 18, 13, 14, 15, 16, 17, 20, -1, 22, 23, 24, 25, 26, 30, 31, 32, 33, 34, 37, 35, 36];
+const MAP_V3_TO_STATIC: &[i32; 27] = &[1, 2, 3, 4, 5, 10, 11, 12, 18, 13, 14, 15, 16, 17, 20, 22, 23, 24, 26, 30, 31, 32, 33, 34, 37, 35, 36];
+const MAP_V4_TO_STATIC: &[i32; 39] = &[1, 2, 3, 4, 5, 10, 45, 11, 46, 12, 47, 18, 50, 51, 13, 14, 15, 16, 17, 52, 20, 44, 22, 23, 24, 42, 43, 26, 30, 31, 32, 48, 33, 49, 34, 37, 35, 36, 53];
 
 #[derive(Debug, Clone)]
 pub(crate) enum Object {
     Empty,
     ExternalResource { r#type: String, path: String },
     InternalResource(i32),
-    ExternalResourceIndex(i32)
+    ExternalResourceIndex(i32),
+    ExternalResourceId(u64),
+    Object(HashMap<String, Variant>)
 }
 
 #[derive(Debug, Clone)]
@@ -59,18 +64,38 @@ pub(crate) enum Variant {
     PackedVector4Array(Vec<Vector4>)
 }
 
-pub(crate) fn get_string(data: &mut Bytes, string_table: &Vec<String>) -> Option<String> {
-    let id = data.get_u32_le();
-    if id & 0x80000000 != 0 {
-        let len = id & 0x7fffffff;
-        Some(data.get_chars(len as usize))
+pub(crate) fn get_string(data: &mut Bytes, string_table: &Vec<String>, is_resource: bool) -> Option<String> {
+    if is_resource {
+        let id = data.get_u32_le();
+        if id & 0x80000000 != 0 {
+            let len = id & 0x7fffffff;
+            Some(data.get_chars(len as usize))
+        } else {
+            string_table.get(id as usize).map(|v| v.clone())
+        }
     } else {
-        string_table.get(id as usize).map(|v| v.clone())
+        let len = data.get_u32_le();
+        let pad = 4 - (len % 4);
+        let val = data.get_chars(len as usize);
+        if pad < 4 {
+            data.advance(pad as usize);
+        }
+        Some(val)
     }
 }
 
 impl Variant {
-    fn get_id(&self) -> i32 {
+    // 98a32967: removed Image (3.0)
+    // 5b3709d3: removed InputEvent (3.0)
+    // 69c95f4b: added Callable and Signal (4.0)
+    // 3c005965: added StringName (4.0)
+    // 33b5c571: added PackedInt64Array and PackedFloat64Array (4.0)
+    // 4.4 added PackedVector4Array, but it's at the end for now
+    fn get_id_normal(&self, major_ver: i32) -> i32 {
+        todo!()
+    }
+
+    fn get_id_resource(&self) -> i32 {
         match self {
             Variant::Nil => 1,
             Variant::Bool(_) => 2,
@@ -117,8 +142,26 @@ impl Variant {
         }
     }
 
-    pub(crate) fn from_bytes(data: &mut Bytes, format_version: i32, string_table: &Vec<String>) -> anyhow::Result<Variant> {
-        Ok(match data.get_i32_le() {
+    fn normal_id_to_resource(id: i32, major_ver: i32) -> i32 {
+        let base = id & 0xff;
+        let v = if major_ver < 3 {
+            MAP_V2_TO_STATIC[base as usize]
+        } else if major_ver == 3 {
+            MAP_V3_TO_STATIC[base as usize]
+        } else if major_ver > 3 {
+            MAP_V4_TO_STATIC[base as usize]
+        } else {
+            id
+        };
+        v | (base & !0xff)
+    }
+
+    pub(crate) fn from_bytes(data: &mut Bytes, string_table: &Vec<String>, old_node_paths: bool, is_resource: bool, major_ver: i32) -> anyhow::Result<Variant> {
+        let mut id = data.get_i32_le();
+        if !is_resource {
+            id = Self::normal_id_to_resource(id, major_ver);
+        }
+        Ok(match id & 0xff {
             1 => { // Nil
                 Variant::Nil
             },
@@ -132,7 +175,7 @@ impl Variant {
                 Variant::Float(data.get_f32_le())
             },
             5 => { // String
-                Variant::String(data.get_string())
+                Variant::String(get_string(data, string_table, is_resource).unwrap())
             },
             10 => { // Vector2
                 Variant::Vector2(Vector2::from_bytes(data))
@@ -179,20 +222,35 @@ impl Variant {
                 Variant::Color(Color128::from_bytes(data))
             },
             22 => { // NodePath
-                let num_names = data.get_u16_le();
-                let mut num_subnames = data.get_u16_le();
-                let absolute = num_subnames & 0x8000 != 0;
-                num_subnames &= 0x7fff;
-                if format_version < 3 {  // FORMAT_VERSION_NO_NODEPATH_PROPERTY
-                    num_subnames += 1;
-                }
+                let (num_names, num_subnames, absolute) = if is_resource {
+                    let num_names = data.get_u16_le() as u32;
+                    let mut num_subnames = data.get_u16_le() as u32;
+                    let absolute = num_subnames & 0x8000 != 0;
+                    num_subnames &= 0x7fff;
+                    if old_node_paths {  // old format
+                        num_subnames += 1;
+                    }
+                    (num_names, num_subnames, absolute)
+                } else {
+                    let num_names = data.get_u32_le();
+                    if num_names & 0x80000000 != 0 {
+                        return Err(anyhow!("old node path format unsupported"));
+                    }
+                    let mut num_subnames = data.get_u32_le();
+                    let flags = data.get_u32_le();
+                    let absolute = flags & 1 != 0;
+                    if flags & 2 != 0 {  // old format
+                        num_subnames += 1;
+                    }
+                    (num_names, num_subnames, absolute)
+                };
                 let mut names = Vec::new();
                 for _ in 0..num_names {
-                    names.push(get_string(data, string_table).unwrap());
+                    names.push(get_string(data, string_table, is_resource).unwrap());
                 }
                 let mut subnames = Vec::new();
                 for _ in 0..num_subnames {
-                    subnames.push(get_string(data, string_table).unwrap());
+                    subnames.push(get_string(data, string_table, is_resource).unwrap());
                 }
                 Variant::NodePath {
                     names,
@@ -204,24 +262,45 @@ impl Variant {
                 Variant::RID(data.get_i32_le())
             },
             24 => { // Object
-                Variant::Object(match data.get_i32_le() {
-                    0 => {  // Empty
-                        Object::Empty
-                    },
-                    1 => {  // ExternalResource
-                        Object::ExternalResource {
-                            r#type: data.get_string(),
-                            path: data.get_string(),
+                if is_resource {
+                    Variant::Object(match data.get_i32_le() {
+                        0 => {  // Empty
+                            Object::Empty
+                        },
+                        1 => {  // ExternalResource
+                            Object::ExternalResource {
+                                r#type: get_string(data, string_table, is_resource).unwrap(),
+                                path: get_string(data, string_table, is_resource).unwrap(),
+                            }
+                        },
+                        2 => {  // InternalResource
+                            Object::InternalResource(data.get_i32_le())
+                        },
+                        3 => {  // ExternalResourceIndex
+                            Object::ExternalResourceIndex(data.get_i32_le())
+                        },
+                        _ => Object::Empty
+                    })
+                } else {
+                    Variant::Object(if id & (1 << 16) != 0 {
+                        let val = data.get_u64_le();
+                        Object::ExternalResourceId(val)
+                    } else {
+                        let typ = get_string(data, string_table, is_resource).unwrap();
+                        if typ.is_empty() {
+                            Object::Empty
+                        } else {
+                            let num_props = data.get_u32_le();
+                            let mut props = HashMap::new();
+                            for _ in 0..num_props {
+                                let key = get_string(data, string_table, is_resource).unwrap();
+                                let val = Variant::from_bytes(data, string_table, old_node_paths, is_resource, major_ver)?;
+                                props.insert(key, val);
+                            }
+                            Object::Object(props)
                         }
-                    },
-                    2 => {  // InternalResource
-                        Object::InternalResource(data.get_i32_le())
-                    },
-                    3 => {  // ExternalResourceIndex
-                        Object::ExternalResourceIndex(data.get_i32_le())
-                    },
-                    _ => Object::Empty
-                })
+                    })
+                }
             },
             25 => { // InputEvent
                 Err(anyhow!("input event not supported"))?
@@ -231,9 +310,9 @@ impl Variant {
                 let len = data.get_i32_le() & 0x7fffffff;
                 let mut dict = HashMap::new();
                 for _ in 0..len {
-                    let key = Variant::from_bytes(data, format_version, string_table)?;
+                    let key = Variant::from_bytes(data, string_table, old_node_paths, is_resource, major_ver)?;
                     if let Variant::String(s) = key {
-                        let value = Variant::from_bytes(data, format_version, string_table)?;
+                        let value = Variant::from_bytes(data, string_table, old_node_paths, is_resource, major_ver)?;
                         dict.insert(s, value);
                     } else {
                         return Err(anyhow!("dict keys must be strings"));
@@ -245,7 +324,7 @@ impl Variant {
                 let len = data.get_i32_le() & 0x7fffffff;
                 let mut arr = Vec::new();
                 for _ in 0..len {
-                    arr.push(Variant::from_bytes(data, format_version, string_table)?);
+                    arr.push(Variant::from_bytes(data, string_table, old_node_paths, is_resource, major_ver)?);
                 }
                 Variant::Array(arr)
             },
@@ -290,7 +369,7 @@ impl Variant {
                 // Variant::Signal
             },
             44 => { // StringName
-                Variant::StringName(data.get_string())
+                Variant::StringName(get_string(data, string_table, is_resource).unwrap())
             },
             45 => { // IVector2
                 Variant::IVector2(IVector2::from_bytes(data))

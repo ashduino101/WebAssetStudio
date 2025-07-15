@@ -3,6 +3,7 @@ use web_sys::{Document, Element};
 use crate::base::asset::{Asset, Export};
 use crate::godot::resource::Resource;
 use crate::godot::wrappers::ResourceWrapper;
+use crate::logger::info;
 use crate::studio::components::asset_views::audio::AudioView;
 use crate::studio::components::base::WidgetComponent;
 use crate::utils::dom::create_data_url;
@@ -20,7 +21,7 @@ impl WavStreamWrapper {
         Some(WavStreamWrapper {
             data: val.properties.get("data")?.as_byte_array()?,
             r#loop: val.properties.get("loop").map(|v| v.as_bool().unwrap_or(false)).unwrap_or(false),
-            stereo: val.properties.get("stereo")?.as_bool()?
+            stereo: val.properties.get("stereo").map(|v| v.as_bool().unwrap_or(false)).unwrap_or(false)
         })
     }
 }

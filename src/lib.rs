@@ -44,7 +44,9 @@ use crate::base::asset::provider::{AssetProvider, GenericAssetProvider};
 use crate::base::format::AssetFormat;
 use crate::base::format::detector::detect_asset_format;
 use crate::fsb::bank::SoundBank;
+use crate::godot::bytecode::{ScriptBytecode, TokenTypeV3};
 use crate::godot::pck_file::PckFile;
+use crate::godot::project_settings::ProjectSettings;
 use crate::godot::resource::ResourceFile;
 use crate::godot::texture::stream::StreamTexture;
 // use mojoshader::*;
@@ -188,6 +190,14 @@ async fn handle_file(name: String, file: File) {
         },
         AssetFormat::GodotStreamTexture => {
             Box::new(GenericBundleFile::wrap_asset(Box::new(StreamTexture::from_bytes(&mut dat).unwrap())))
+        },
+        AssetFormat::GodotScriptBytecode => {
+            info!("{:?}", ScriptBytecode::from_bytes(&mut dat, 3).unwrap());
+            return;
+        },
+        AssetFormat::GodotProjectSettings => {
+            info!("{:#?}", ProjectSettings::from_bytes(&mut dat, 3).unwrap());
+            return;
         }
         _ => {
             info!("unsupported format {format:?}");

@@ -87,8 +87,8 @@ impl ResourceFile {
         let resource_type = data.get_string_ordered(little_endian);
         let mut properties = HashMap::new();
         for _ in 0..data.get_i32_ordered(little_endian) {
-            let key = get_string(data, &string_table).unwrap();
-            let val = Variant::from_bytes(data, format_version, &string_table)?;
+            let key = get_string(data, &string_table, true).unwrap();
+            let val = Variant::from_bytes(data, &string_table, format_version < 3, true, major)?;
             properties.insert(key, val);
         }
         // TODO: this will fail if there is more than one resource

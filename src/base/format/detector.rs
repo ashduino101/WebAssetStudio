@@ -52,6 +52,9 @@ pub(crate) fn detect_asset_format(buf: &mut Bytes) -> anyhow::Result<AssetFormat
     if check_magic_basic(buf, b"GDSC") {
         return Ok(AssetFormat::GodotScriptBytecode);
     }
+    if check_magic_basic(buf, b"ECFG") {
+        return Ok(AssetFormat::GodotProjectSettings);
+    }
 
     // FSB
     if check_magic_basic(buf, b"FSB5") {
