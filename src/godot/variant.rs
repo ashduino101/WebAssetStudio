@@ -158,6 +158,7 @@ impl Variant {
 
     pub(crate) fn from_bytes(data: &mut Bytes, string_table: &Vec<String>, old_node_paths: bool, is_resource: bool, major_ver: i32) -> anyhow::Result<Variant> {
         let mut id = data.get_i32_le();
+        let raw_id = id;
         if !is_resource {
             id = Self::normal_id_to_resource(id, major_ver);
         }
@@ -172,7 +173,11 @@ impl Variant {
                 Variant::Int(data.get_i32_le())
             },
             4 => { // Float
-                Variant::Float(data.get_f32_le())
+                if !is_resource && (raw_id & (1 << 16) != 0) {
+                    Variant::Double(data.get_f64_le())
+                } else {
+                    Variant::Float(data.get_f32_le())
+                }
             },
             5 => { // String
                 Variant::String(get_string(data, string_table, is_resource).unwrap())
@@ -282,7 +287,7 @@ impl Variant {
                         _ => Object::Empty
                     })
                 } else {
-                    Variant::Object(if id & (1 << 16) != 0 {
+                    Variant::Object(if raw_id & (1 << 16) != 0 {
                         let val = data.get_u64_le();
                         Object::ExternalResourceId(val)
                     } else {
