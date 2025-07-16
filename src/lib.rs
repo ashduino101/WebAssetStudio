@@ -33,6 +33,7 @@ use std::sync::{Arc, Mutex};
 use bytes::{Bytes, Buf};
 use flate2::read::GzDecoder;
 use lzma_rs::xz_decompress;
+use pelite::PeFile;
 use three_d::{vec3, AmbientLight, Camera, ClearState, CpuModel, FrameOutput, Geometry, Model, OrbitControl, PhysicalMaterial, Skybox, Window, WindowSettings};
 use three_d_asset::{degrees, GeometryFunction, LightingModel, NormalDistributionFunction, Srgba, Viewport};
 // use three_d::*;
@@ -198,7 +199,23 @@ async fn handle_file(name: String, file: File) {
         AssetFormat::GodotProjectSettings => {
             info!("{:#?}", ProjectSettings::from_bytes(&mut dat, 3).unwrap());
             return;
-        }
+        },
+        AssetFormat::PE => {
+            let mut f = PeFile::from_bytes(&dat[..]).unwrap();
+            let mut pck = None;
+            for h in f.section_headers() {
+                if h.name().unwrap() == "pck" {
+                    let mut d = Bytes::from(Vec::from(f.get_section_bytes(h).unwrap()));
+                    pck = Some(Box::new(PckFile::new(&mut d).unwrap()));
+                    break;
+                }
+            }
+            if let Some(p) = pck {
+                p
+            } else {
+                return;
+            }
+        },
         _ => {
             info!("unsupported format {format:?}");
             return;

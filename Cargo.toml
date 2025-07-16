@@ -61,6 +61,7 @@ bitvec = "1.0.1"
 itertools = "0.12.1"
 serde_path_to_error = "0.1"
 num_enum = "0.7.4"
+pelite = "0.10.0"
 #bincode = { version = "2.0.0-rc.3", features = ["serde", "derive"] }
 #serde_repr = "0.1.19"
 #bitvec = {  version = "1.0.1", features = ["serde"] }

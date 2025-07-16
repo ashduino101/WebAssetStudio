@@ -78,7 +78,7 @@ pub(crate) fn detect_asset_format(buf: &mut Bytes) -> anyhow::Result<AssetFormat
     }
 
     // Executables
-    if check_magic_basic(buf, b"PE") {
+    if check_magic_basic(buf, b"MZ") {
         return Ok(AssetFormat::PE);
     }
     if check_magic_basic(buf, b"\x7fELF") {
