@@ -18,11 +18,13 @@ use crate::unity::assets::external::External;
 use crate::unity::assets::typetree::{TypeInfo, TypeParser, ValueType};
 use crate::unity::assets::wrappers::audioclip::AudioClipWrapper;
 use crate::unity::assets::wrappers::mesh::MeshWrapper;
+use crate::unity::assets::wrappers::text::TextWrapper;
 use crate::unity::assets::wrappers::texture2d::Texture2DWrapper;
 use crate::unity::object::identifier::LocalObjectIdentifier;
 use crate::unity::object::info::ObjectInfo;
 
 use crate::utils::buf::{BufExt, FromBytes};
+use crate::utils::debug::download_file;
 use crate::utils::time::now;
 
 pub struct AssetFile {
@@ -66,6 +68,7 @@ impl AssetFile {
     }
 
     fn from_bytes(data: &mut Bytes) -> Self {
+        let original_data = data.clone();
         let start_length = data.len();  // keep track of the start length -- TODO: custom bytes wrapper
         let mut metadata_size = data.get_u32() as usize;
         let mut file_size = data.get_u32() as usize;
@@ -79,7 +82,8 @@ impl AssetFile {
             data.get_u64();  // unknown
         }
 
-        let object_data = data.slice(data_offset - (if version >= 22 { 40 } else if version >= 9 { 20 } else { 16 })..);
+        let object_data = original_data.slice(data_offset..);
+        // download_file(&object_data[..], "object_data.dat");
 
         let raw_version = if version >= 7 { data.get_cstring() } else { "2.5.0f5".to_owned() };
         let unity_version = UnityVersion::parse(&raw_version).unwrap();
@@ -122,7 +126,13 @@ impl AssetFile {
                 let offset = trees.get_u32_le();
                 offsets.insert(version, offset);
             }
-            let offset = *offsets.get(&raw_version).unwrap() as usize;
+            let maybe_offset = offsets.get(&raw_version);
+            let offset = *match maybe_offset {
+                Some(v) => v,
+                None => {
+                    panic!("unsupported unity version {}", raw_version);
+                }
+            } as usize;
 
             let mut data = trees.slice(offset..);
             let version = data.get_cstring();
@@ -198,6 +208,7 @@ impl AssetFile {
 impl AssetProvider for AssetFile {
     fn list_assets(&self) -> Vec<AssetMetadata> {
         self.objects.iter().map(|o| {
+            info!("get asset {} at {} ({})", o.path_id, o.offset, o.size);
             AssetMetadata {
                 // TODO: do this without loading the entire asset
                 name: self.get_asset_from_info(o).get("m_Name").ok().map_or("<unnamed>".to_owned(), |v| v.as_string().unwrap()),
@@ -221,6 +232,9 @@ impl AssetProvider for AssetFile {
         }
         if typ.class_id == 43 {
             return Some(Arc::new(Mutex::new(Box::new(MeshWrapper::from_value(&parsed, self.unity_version.major, self.little_endian).ok()?) as Box<dyn Asset>)));
+        }
+        if typ.class_id == 49 {
+            return Some(Arc::new(Mutex::new(Box::new(TextWrapper::from_value(&parsed).ok()?) as Box<dyn Asset>)));
         }
         if typ.class_id == 74 {
             info!("{:#?}", parsed);

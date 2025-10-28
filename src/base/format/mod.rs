@@ -15,8 +15,11 @@ pub enum AssetFormat {
     UnrealPak,
     UnrealPackage,
     XNB,
+    GameMakerBundle,
+
     PE,
     ELF,
+
     DirectXShader,
 
     GZipCompressed
@@ -41,6 +44,7 @@ impl AssetFormat {
             AssetFormat::PE => 600,
             AssetFormat::ELF => 601,
             AssetFormat::DirectXShader => 700,
+            AssetFormat::GameMakerBundle => 800,
             AssetFormat::GZipCompressed => -1
         }
     }

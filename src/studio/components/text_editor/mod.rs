@@ -1,7 +1,9 @@
 use std::sync::OnceLock;
 use js_sys::{Function, Reflect};
 use lzma_rs::xz_decompress;
+use rand::distributions::DistString;
 use wasm_bindgen::JsValue;
+use web_sys::{window, Element};
 use crate::logger::{info, log1obj};
 use crate::utils::time::now;
 
@@ -87,6 +89,14 @@ impl Ace {
                 .call1(&JsValue::undefined(), &JsValue::from_str(elem_id)).unwrap(),
             parent: &self.module,
         }
+    }
+
+    pub(crate) fn create_on(&self, elem: &Element) -> AceEditor {
+        let div = window().unwrap().document().unwrap().create_element("div").unwrap();
+        let id = format!("ace-{}", rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 8));
+        div.set_id(&id);
+        elem.append_child(&div).unwrap();
+        self.edit(&id)
     }
 }
 

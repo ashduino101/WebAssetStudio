@@ -29,9 +29,9 @@ pub async fn render_mesh(scene: Scene, parent: &Element) {
         vec3(0.0, 1.0, 0.0),
         degrees(45.0),
         0.1,
-        1000.0,
+        10.0,
     );
-    let mut control = FlyControl::new(1.0);
+    let mut control = FlyControl::new(0.001);
 
     let mut loaded = if let Ok(loaded) = three_d_asset::io::load_async(&[
         "chinese_garden_4k.hdr",

@@ -35,7 +35,7 @@ impl Asset for Texture2DWrapper {
         let elem = doc.create_element("img").unwrap();
         let elem = elem.unchecked_into::<HtmlImageElement>();
         let start = now();
-        elem.set_attribute("src", &create_img(&self.get_image(0), self.width as usize, self.height as usize, false)).unwrap();
+        elem.set_attribute("src", &create_img(&self.get_image(0), self.width as usize, self.height as usize, true)).unwrap();
         let mut style = elem.style();
         style.set_property("max-width", "100%").unwrap();
         style.set_property("max-height", "100%").unwrap();
@@ -54,7 +54,7 @@ impl Asset for Texture2DWrapper {
         Export {
             extension: ".png".to_owned(),
             // TODO: export all mips
-            data: encode_png(self.width as u32, self.height as u32, &self.get_image(0), false).into()
+            data: encode_png(self.width as u32, self.height as u32, &self.get_image(0), true).into()
         }
     }
 }

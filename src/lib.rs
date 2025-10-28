@@ -45,6 +45,7 @@ use crate::base::asset::provider::{AssetProvider, GenericAssetProvider};
 use crate::base::format::AssetFormat;
 use crate::base::format::detector::detect_asset_format;
 use crate::fsb::bank::SoundBank;
+use crate::gamemaker::file::GameMakerFile;
 use crate::godot::bytecode::{ScriptBytecode, TokenTypeV3};
 use crate::godot::pck_file::PckFile;
 use crate::godot::project_settings::ProjectSettings;
@@ -200,6 +201,9 @@ async fn handle_file(name: String, file: File) {
             info!("{:#?}", ProjectSettings::from_bytes(&mut dat, 3).unwrap());
             return;
         },
+        AssetFormat::GameMakerBundle => {
+            Box::new(GenericBundleFile::wrap(Box::new(GameMakerFile::new(&mut dat))))
+        }
         AssetFormat::PE => {
             let mut f = PeFile::from_bytes(&dat[..]).unwrap();
             let mut pck = None;

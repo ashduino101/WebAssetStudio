@@ -72,9 +72,14 @@ pub(crate) fn detect_asset_format(buf: &mut Bytes) -> anyhow::Result<AssetFormat
         return Ok(AssetFormat::XNB);
     }
 
+    // GameMaker
+    if check_magic_basic(buf, b"FORM") {
+       return Ok(AssetFormat::GameMakerBundle);
+    }
+
     // DirectX
     if check_magic_basic(buf, b"\x01\x09\xFF\xFE") {
-        return Ok(AssetFormat::DirectXShader)
+        return Ok(AssetFormat::DirectXShader);
     }
 
     // Executables

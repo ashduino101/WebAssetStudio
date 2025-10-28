@@ -128,7 +128,7 @@ impl FromBytes for char {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Void {}
 
 impl Asset for Void {
@@ -150,5 +150,11 @@ impl Asset for String {
 
     fn export(&mut self) -> Export {
         Export { extension: "txt".to_owned(), data: self.clone().into_bytes() }
+    }
+}
+
+impl FromBytes for Void {
+    fn from_bytes(data: &mut Bytes) -> Self {
+        Void {}
     }
 }
